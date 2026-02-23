@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ song.title }} - SoulPlayer Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(59, 226, 200, 0.5);
+            /* Cyan glow */
+        }
+
+        .slider-thumb:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+            background: #3be2c8;
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen text-white flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+
+    <!-- Background Blur Effect matched to deep blue theme -->
+    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#111827] to-[#0b0f19]"></div>
+        {% if song.image %}
+        <div class="absolute inset-0 bg-cover bg-center blur-[120px] opacity-20 scale-150"
+            style="background-image: url('{{ song.image.url }}');"></div>
+        <div class="absolute inset-0 bg-[#0b0f19]/80"></div>
+        <!-- Decorative Glow Orbs -->
+        <div
+            class="absolute -top-32 -left-32 w-96 h-96 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[150px] opacity-10 animate-pulse">
+        </div>
+        <div
+            class="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600 rounded-full mix-blend-screen filter blur-[150px] opacity-10">
+        </div>
+        {% else %}
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/30 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#3be2c8]/20 rounded-full blur-[120px]">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Header -->
+    <div class="w-full max-w-md flex justify-between items-center z-10 mb-10">
+        <a href="{% url 'index' %}"
+            class="w-10 h-10 flex items-center justify-center text-white text-xl hover:bg-white/10 rounded-full transition transform hover:-translate-y-1">
+            <i class="fas fa-chevron-down"></i>
+        </a>
+        <div class="text-center">
+            <h2 class="text-[10px] uppercase tracking-[0.2em] text-[#3be2c8] font-bold mb-1">Playing From Library</h2>
+            <p class="text-sm font-semibold tracking-wide text-gray-300">SoulPlayer</p>
+        </div>
+        <button
+            class="w-10 h-10 flex items-center justify-center text-white text-xl hover:bg-white/10 rounded-full transition transform hover:rotate-90">
+            <i class="fas fa-ellipsis-v"></i>
+        </button>
+    </div>
+
+    <!-- Main Player Card -->
+    <div
+        class="w-full max-w-md z-10 flex flex-col gap-8 bg-[#111827]/30 backdrop-blur-xl p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5">
+
+        <!-- Album Art -->
+        <div class="w-full aspect-square relative group mx-auto">
+            {% if song.image %}
+            <img src="{{ song.image.url }}" alt="{{ song.title }}"
+                class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
+            <!-- Glow behind art -->
+            <div
+                class="absolute inset-0 bg-gradient-to-tr from-[#3be2c8]/20 to-blue-500/20 opacity-0 group-hover:opacity-100 rounded-[1.5rem] transition duration-500 blur-xl -z-10">
+            </div>
+            {% else %}
+            <div
+                class="w-full h-full bg-gradient-to-br from-gray-800 to-[#0b0f19] rounded-[1.5rem] flex items-center justify-center shadow-2xl border border-white/5">
+                <i class="fas fa-music text-6xl text-gray-600"></i>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Song Info -->
+        <div class="flex justify-between items-start mt-2">
+            <div class="flex-1 min-w-0 pr-4 flex flex-col">
+                <h1 class="text-3xl font-extrabold truncate mb-1 tracking-tight drop-shadow-md">{{ song.title }}</h1>
+                <p class="text-gray-400 text-base font-medium truncate">{{ song.artist }}</p>
+            </div>
+            <button
+                class="mt-2 text-2xl text-[#3be2c8] hover:scale-110 transition drop-shadow-[0_0_10px_rgba(59,226,200,0.4)]">
+                <i class="fas fa-heart"></i>
+            </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full mb-2">
+            <input type="range" id="progress" value="0" min="0" max="100"
+                class="w-full h-1.5 bg-gray-700/50 rounded-lg appearance-none cursor-pointer slider-thumb accent-[#3be2c8] hover:h-2 transition-all">
+            <div class="flex justify-between text-xs text-gray-400 mt-2 font-mono tracking-wider font-semibold">
+                <span id="current-time">0:00</span>
+                <span id="duration">0:00</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex items-center justify-between px-1 mb-2">
+            <button class="text-gray-500 hover:text-[#3be2c8] text-xl transition transform hover:scale-110">
+                <i class="fas fa-random"></i>
+            </button>
+
+            <div class="flex items-center gap-7">
+                <a href="{% if previous_song %}{% url 'play_song' previous_song.id %}{% else %}#{% endif %}"
+                    class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:-translate-x-1 {% if not previous_song %}opacity-40 cursor-not-allowed hover:text-white hover:-translate-x-0{% endif %}">
+                    <i class="fas fa-step-backward"></i>
+                </a>
+
+                <button id="play-btn"
+                    class="w-[4.5rem] h-[4.5rem] bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center text-[#0b0f19] text-3xl shadow-[0_0_25px_rgba(59,226,200,0.5)] hover:shadow-[0_0_35px_rgba(59,226,200,0.7)] transition-all transform hover:scale-105 active:scale-95">
+                    <i class="fas fa-pause ml-0.5"></i>
+                </button>
+
+                <a href="{% if next_song %}{% url 'play_song' next_song.id %}{% else %}#{% endif %}"
+                    class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:translate-x-1 {% if not next_song %}opacity-40 cursor-not-allowed hover:text-white hover:translate-x-0{% endif %}">
+                    <i class="fas fa-step-forward"></i>
+                </a>
+            </div>
+
+            <button class="text-gray-500 hover:text-[#3be2c8] text-xl transition transform hover:scale-110">
+                <i class="fas fa-repeat"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="flex justify-between items-center px-4 pt-4 border-t border-white/10 text-gray-400">
+            <button class="hover:text-white transition transform hover:scale-110"><i
+                    class="fas fa-laptop-house text-lg"></i></button>
+            <div class="flex gap-1">
+                <div class="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-white opacity-100"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
+            </div>
+            <button class="hover:text-white transition transform hover:scale-110"><i
+                    class="fas fa-list text-lg"></i></button>
+        </div>
+
+    </div>
+
+    <audio id="audio-player"
+        src="{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}"
+        autoplay></audio>
+
+    <script>
+        const audio = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = playBtn.querySelector('i');
+        const progress = document.getElementById('progress');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+
+        // Play/Pause Toggle
+        playBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                playIcon.classList.remove('fa-play', 'ml-1.5');
+                playIcon.classList.add('fa-pause', 'ml-0.5');
+            } else {
+                audio.pause();
+                playIcon.classList.remove('fa-pause', 'ml-0.5');
+                playIcon.classList.add('fa-play', 'ml-1.5');
+            }
+        });
+
+        // Update Progress Bar
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progress.value = percent;
+
+                // Update coloring of slider track (before vs after thumb) with cyan
+                progress.style.background = `linear-gradient(to right, #3be2c8 ${percent}%, rgba(255,255,255,0.1) ${percent}%)`;
+
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+                durationEl.textContent = formatTime(audio.duration);
+            }
+        });
+
+        // Seek functionality
+        progress.addEventListener('input', () => {
+            const seekTime = (progress.value / 100) * audio.duration;
+            audio.currentTime = seekTime;
+        });
+
+        // Format time helper
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        // Initial setup for duration (sometimes metadata loads a bit late)
+        audio.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(audio.duration);
+        });
+
+    </script>
+</body>
+
+</html>

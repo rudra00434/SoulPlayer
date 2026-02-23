@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - SoulPlayer Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+
+    <div class="flex flex-1 overflow-hidden pb-20">
+        <!-- Sidebar -->
+        <div
+            class="w-72 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
+            <div class="text-3xl font-bold mb-12 tracking-wide text-white">SoulPlayer<span
+                    class="text-[#3be2c8]">.</span>
+            </div>
+
+            <nav class="flex flex-col gap-6 text-gray-400 font-semibold tracking-wide">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-home text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Home</a>
+                <a href="{% url 'search' %}" class="flex items-center gap-4 text-white transition group"><i
+                        class="fas fa-search text-xl w-6 text-[#3be2c8]"></i> Search</a>
+                <a href="{% url 'playlists' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-book text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Your
+                    Library</a>
+            </nav>
+
+            <div class="mt-8 pt-8 border-t border-[#1e293b]/50">
+                <a href="{% url 'create_playlist' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group mb-5">
+                    <i class="fas fa-plus-square text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Create
+                    Playlist
+                </a>
+                <a href="{% url 'add_song' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group mb-5">
+                    <i class="fas fa-music text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Add Songs
+                </a>
+                <button class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group">
+                    <i class="fas fa-heart text-xl w-6 text-purple-500 group-hover:scale-110 transition-transform"></i>
+                    Liked Songs
+                </button>
+            </div>
+
+            <!-- Bottom visualizer placeholder -->
+            <div class="mt-auto pt-6 flex items-end gap-1 px-2 h-16 opacity-50">
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full"
+                    style="animation-delay: 0.1s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3"
+                    style="animation-delay: 0.3s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5"
+                    style="animation-delay: 0.2s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2"
+                    style="animation-delay: 0.4s"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div
+            class="flex-1 flex flex-col overflow-y-auto no-scrollbar relative bg-gradient-to-br from-[#111827] to-[#0b0f19]">
+
+            <!-- Top Nav -->
+            <header
+                class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
+                <div class="flex gap-4">
+                    <button onclick="history.back()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg"><i
+                            class="fas fa-chevron-left"></i></button>
+                    <button onclick="history.forward()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg disabled:opacity-30 disabled:hover:bg-[#1e293b]/70 disabled:hover:text-white"><i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+
+                <!-- Search Input in Header -->
+                <div class="flex-1 max-w-md mx-6">
+                    <form action="{% url 'search' %}" method="GET" class="relative group">
+                        <i
+                            class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-[#3be2c8] transition text-lg"></i>
+                        <input type="text" name="query" value="{{ query|default:'' }}"
+                            placeholder="What do you want to listen to?"
+                            class="bg-[#1e293b]/50 border border-[#1e293b] focus:border-[#3be2c8]/70 text-base rounded-full pl-14 pr-6 py-3 w-full focus:outline-none focus:bg-[#1e293b] text-white transition-all shadow-inner placeholder-gray-500 font-medium tracking-wide"
+                            autofocus>
+                    </form>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[#3be2c8] flex items-center justify-center font-bold text-sm ring-2 ring-[#0b0f19] shadow-[0_0_15px_rgba(59,226,200,0.3)] cursor-pointer hover:scale-105 transition">
+                        RG
+                    </div>
+                </div>
+            </header>
+
+            <div class="px-10 pb-32 pt-4">
+
+                {% if query %}
+                <h2 class="text-3xl font-extrabold mb-8 tracking-wide">Top results for <span class="text-[#3be2c8]">
+                        {{ song.title }}</span></h2>
+
+                {% if songs %}
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {% for song in songs %}
+                    <div
+                        class="flex-none p-4 group cursor-pointer relative bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 transition-all duration-300 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+                        <!-- Delete Button -->
+                        <a href="{% url 'delete_song' song.id %}"
+                            onclick="return confirm('Are you sure you want to delete this song?')"
+                            class="absolute top-4 right-4 z-20 text-gray-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-300 drop-shadow-md bg-black/50 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-trash text-sm"></i>
+                        </a>
+
+                        <div class="relative mb-5 overflow-hidden rounded-xl shadow-md">
+                            <img src="{% if song.image %}{{ song.image.url }}{% endif %}"
+                                class="w-full aspect-square object-cover transform group-hover:scale-105 transition duration-500">
+
+                            <div
+                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                <a href="{% url 'play_song' song.id %}" onclick="event.stopPropagation();"
+                                    class="w-14 h-14 bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75 hover:scale-110">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1 text-lg"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-lg truncate px-1 text-white tracking-wide">{{ song.title }}</h3>
+                        <p class="text-sm text-gray-400 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div
+                    class="flex flex-col items-center justify-center py-32 bg-white/5 rounded-3xl border border-white/5 shadow-inner">
+                    <div
+                        class="w-24 h-24 bg-[#1e293b]/50 rounded-full flex items-center justify-center mb-6 shadow-lg border border-[#1e293b]">
+                        <i class="fas fa-search text-4xl text-gray-500"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold mb-3 tracking-wide">No results found</h3>
+                    <p class="text-gray-400 text-lg font-light">Please try searching for a different song or artist.</p>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <!-- Default State: Browse All / Categories -->
+                <div class="mt-4">
+                    <h2 class="text-3xl font-extrabold mb-8 tracking-wide">Browse All</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                        <!-- Category Cards with Premium Gradients -->
+                        <a href="{% url 'genre_detail' 'Pop' %}"
+                            class="bg-gradient-to-br from-purple-600 to-indigo-900 h-48 rounded-2xl p-6 relative overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform duration-300 shadow-lg group block">
+                            <h3 class="text-2xl font-bold tracking-wide drop-shadow-md">Pop</h3>
+                            <div
+                                class="absolute -bottom-4 -right-4 transform rotate-[25deg] shadow-2xl group-hover:rotate-[20deg] group-hover:scale-110 transition-all duration-500 border-4 border-white/10 rounded-xl overflow-hidden">
+                                <img src="https://placehold.co/120x120/8b5cf6/ffffff?text=Pop"
+                                    class="w-28 h-28 object-cover">
+                            </div>
+                        </a>
+
+                        <a href="{% url 'genre_detail' 'Hip-Hop' %}"
+                            class="bg-gradient-to-br from-[#3be2c8] to-emerald-900 h-48 rounded-2xl p-6 relative overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform duration-300 shadow-lg group block">
+                            <h3 class="text-2xl font-bold tracking-wide drop-shadow-md text-[#0b0f19]">Hip-Hop</h3>
+                            <div
+                                class="absolute -bottom-4 -right-4 transform rotate-[25deg] shadow-2xl group-hover:rotate-[20deg] group-hover:scale-110 transition-all duration-500 border-4 border-[#0b0f19]/20 rounded-xl overflow-hidden">
+                                <img src="https://placehold.co/120x120/10b981/ffffff?text=Hip-Hop"
+                                    class="w-28 h-28 object-cover">
+                            </div>
+                        </a>
+
+                        <a href="{% url 'genre_detail' 'Rock' %}"
+                            class="bg-gradient-to-br from-red-600 to-rose-900 h-48 rounded-2xl p-6 relative overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform duration-300 shadow-lg group block">
+                            <h3 class="text-2xl font-bold tracking-wide drop-shadow-md">Rock</h3>
+                            <div
+                                class="absolute -bottom-4 -right-4 transform rotate-[25deg] shadow-2xl group-hover:rotate-[20deg] group-hover:scale-110 transition-all duration-500 border-4 border-white/10 rounded-xl overflow-hidden">
+                                <img src="https://placehold.co/120x120/e11d48/ffffff?text=Rock"
+                                    class="w-28 h-28 object-cover">
+                            </div>
+                        </a>
+
+                        <a href="{% url 'genre_detail' 'Indie' %}"
+                            class="bg-gradient-to-br from-blue-600 to-cyan-900 h-48 rounded-2xl p-6 relative overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform duration-300 shadow-lg group block">
+                            <h3 class="text-2xl font-bold tracking-wide drop-shadow-md">Indie</h3>
+                            <div
+                                class="absolute -bottom-4 -right-4 transform rotate-[25deg] shadow-2xl group-hover:rotate-[20deg] group-hover:scale-110 transition-all duration-500 border-4 border-white/10 rounded-xl overflow-hidden">
+                                <img src="https://placehold.co/120x120/2563eb/ffffff?text=Indie"
+                                    class="w-28 h-28 object-cover">
+                            </div>
+                        </a>
+
+                        <a href="{% url 'genre_detail' 'Romance' %}"
+                            class="bg-gradient-to-br from-pink-600 to-fuchsia-900 h-48 rounded-2xl p-6 relative overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform duration-300 shadow-lg group block">
+                            <h3 class="text-2xl font-bold tracking-wide drop-shadow-md">Romance</h3>
+                            <div
+                                class="absolute -bottom-4 -right-4 transform rotate-[25deg] shadow-2xl group-hover:rotate-[20deg] group-hover:scale-110 transition-all duration-500 border-4 border-white/10 rounded-xl overflow-hidden">
+                                <img src="https://placehold.co/120x120/db2777/ffffff?text=Romance"
+                                    class="w-28 h-28 object-cover">
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artists - SoulPlayer Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+
+    <div class="flex flex-1 overflow-hidden pb-20">
+        <!-- Sidebar -->
+        <div
+            class="w-72 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
+            <div class="text-3xl font-bold mb-12 tracking-wide text-white">SoulPlayer<span
+                    class="text-[#3be2c8]">.</span></div>
+
+            <nav class="flex flex-col gap-6 text-gray-400 font-semibold tracking-wide">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-home text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Home</a>
+                <a href="{% url 'search' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-search text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Search</a>
+                <a href="{% url 'playlists' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-book text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Your
+                    Library</a>
+            </nav>
+
+            <div class="mt-8 pt-8 border-t border-[#1e293b]/50">
+                <a href="{% url 'create_playlist' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group mb-5">
+                    <i class="fas fa-plus-square text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Create
+                    Playlist
+                </a>
+                <a href="{% url 'add_song' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group mb-5">
+                    <i class="fas fa-music text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Add Songs
+                </a>
+                <a href="{% url 'artists' %}"
+                    class="flex items-center gap-4 text-white transition font-semibold group mb-5">
+                    <i class="fas fa-users text-xl w-6 text-[#3be2c8] transition-colors"></i> Artists
+                </a>
+            </div>
+
+            <div class="mt-auto pt-6 flex items-end gap-1 px-2 h-16 opacity-50">
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full"
+                    style="animation-delay: 0.1s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3"
+                    style="animation-delay: 0.3s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5"
+                    style="animation-delay: 0.2s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2"
+                    style="animation-delay: 0.4s"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div
+            class="flex-1 flex flex-col overflow-y-auto custom-scrollbar relative bg-gradient-to-br from-[#111827] to-[#0b0f19]">
+
+            <!-- Top Nav -->
+            <header
+                class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
+                <div class="flex gap-4">
+                    <button onclick="history.back()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg"><i
+                            class="fas fa-chevron-left"></i></button>
+                    <button onclick="history.forward()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg disabled:opacity-30 disabled:hover:bg-[#1e293b]/70 disabled:hover:text-white"><i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <a href="{% url 'add_artist' %}"
+                        class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-6 py-2.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                        <i class="fas fa-plus"></i> ADD ARTIST
+                    </a>
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[#3be2c8] flex items-center justify-center font-bold text-sm ring-2 ring-[#0b0f19] shadow-[0_0_15px_rgba(59,226,200,0.3)] cursor-pointer hover:scale-105 transition">
+                        RG
+                    </div>
+                </div>
+            </header>
+
+            <div class="px-10 pb-32 pt-6">
+                <!-- Hero Section -->
+                <div class="flex items-end gap-8 mb-12">
+                    <div
+                        class="relative w-48 h-48 rounded-full shadow-2xl flex items-center justify-center text-6xl text-white group cursor-pointer overflow-hidden">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-tr from-[#3be2c8] to-blue-600 rounded-full group-hover:scale-110 transition-transform duration-700">
+                        </div>
+                        <i class="fas fa-microphone-alt relative z-10 drop-shadow-md"></i>
+                        <div class="absolute inset-0 bg-black/20 mix-blend-overlay"></div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold uppercase tracking-widest text-[#3be2c8] mb-2 drop-shadow-md">
+                            Profile</p>
+                        <h1 class="text-6xl md:text-7xl font-extrabold tracking-tighter mb-4 drop-shadow-lg text-white">
+                            Your Artists</h1>
+                        <p class="text-gray-400 font-medium tracking-wide text-lg">{{ artists|length }} artists in your
+                            library</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold tracking-wide">All Artists</h2>
+                    <div class="flex gap-4">
+                        <form method="GET" action="{% url 'artists' %}"
+                            class="relative text-gray-400 focus-within:text-[#3be2c8]">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sm"></i>
+                            <input type="text" name="query" value="{{ query|default_if_none:'' }}"
+                                placeholder="Find an artist..."
+                                class="bg-[#1e293b]/50 border border-transparent focus:border-[#3be2c8]/50 rounded-full pl-9 pr-4 py-1.5 text-sm outline-none text-white w-48 transition-colors">
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Artist Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {% for artist in artists %}
+                    <div onclick="window.location.href='{% url 'artist_detail' artist.id %}'"
+                        class="bg-[#1e293b]/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 relative overflow-hidden shadow-lg group cursor-pointer hover:bg-[#1e293b]/80 hover:border-[#3be2c8]/30 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center">
+
+                        <div
+                            class="relative mb-5 w-full aspect-square rounded-full shadow-2xl overflow-hidden group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.2)] transition-shadow duration-500">
+                            {% if artist.image %}
+                            <img src="{{ artist.image.url }}"
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
+                            {% else %}
+                            <div
+                                class="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                                <i class="fas fa-user text-5xl text-gray-400"></i>
+                            </div>
+                            {% endif %}
+
+                            <div
+                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                <div
+                                    class="w-14 h-14 bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75 hover:scale-110 relative">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1 text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-lg text-white text-center truncate w-full tracking-wide">
+                            {{ artist.name }}</h3>
+                        <p class="text-sm text-gray-400 text-center font-medium truncate w-full mt-1">
+                            {{ artist.music_band }}</p>
+                        <span
+                            class="text-[10px] font-bold text-[#3be2c8] tracking-widest mt-2 uppercase bg-[#3be2c8]/10 px-2 py-0.5 rounded-full">Artist</span>
+                    </div>
+                    {% empty %}
+                    <div
+                        class="col-span-full py-20 bg-white/5 rounded-3xl border border-white/5 shadow-inner mt-6 flex flex-col items-center justify-center">
+                        <div
+                            class="w-20 h-20 bg-[#1e293b]/50 rounded-full flex items-center justify-center mb-6 shadow-lg border border-[#1e293b]">
+                            <i class="fas fa-users text-3xl text-gray-500"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white mb-2 tracking-wide">No Artists Found</h2>
+                        <p class="text-gray-400 mb-8 font-light">Start building your library by adding your favorite
+                            artists.</p>
+                        <a href="{% url 'add_artist' %}"
+                            class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-8 py-3.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-1 transition-all">
+                            ADD YOUR FIRST ARTIST
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

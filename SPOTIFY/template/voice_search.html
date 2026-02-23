@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Search - SoulPlayer Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+            overflow: hidden;
+        }
+
+        /* Ambient glowing background */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(59, 226, 200, 0.1) 0%, rgba(11, 15, 25, 1) 70%);
+            z-index: -1;
+        }
+
+        /* Microphone Ripple Effect */
+        .ripple-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid #3be2c8;
+            animation: ripple-anim 2s linear infinite;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .ripple:nth-child(2) {
+            animation-delay: 0.6s;
+        }
+
+        .ripple:nth-child(3) {
+            animation-delay: 1.2s;
+        }
+
+        @keyframes ripple-anim {
+            0% {
+                width: 100px;
+                height: 100px;
+                opacity: 1;
+                border-width: 4px;
+            }
+
+            100% {
+                width: 400px;
+                height: 400px;
+                opacity: 0;
+                border-width: 1px;
+            }
+        }
+
+        /* Audio Visualizer Waves */
+        .visualizer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 6px;
+            height: 60px;
+            margin-top: 2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .visualizer.active {
+            opacity: 1;
+        }
+
+        .bar {
+            width: 8px;
+            background: linear-gradient(to top, #3be2c8, #00ffcc);
+            border-radius: 10px;
+            height: 10px;
+            box-shadow: 0 0 15px rgba(59, 226, 200, 0.6);
+        }
+
+        .visualizer.active .bar {
+            animation: equalize 0.5s ease-in-out infinite alternate;
+        }
+
+        .bar:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .bar:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .bar:nth-child(3) {
+            animation-delay: 0.0s;
+        }
+
+        .bar:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .bar:nth-child(5) {
+            animation-delay: 0.1s;
+        }
+
+        .bar:nth-child(6) {
+            animation-delay: 0.4s;
+        }
+
+        .bar:nth-child(7) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes equalize {
+            0% {
+                height: 10px;
+            }
+
+            100% {
+                height: 60px;
+            }
+        }
+
+        /* Stop animation class */
+        .mic-stopped .ripple {
+            animation: none !important;
+            opacity: 0 !important;
+        }
+    </style>
+</head>
+
+<body class="text-white h-screen flex flex-col items-center justify-center relative">
+
+    <div class="ambient-bg"></div>
+
+    <!-- Navigation Header -->
+    <header class="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-50">
+        <a href="{% url 'index' %}"
+            class="text-3xl font-black tracking-wide flex items-center gap-3 hover:scale-105 transition-transform">
+            <div
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#3be2c8] to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(59,226,200,0.4)]">
+                <i class="fas fa-compact-disc text-lg text-white"></i>
+            </div>
+            SoulPlayer
+        </a>
+        <a href="{% url 'search' %}"
+            class="text-gray-400 hover:text-white font-bold tracking-widest text-sm uppercase transition-colors flex items-center gap-2">
+            <i class="fas fa-times text-lg"></i> Close
+        </a>
+    </header>
+
+    <!-- Main Content -->
+    <div class="text-center z-10 w-full max-w-2xl px-6 flex flex-col items-center">
+
+        <h1 class="text-5xl md:text-6xl font-black mb-4 tracking-tight drop-shadow-2xl" id="statusHeading">
+            Voice <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#3be2c8] to-blue-500">Search</span>
+        </h1>
+        <p class="text-gray-400 text-lg md:text-xl font-medium tracking-wide mb-16 h-8" id="statusSubtext">
+            Try saying "Play Shape of You" or "Aditya Rikhari"
+        </p>
+
+        <!-- Dynamic Output Text -->
+        <div class="min-h-[100px] w-full flex items-center justify-center mb-12">
+            <p id="transcriptOutput"
+                class="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 opacity-80 transition-all duration-300">
+                ...
+            </p>
+        </div>
+
+        <!-- Hidden search form that will be auto-submitted -->
+        <form id="voiceSearchForm" action="{% url 'search' %}" method="GET" class="hidden">
+            <input type="text" name="query" id="hiddenSearchInput">
+        </form>
+
+        <!-- Microphone Button Area -->
+        <div class="ripple-container mic-stopped" id="micContainer">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+
+            <button id="micButton"
+                class="relative z-10 w-28 h-28 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center text-4xl text-white transition-all duration-500 hover:scale-105 hover:border-white/20 hover:shadow-[0_15px_40px_rgba(0,0,0,0.7)] group">
+                <div
+                    class="absolute inset-0 rounded-full bg-gradient-to-tr from-[#3be2c8] to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none">
+                </div>
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+
+        <!-- Audio Visualizer -->
+        <div class="visualizer" id="audioVisualizer">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+
+    </div>
+
+    <!-- Web Speech API Integration -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const micButton = document.getElementById('micButton');
+            const micContainer = document.getElementById('micContainer');
+            const audioVisualizer = document.getElementById('audioVisualizer');
+            const statusHeading = document.getElementById('statusHeading');
+            const statusSubtext = document.getElementById('statusSubtext');
+            const transcriptOutput = document.getElementById('transcriptOutput');
+            const hiddenSearchInput = document.getElementById('hiddenSearchInput');
+            const voiceSearchForm = document.getElementById('voiceSearchForm');
+
+            // Check if browser supports speech recognition
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (!SpeechRecognition) {
+                statusHeading.innerHTML = "Not Supported";
+                statusSubtext.innerHTML = "Your browser does not support Voice Search. Please use Chrome or Safari.";
+                micButton.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false; // Stop listening after one phrase
+            recognition.lang = 'en-US';     // Can be customized
+            recognition.interimResults = true; // Show words as they are spoken
+
+            let isListening = false;
+
+            micButton.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                    return;
+                }
+
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error("Speech recognition error:", e);
+                }
+            });
+
+            // --- RECOGNITION EVENTS ---
+
+            recognition.onstart = () => {
+                isListening = true;
+
+                // Update UI to Listening State
+                micContainer.classList.remove('mic-stopped');
+                audioVisualizer.classList.add('active');
+
+                micButton.classList.remove('from-gray-800', 'to-gray-900', 'border-gray-700');
+                micButton.classList.add('from-[#3be2c8]/20', 'to-blue-600/20', 'border-[#3be2c8]', 'shadow-[0_0_50px_rgba(59,226,200,0.3)]', 'text-[#3be2c8]');
+
+                statusHeading.innerHTML = "Listening...";
+                statusSubtext.innerHTML = "Speak clearly into your microphone.";
+                transcriptOutput.innerHTML = "Listening...";
+                transcriptOutput.classList.remove('opacity-100');
+                transcriptOutput.classList.add('opacity-50');
+            };
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                // Show what they are saying in real time
+                if (interimTranscript) {
+                    transcriptOutput.innerHTML = interimTranscript;
+                }
+                if (finalTranscript) {
+                    transcriptOutput.innerHTML = finalTranscript;
+                    transcriptOutput.classList.add('text-white', 'opacity-100');
+                    transcriptOutput.classList.remove('opacity-50');
+
+                    // Stop UI immediately
+                    statusHeading.innerHTML = "Got it!";
+                    statusSubtext.innerHTML = "Searching library...";
+
+                    // SET VALUE AND SUBMIT FORM
+                    setTimeout(() => {
+                        hiddenSearchInput.value = finalTranscript;
+                        voiceSearchForm.submit();
+                    }, 800);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech Recognition Error", event.error);
+                resetUI();
+
+                if (event.error === 'no-speech') {
+                    statusHeading.innerHTML = "No sound detected";
+                    statusSubtext.innerHTML = "Please check your microphone and try again.";
+                } else if (event.error === 'audio-capture') {
+                    statusHeading.innerHTML = "Microphone missing";
+                    statusSubtext.innerHTML = "Ensure your microphone is plugged in and authorized.";
+                } else if (event.error === 'not-allowed') {
+                    statusHeading.innerHTML = "Access Denied";
+                    statusSubtext.innerHTML = "Please allow microphone permissions in your browser settings.";
+                } else {
+                    statusHeading.innerHTML = "Something went wrong";
+                    statusSubtext.innerHTML = "Please try again.";
+                }
+            };
+
+            recognition.onend = () => {
+                resetUI();
+            };
+
+            function resetUI() {
+                isListening = false;
+
+                // Revert UI to Default State
+                micContainer.classList.add('mic-stopped');
+                audioVisualizer.classList.remove('active');
+
+                micButton.classList.add('from-gray-800', 'to-gray-900', 'border-gray-700');
+                micButton.classList.remove('from-[#3be2c8]/20', 'to-blue-600/20', 'border-[#3be2c8]', 'shadow-[0_0_50px_rgba(59,226,200,0.3)]', 'text-[#3be2c8]');
+
+                // Only reset text if it didn't succeed (success updates its own text and redirects)
+                if (statusHeading.innerHTML === "Listening...") {
+                    statusHeading.innerHTML = "Voice <span class='text-transparent bg-clip-text bg-gradient-to-r from-[#3be2c8] to-blue-500'>Search</span>";
+                    statusSubtext.innerHTML = "Tap the microphone and say a song, artist, or album.";
+                    transcriptOutput.innerHTML = "...";
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

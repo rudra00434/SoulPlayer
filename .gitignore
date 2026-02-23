@@ -1,0 +1,29 @@
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media files
+media/
+
+# Environment variables
+.env
+
+# Requirements
+# If you compiled requirements from pip freeze, consider leaving out some specific ones, but otherwise requirements.txt is tracked.
+
+# IDEs
+.vscode/
+.idea/

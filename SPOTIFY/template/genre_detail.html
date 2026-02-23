@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ genre }} Music - SoulPlayer Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+
+    <div class="flex flex-1 overflow-hidden pb-20">
+        <!-- Sidebar -->
+        <div
+            class="w-72 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
+            <div class="text-3xl font-bold mb-12 tracking-wide text-white">SoulPlayer<span
+                    class="text-[#3be2c8]">.</span></div>
+
+            <nav class="flex flex-col gap-6 text-gray-400 font-semibold tracking-wide">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-home text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Home</a>
+                <a href="{% url 'search' %}" class="flex items-center gap-4 text-white transition group"><i
+                        class="fas fa-search text-xl w-6 text-[#3be2c8] transition-colors"></i> Search</a>
+                <a href="{% url 'playlists' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-book text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Your
+                    Library</a>
+            </nav>
+
+            <div class="mt-8 pt-8 border-t border-[#1e293b]/50">
+                <a href="{% url 'create_playlist' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group mb-5">
+                    <i class="fas fa-plus-square text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Create
+                    Playlist
+                </a>
+            </div>
+
+            <div class="mt-auto pt-6 flex items-end gap-1 px-2 h-16 opacity-50">
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full"
+                    style="animation-delay: 0.1s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3"
+                    style="animation-delay: 0.3s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5"
+                    style="animation-delay: 0.2s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2"
+                    style="animation-delay: 0.4s"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div
+            class="flex-1 flex flex-col overflow-y-auto custom-scrollbar relative bg-gradient-to-br from-[#111827] to-[#0b0f19]">
+
+            <!-- Top Nav -->
+            <header
+                class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
+                <div class="flex gap-4">
+                    <button onclick="history.back()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg"><i
+                            class="fas fa-chevron-left"></i></button>
+                    <button onclick="history.forward()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg disabled:opacity-30"><i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+
+                <!-- Search Input in Header styled identically to search.html -->
+                <div class="flex-1 max-w-md mx-6">
+                    <form action="{% url 'search' %}" method="GET" class="relative group">
+                        <i
+                            class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-[#3be2c8] transition text-lg"></i>
+                        <input type="text" name="query" placeholder="What do you want to listen to?"
+                            class="bg-[#1e293b]/50 border border-[#1e293b] focus:border-[#3be2c8]/70 text-base rounded-full pl-14 pr-6 py-3 w-full focus:outline-none focus:bg-[#1e293b] text-white transition-all shadow-inner placeholder-gray-500 font-medium tracking-wide">
+                    </form>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[#3be2c8] flex items-center justify-center font-bold text-sm ring-2 ring-[#0b0f19] shadow-[0_0_15px_rgba(59,226,200,0.3)] cursor-pointer hover:scale-105 transition">
+                        RG
+                    </div>
+                </div>
+            </header>
+
+            <div class="px-10 pb-32 pt-6">
+
+                <!-- Dynamic Genre Header styling based on genre -->
+                {% if genre|lower == 'pop' %}
+                <div
+                    class="h-48 rounded-3xl bg-gradient-to-r from-purple-800 to-indigo-900 mb-10 flex flex-col justify-end p-8 shadow-xl relative overflow-hidden group">
+                    <div
+                        class="absolute -right-20 -top-20 text-[200px] opacity-10 font-bold group-hover:rotate-12 transition-transform duration-700">
+                        POP</div>
+                    {% elif genre|lower == 'hip-hop' %}
+                    <div
+                        class="h-48 rounded-3xl bg-gradient-to-r from-emerald-800 to-teal-900 mb-10 flex flex-col justify-end p-8 shadow-xl relative overflow-hidden group">
+                        <div
+                            class="absolute -right-20 -top-20 text-[180px] opacity-10 font-bold group-hover:rotate-12 transition-transform duration-700">
+                            HIP</div>
+                        {% elif genre|lower == 'rock' %}
+                        <div
+                            class="h-48 rounded-3xl bg-gradient-to-r from-red-800 to-rose-900 mb-10 flex flex-col justify-end p-8 shadow-xl relative overflow-hidden group">
+                            <div
+                                class="absolute -right-20 -top-20 text-[180px] opacity-10 font-bold group-hover:rotate-12 transition-transform duration-700">
+                                ROCK</div>
+                            {% elif genre|lower == 'indie' %}
+                            <div
+                                class="h-48 rounded-3xl bg-gradient-to-r from-blue-800 to-cyan-900 mb-10 flex flex-col justify-end p-8 shadow-xl relative overflow-hidden group">
+                                <div
+                                    class="absolute -right-20 -top-20 text-[180px] opacity-10 font-bold group-hover:rotate-12 transition-transform duration-700">
+                                    INDIE</div>
+                                {% elif genre|lower == 'romance' %}
+                                <div
+                                    class="h-48 rounded-3xl bg-gradient-to-r from-pink-800 to-fuchsia-900 mb-10 flex flex-col justify-end p-8 shadow-xl relative overflow-hidden group">
+                                    <div
+                                        class="absolute -right-20 -top-20 text-[180px] opacity-10 font-bold group-hover:rotate-12 transition-transform duration-700">
+                                        LOVE</div>
+                                    {% else %}
+                                    <div
+                                        class="h-48 rounded-3xl bg-[#1e293b] mb-10 flex flex-col justify-end p-8 shadow-xl relative overflow-hidden group border border-[#3be2c8]/20">
+                                        {% endif %}
+                                        <p
+                                            class="text-sm font-bold tracking-widest uppercase mb-1 drop-shadow-md text-white/70">
+                                            Genre Hub</p>
+                                        <h1 class="text-6xl font-extrabold tracking-tight drop-shadow-xl text-white">
+                                            {{ genre|title }}</h1>
+                                    </div>
+
+                                    <div class="flex items-center justify-between mb-8">
+                                        <h2 class="text-2xl font-bold tracking-wide">Top Results</h2>
+                                        <div class="flex gap-4">
+                                            <button
+                                                class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] w-12 h-12 rounded-full flex items-center justify-center text-[#0b0f19] shadow-[0_0_20px_rgba(59,226,200,0.5)] hover:scale-110 transition-transform">
+                                                <i class="fas fa-play ml-1"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {% if songs %}
+                                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                        {% for song in songs %}
+                                        <div
+                                            class="flex-none p-4 group cursor-pointer relative bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 transition-all duration-300 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+                                            <a href="{% url 'delete_song' song.id %}"
+                                                onclick="return confirm('Are you sure you want to delete this song?')"
+                                                class="absolute top-4 right-4 z-20 text-gray-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-300 drop-shadow-md bg-black/50 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </a>
+
+                                            <div class="relative mb-5 overflow-hidden rounded-xl shadow-md">
+                                                <img src="{% if song.image %}{{ song.image.url }}{% endif %}"
+                                                    class="w-full aspect-square object-cover transform group-hover:scale-105 transition duration-500">
+
+                                                <div
+                                                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                                    <a href="{% url 'play_song' song.id %}"
+                                                        onclick="event.stopPropagation();"
+                                                        class="w-14 h-14 bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75 hover:scale-110">
+                                                        <i class="fas fa-play text-[#0b0f19] ml-1 text-lg"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <h3 class="font-bold text-lg truncate px-1 text-white tracking-wide">
+                                                {{ song.title }}</h3>
+                                            <p class="text-sm text-gray-400 truncate px-1 mt-1 font-medium">
+                                                {{ song.artist }}</p>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <div
+                                        class="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-white/5 shadow-inner mt-6">
+                                        <div
+                                            class="w-20 h-20 bg-[#1e293b]/50 rounded-full flex items-center justify-center mb-6 shadow-lg border border-[#1e293b]">
+                                            <i class="fas fa-ghost text-3xl text-gray-500"></i>
+                                        </div>
+                                        <h3 class="text-2xl font-bold mb-3 tracking-wide">Nothing here yet</h3>
+                                        <p class="text-gray-400 font-light">We couldn't find any songs in this genre.
+                                        </p>
+                                    </div>
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        </div>
+</body>
+
+</html>

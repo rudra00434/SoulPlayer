@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Add Artist </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #5a5a5a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+    </style>
+</head>
+
+<body class="bg-black text-white h-screen flex flex-col overflow-hidden">
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <div
+            class="w-72 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
+            <div class="text-3xl font-bold mb-12 tracking-wide text-white flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#3be2c8] to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(59,226,200,0.4)]">
+                    <i class="fas fa-compact-disc text-lg text-white"></i>
+                </div>
+                SoulPlayer
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="flex flex-col gap-5 mb-8 text-sm font-medium">
+                <a href="{% url 'index' %}"
+                    class="flex items-center gap-4 text-gray-500 hover:text-white transition cursor-pointer group">
+                    <i class="fas fa-home text-lg w-5 text-center group-hover:scale-110 transition"></i>
+                    <span class="tracking-wide">Discover</span>
+                </a>
+                <a href="{% url 'search' %}"
+                    class="flex items-center gap-4 text-gray-500 hover:text-white transition cursor-pointer group">
+                    <i class="fas fa-search text-lg w-5 text-center group-hover:scale-110 transition"></i>
+                    <span class="tracking-wide">Search</span>
+                </a>
+                <a href="{% url 'artists' %}"
+                    class="flex items-center gap-4 text-gray-500 hover:text-white transition cursor-pointer group">
+                    <i class="fas fa-users text-lg w-5 text-center group-hover:scale-110 transition"></i>
+                    <span class="tracking-wide">Artists</span>
+                </a>
+                <a href="{% url 'playlists' %}"
+                    class="flex items-center gap-4 text-gray-500 hover:text-white transition cursor-pointer group">
+                    <i class="fas fa-music text-lg w-5 text-center group-hover:scale-110 transition"></i>
+                    <span class="tracking-wide">My Playlists</span>
+                </a>
+            </nav>
+
+            <div class="mt-auto pt-6 border-t border-[#1e293b]/50">
+                <a href="{% url 'create_playlist' %}"
+                    class="flex items-center gap-4 text-gray-500 hover:text-white transition cursor-pointer group text-sm font-medium mb-5">
+                    <i class="fas fa-plus-square text-lg w-5 text-center group-hover:text-[#3be2c8] transition"></i>
+                    <span class="tracking-wide">Create Playlist</span>
+                </a>
+                <div
+                    class="flex items-center gap-4 text-gray-500 hover:text-white transition cursor-pointer group text-sm font-medium">
+                    <i class="fas fa-heart text-lg w-5 text-center group-hover:text-red-500 transition"></i>
+                    <span class="tracking-wide">Liked Songs</span>
+                </div>
+            </div>
+
+            <!-- Bottom visualizer placeholder -->
+            <div class="mt-8 pt-6 flex items-end gap-1 px-2 border-t border-[#1e293b]/50 h-16">
+                <!-- Mini visualization bars -->
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full"
+                    style="animation-delay: 0.1s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3"
+                    style="animation-delay: 0.3s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5"
+                    style="animation-delay: 0.2s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2"
+                    style="animation-delay: 0.4s"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div
+            class="flex-1 bg-gradient-to-br from-[#1e1b4b] via-[#2e1065] to-[#1e1b4b] m-2 rounded-2xl overflow-y-auto relative shadow-inner">
+            <!-- Decorative blurred shapes -->
+            <div
+                class="absolute -top-20 -left-20 w-96 h-96 bg-fuchsia-500 rounded-full mix-blend-screen filter blur-[150px] opacity-20 pointer-events-none">
+            </div>
+            <div
+                class="absolute bottom-0 right-0 w-80 h-80 bg-purple-600 rounded-full mix-blend-screen filter blur-[150px] opacity-20 pointer-events-none flex items-center justify-center">
+            </div>
+
+            <!-- Sticky Header -->
+            <header
+                class="sticky top-0 bg-transparent z-10 p-6 px-10 flex justify-between items-center pointer-events-none">
+                <div class="flex gap-4 pointer-events-auto">
+                    <button onclick="history.back()"
+                        class="bg-black/40 backdrop-blur-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-black/60 transition text-white/70 hover:text-white border border-white/5"><i
+                            class="fas fa-chevron-left"></i></button>
+                    <button onclick="history.forward()"
+                        class="bg-black/40 backdrop-blur-md rounded-full w-10 h-10 flex items-center justify-center hover:bg-black/60 transition disabled:opacity-30 text-white/70 hover:text-white border border-white/5"><i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="flex gap-4 items-center pointer-events-auto">
+                    <a href="{% url 'artists' %}"
+                        class="text-gray-400 hover:text-white font-semibold text-sm transition-colors tracking-wider">CANCEL</a>
+                </div>
+            </header>
+
+            <div class="px-6 sm:px-10 pb-32 max-w-3xl mx-auto relative z-10 mt-4">
+                <div class="text-center mb-10">
+                    <h1
+                        class="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-fuchsia-200 mb-3">
+                        Add a new Artist</h1>
+                    <p class="text-fuchsia-200/60 text-sm tracking-wide">Introduce an amazing new creator to the
+                        platform</p>
+                </div>
+
+                <div class="bg-white/5 backdrop-blur-xl p-8 md:p-12 rounded-3xl shadow-2xl border border-white/10">
+                    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                        {% csrf_token %}
+
+                        <!-- Name -->
+                        <div class="space-y-2">
+                            <label for="{{ form.name.id_for_label }}"
+                                class="text-xs font-bold tracking-widest text-[#f472b6] uppercase block drop-shadow-sm">Artist
+                                Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Music Band -->
+                        <div class="space-y-2">
+                            <label for="{{ form.music_band.id_for_label }}"
+                                class="text-xs font-bold tracking-widest text-[#f472b6] uppercase block drop-shadow-sm">Music
+                                Band</label>
+                            {{ form.music_band }}
+                            {% if form.music_band.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.music_band.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Bio -->
+                        <div class="space-y-2">
+                            <label for="{{ form.bio.id_for_label }}"
+                                class="text-xs font-bold tracking-widest text-[#f472b6] uppercase block drop-shadow-sm">Biography</label>
+                            {{ form.bio }}
+                            {% if form.bio.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.bio.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Image -->
+                        <div class="space-y-2 pt-4">
+                            <label for="{{ form.image.id_for_label }}"
+                                class="text-xs font-bold tracking-widest text-[#f472b6] uppercase block drop-shadow-sm">Profile
+                                Image</label>
+                            <div
+                                class="bg-black/20 rounded-2xl p-6 border-2 border-dashed border-white/10 hover:border-[#f472b6]/50 transition duration-300 group flex flex-col items-center justify-center text-center">
+                                <i
+                                    class="fas fa-user-circle text-4xl text-gray-500 mb-4 group-hover:text-[#f472b6] transition-colors"></i>
+                                {{ form.image }}
+                            </div>
+                            {% if form.image.errors %}
+                            <p class="text-red-400 text-xs mt-1">{{ form.image.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="pt-10 flex justify-center">
+                            <button type="submit"
+                                class="bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white font-bold tracking-widest text-sm px-14 py-4 rounded-full shadow-[0_4px_20px_rgba(217,70,239,0.3)] hover:shadow-[0_6px_25px_rgba(217,70,239,0.5)] hover:-translate-y-1 transition-all duration-300 w-full md:w-auto">
+                                <i class="fas fa-user-plus mr-2"></i> SAVE ARTIST
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

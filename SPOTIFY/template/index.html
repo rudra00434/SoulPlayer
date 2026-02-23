@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulPlayer - Premium Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes autoSlide {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(calc(-50% - 12px));
+            }
+        }
+
+        .animate-autoSlide {
+            animation: autoSlide 30s linear infinite;
+        }
+
+        .animate-autoSlide:hover {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+
+<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+
+    <div class="flex flex-1 overflow-hidden pb-20">
+        <!-- Sidebar -->
+        <div
+            class="w-72 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10">
+            <div class="text-3xl font-bold mb-12 tracking-wide text-white">Playlist</div>
+
+            <!-- Nav Links -->
+            <nav class="flex flex-col gap-5 mb-8 text-sm font-medium">
+                <a href="{% url 'playlists' %}" class="flex items-center gap-4 text-[#3be2c8] cursor-pointer">
+                    <i class="fas fa-music text-lg w-5 text-center"></i>
+                    <span class="tracking-wide">My Playlist</span>
+                </a>
+                <div class="flex items-center gap-4 text-gray-500 hover:text-gray-300 transition cursor-pointer group">
+                    <i class="far fa-circle text-[10px] w-5 text-center group-hover:scale-110 transition"></i>
+                    <span class="tracking-wide">Last Listening</span>
+                </div>
+                <div class="flex items-center gap-4 text-gray-500 hover:text-gray-300 transition cursor-pointer group">
+                    <i class="far fa-circle text-[10px] w-5 text-center group-hover:scale-110 transition"></i>
+                    <span class="tracking-wide">Recommended</span>
+                </div>
+            </nav>
+
+            <!-- Song Items -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 mt-4 -mr-2">
+                {% for song in page_obj|slice:":5" %}
+                <div onclick="playSong('{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')"
+                    class="flex items-center group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all duration-300">
+
+                    {% if song.image %}
+                    <img src="{{ song.image.url }}"
+                        class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">
+                    {% else %}
+                    <div
+                        class="w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center ml-1 border border-white/5 shadow-md group-hover:scale-105 transition">
+                        <i class="fas fa-music text-gray-500 group-hover:text-[#3be2c8] transition-colors"></i>
+                    </div>
+                    {% endif %}
+
+                    <div class="ml-4 flex-1 overflow-hidden">
+                        <div class="text-sm font-semibold truncate group-hover:text-[#3be2c8] transition-colors">
+                            {{ song.title }}</div>
+                        <div class="text-xs text-gray-500 truncate mt-0.5">{{ song.artist }}</div>
+                    </div>
+                    <!-- Play icon on hover -->
+                    <div
+                        class="w-8 h-8 rounded-full bg-white text-[#0b0f19] opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-lg transform translate-x-2 group-hover:translate-x-0 transition-all duration-300 hover:scale-110">
+                        <i class="fas fa-play text-xs ml-0.5"></i>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-gray-500 text-sm italic pl-2">No songs in library.</div>
+                <a href="{% url 'add_song' %}"
+                    class="block w-full text-center py-2 mt-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-[#3be2c8] transition-colors">
+                    + Add A Song
+                </a>
+                {% endfor %}
+            </div>
+
+            <!-- Bottom visualizer placeholder -->
+            <div class="mt-6 pt-6 flex items-end gap-1 px-2 border-t border-[#1e293b]/50 h-16">
+                <!-- Mini visualization bars -->
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full"
+                    style="animation-delay: 0.1s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3"
+                    style="animation-delay: 0.3s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5"
+                    style="animation-delay: 0.2s"></div>
+                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2"
+                    style="animation-delay: 0.4s"></div>
+            </div>
+
+            <!-- Link to Original Tools -->
+            <div class="absolute bottom-6 left-8 flex gap-4 text-gray-500 text-sm">
+                <a href="{% url 'add_song' %}" class="hover:text-white transition" title="Add Song"><i
+                        class="fas fa-plus"></i></a>
+                <a href="{% url 'add_artist' %}" class="hover:text-white transition" title="Add Artist"><i
+                        class="fas fa-user-plus"></i></a>
+                <a href="{% url 'artists' %}" class="hover:text-white transition" title="Artists Gallery"><i
+                        class="fas fa-users"></i></a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div
+            class="flex-1 flex flex-col overflow-y-auto no-scrollbar relative bg-gradient-to-br from-[#111827] to-[#0b0f19]">
+
+            <!-- Top Nav -->
+            <header
+                class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
+                <nav class="flex gap-10 text-gray-500 font-semibold text-sm tracking-widest">
+                    <a href="{% url 'index' %}"
+                        class="text-white border-b-2 border-[#3be2c8] pb-1 hover:text-white transition">Discover</a>
+                    <a href="{% url 'search' %}" class="hover:text-white pb-1 transition">Music Library</a>
+                    <a href="{% url 'voice_search' %}"
+                        class="hover:text-white pb-1 transition flex items-center gap-1.5"><i
+                            class="fas fa-microphone-alt text-[10px]"></i> Voice Search</a>
+                    <a href="{% url 'podcasts' %}" class="hover:text-white pb-1 transition">Podcasts</a>
+                    <a href="{% url 'create_playlist' %}" class="hover:text-white pb-1 transition">Create Playlist</a>
+                </nav>
+
+                <div class="flex items-center gap-6">
+                    <form action="{% url 'search' %}" method="GET" class="relative group">
+                        <i
+                            class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-[#3be2c8] transition"></i>
+                        <input type="text" name="query" placeholder="Search Music..."
+                            class="bg-[#1e293b]/50 border border-transparent focus:border-[#3be2c8]/50 text-sm rounded-full pl-12 pr-6 py-2.5 w-64 focus:outline-none focus:bg-[#1e293b] text-white transition-all shadow-inner placeholder-gray-500 font-medium tracking-wide">
+                    </form>
+                    {% if user.is_authenticated %}
+                    <div class="flex items-center gap-4">
+                        <form action="{% url 'user_logout' %}" method="POST" class="inline">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="text-gray-400 hover:text-red-400 text-sm font-semibold tracking-wide transition">Logout</button>
+                        </form>
+                        <div
+                            class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[#3be2c8] flex items-center justify-center font-bold text-sm ring-2 ring-[#0b0f19] shadow-[0_0_15px_rgba(59,226,200,0.3)] cursor-pointer hover:scale-105 transition uppercase">
+                            {{ user.username|make_list|first }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center gap-4">
+                        <a href="{% url 'user_login' %}"
+                            class="text-white hover:text-[#3be2c8] text-sm font-semibold tracking-wide transition">Log
+                            in</a>
+                        <a href="{% url 'register' %}"
+                            class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-6 py-2.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-0.5 transition-all">SIGN
+                            UP</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="px-10 pb-32">
+                {% block content %}
+                <!-- Hero Section Carousel -->
+                <div class="relative w-full h-[340px] rounded-3xl overflow-hidden mb-14 shadow-2xl mt-2 group"
+                    id="heroCarousel">
+                    <!-- Carousel Track -->
+                    <div id="heroTrack" class="flex h-full w-full transition-transform duration-700 ease-in-out">
+
+                        <!-- Slide 1: Original SoulPlayer Library -->
+                        <div class="w-full h-full flex-shrink-0 relative flex items-center">
+                            <div class="absolute inset-0 bg-gradient-to-r from-[#1e293b] via-[#0f172a] to-[#020617]">
+                            </div>
+                            <div
+                                class="absolute -top-20 -right-20 w-80 h-80 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[100px] opacity-20">
+                            </div>
+                            <div
+                                class="absolute bottom-0 right-1/4 w-60 h-60 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20 relative animate-pulse">
+                            </div>
+                            <div class="relative z-10 p-14 max-w-2xl w-full">
+                                <div class="flex items-center gap-6 mb-6">
+                                    <div
+                                        class="w-20 h-20 rounded-full bg-gradient-to-tr from-[#3be2c8] to-blue-600 flex items-center justify-center shadow-[0_0_40px_rgba(59,226,200,0.6)] relative">
+                                        <div
+                                            class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_10s_linear_infinite]">
+                                        </div>
+                                        <i
+                                            class="fas fa-compact-disc text-4xl text-white animate-[spin_4s_linear_infinite]"></i>
+                                    </div>
+                                    <h1
+                                        class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
+                                        SoulPlayer<br />Library</h1>
+                                </div>
+                                <p
+                                    class="text-gray-400 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
+                                    You were the shadow to my light Did you feel us Another start You fade<br>Away
+                                    afraid our aim is out of sight Wanna see us Alive</p>
+                                <div class="flex gap-5">
+                                    <button
+                                        class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-1 transition-all duration-300">PLAY</button>
+                                    <button
+                                        class="border border-[#3be2c8] bg-transparent text-[#3be2c8] font-bold tracking-widest text-xs px-10 py-3.5 rounded-full hover:bg-[#3be2c8]/10 transition-all duration-300 backdrop-blur-sm">FOLLOW</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 2: Top Global Hits -->
+                        <div class="w-full h-full flex-shrink-0 relative flex items-center">
+                            <div class="absolute inset-0 bg-gradient-to-r from-[#2e1065] via-[#1e1b4b] to-[#020617]">
+                            </div>
+                            <div
+                                class="absolute -bottom-20 -left-20 w-80 h-80 bg-fuchsia-500 rounded-full mix-blend-screen filter blur-[120px] opacity-30">
+                            </div>
+                            <div
+                                class="absolute top-0 right-1/3 w-72 h-72 bg-purple-500 rounded-full mix-blend-screen filter blur-[90px] opacity-20 relative animate-pulse">
+                            </div>
+                            <div class="relative z-10 p-14 max-w-2xl w-full">
+                                <div class="flex items-center gap-6 mb-6">
+                                    <div
+                                        class="w-20 h-20 rounded-full bg-gradient-to-tr from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-[0_0_40px_rgba(217,70,239,0.5)] relative">
+                                        <div
+                                            class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_8s_linear_infinite_reverse]">
+                                        </div>
+                                        <i class="fas fa-globe text-4xl text-white"></i>
+                                    </div>
+                                    <h1
+                                        class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-fuchsia-200">
+                                        Global<br />Top 50</h1>
+                                </div>
+                                <p
+                                    class="text-fuchsia-100/70 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
+                                    The most played tracks right now. Updated daily. Discover what the world is
+                                    listening to.</p>
+                                <div class="flex gap-5">
+                                    <button
+                                        class="bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(217,70,239,0.4)] hover:-translate-y-1 transition-all duration-300">LISTEN
+                                        NOW</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 3: Weekly Discovery -->
+                        <div class="w-full h-full flex-shrink-0 relative flex items-center">
+                            <div class="absolute inset-0 bg-gradient-to-r from-[#451a03] via-[#2e1008] to-[#020617]">
+                            </div>
+                            <div
+                                class="absolute -top-10 right-10 w-96 h-96 bg-amber-500 rounded-full mix-blend-screen filter blur-[130px] opacity-20 flex items-center justify-center">
+                            </div>
+                            <div
+                                class="absolute bottom-1/4 -left-10 w-64 h-64 bg-orange-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 relative animate-[pulse_3s_ease-in-out_infinite]">
+                            </div>
+                            <div class="relative z-10 p-14 max-w-2xl w-full">
+                                <div class="flex items-center gap-6 mb-6">
+                                    <div
+                                        class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-orange-600 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.5)] relative">
+                                        <div
+                                            class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_12s_linear_infinite]">
+                                        </div>
+                                        <i class="fas fa-magic text-4xl text-white"></i>
+                                    </div>
+                                    <h1
+                                        class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200">
+                                        Weekly<br />Discovery</h1>
+                                </div>
+                                <p
+                                    class="text-amber-100/70 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
+                                    A personalized mix of new releases and classic deep cuts curated just for your
+                                    taste.</p>
+                                <div class="flex gap-5">
+                                    <button
+                                        class="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(245,158,11,0.4)] hover:-translate-y-1 transition-all duration-300">EXPLORE</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Arrows -->
+                    <button id="heroPrevBtn"
+                        class="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 z-20 hover:scale-105">
+                        <i class="fas fa-chevron-left text-lg pr-1"></i>
+                    </button>
+                    <button id="heroNextBtn"
+                        class="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 z-20 hover:scale-105">
+                        <i class="fas fa-chevron-right text-lg pl-1"></i>
+                    </button>
+
+                    <!-- Indicators -->
+                    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+                        <div
+                            class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-white scale-125 hover:scale-125">
+                        </div>
+                        <div
+                            class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-[#516480] hover:bg-gray-300 hover:scale-125">
+                        </div>
+                        <div
+                            class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-[#516480] hover:bg-gray-300 hover:scale-125">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Slider JS -->
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const track = document.getElementById('heroTrack');
+                        if (!track) return;
+                        const slides = track.children;
+                        const prevBtn = document.getElementById('heroPrevBtn');
+                        const nextBtn = document.getElementById('heroNextBtn');
+                        const dots = document.querySelectorAll('.hero-dot');
+                        const carousel = document.getElementById('heroCarousel');
+
+                        let currentIndex = 0;
+                        const slideCount = slides.length;
+                        let autoSlideInterval;
+
+                        function updateSlider() {
+                            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                            // Update dots
+                            dots.forEach((dot, index) => {
+                                if (index === currentIndex) {
+                                    dot.classList.remove('bg-[#516480]', 'hover:bg-gray-300');
+                                    dot.classList.add('bg-white', 'scale-125');
+                                } else {
+                                    dot.classList.add('bg-[#516480]', 'hover:bg-gray-300');
+                                    dot.classList.remove('bg-white', 'scale-125');
+                                }
+                            });
+                        }
+
+                        function nextSlide() {
+                            currentIndex = (currentIndex + 1) % slideCount;
+                            updateSlider();
+                        }
+
+                        function prevSlide() {
+                            currentIndex = (currentIndex - 1 + slideCount) % slideCount;
+                            updateSlider();
+                        }
+
+                        function startAutoSlide() {
+                            if (autoSlideInterval) clearInterval(autoSlideInterval);
+                            autoSlideInterval = setInterval(nextSlide, 5000);
+                        }
+
+                        function stopAutoSlide() {
+                            if (autoSlideInterval) clearInterval(autoSlideInterval);
+                        }
+
+                        nextBtn.addEventListener('click', () => {
+                            nextSlide();
+                            stopAutoSlide();
+                            startAutoSlide();
+                        });
+
+                        prevBtn.addEventListener('click', () => {
+                            prevSlide();
+                            stopAutoSlide();
+                            startAutoSlide();
+                        });
+
+                        dots.forEach((dot, index) => {
+                            dot.addEventListener('click', () => {
+                                currentIndex = index;
+                                updateSlider();
+                                stopAutoSlide();
+                                startAutoSlide();
+                            });
+                        });
+
+                        carousel.addEventListener('mouseenter', stopAutoSlide);
+                        carousel.addEventListener('mouseleave', startAutoSlide);
+
+                        startAutoSlide();
+                    });
+                </script>
+
+
+                <!-- Automatic Sliding Cards -->
+                <div class="mb-14">
+                    <h2 class="text-2xl font-bold tracking-wide mb-6">Moods & Genres</h2>
+                    <div class="relative w-full overflow-hidden rounded-2xl">
+                        <!-- Fade overlays -->
+                        <div
+                            class="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-[#111827] to-transparent pointer-events-none">
+                        </div>
+                        <div
+                            class="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-[#111827] to-transparent pointer-events-none">
+                        </div>
+
+                        <div class="flex gap-6 w-max animate-autoSlide">
+                            <!-- Set 1 -->
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-heart absolute -right-4 -bottom-4 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Romantic Songs</h3>
+                                <p class="text-sm text-white/80 mt-1">Feel the love</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-microphone-alt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Arijit Singh Hits</h3>
+                                <p class="text-sm text-white/80 mt-1">Soulful melodies</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-dumbbell absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Workout Mix</h3>
+                                <p class="text-sm text-white/80 mt-1">Pump it up</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-compact-disc absolute -right-4 -bottom-4 text-7xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">90s Nostalgia</h3>
+                                <p class="text-sm text-white/80 mt-1">Golden era</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-coffee absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Lo-Fi Beats</h3>
+                                <p class="text-sm text-white/80 mt-1">Chill & study</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-bolt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Pop Anthems</h3>
+                                <p class="text-sm text-white/80 mt-1">Top chart hits</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-moon absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Chill Vibes</h3>
+                                <p class="text-sm text-white/80 mt-1">Relax your mind</p>
+                            </div>
+                            <!-- Set 2 -->
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-heart absolute -right-4 -bottom-4 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Romantic Songs</h3>
+                                <p class="text-sm text-white/80 mt-1">Feel the love</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-microphone-alt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Arijit Singh Hits</h3>
+                                <p class="text-sm text-white/80 mt-1">Soulful melodies</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-dumbbell absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Workout Mix</h3>
+                                <p class="text-sm text-white/80 mt-1">Pump it up</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-compact-disc absolute -right-4 -bottom-4 text-7xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">90s Nostalgia</h3>
+                                <p class="text-sm text-white/80 mt-1">Golden era</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-coffee absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Lo-Fi Beats</h3>
+                                <p class="text-sm text-white/80 mt-1">Chill & study</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-bolt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Pop Anthems</h3>
+                                <p class="text-sm text-white/80 mt-1">Top chart hits</p>
+                            </div>
+                            <div
+                                class="flex-none w-64 h-32 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                <i
+                                    class="fas fa-moon absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="text-xl font-bold text-white relative z-10">Chill Vibes</h3>
+                                <p class="text-sm text-white/80 mt-1">Relax your mind</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Popular Song -->
+                <div class="mb-5 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Popular Song</h2>
+                    <div class="flex gap-3 text-gray-500">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="hover:text-white transition"><i
+                                class="fas fa-arrow-left hover:scale-110 transition cursor-pointer text-[#3be2c8]"></i></a>
+                        {% else %}
+                        <i class="fas fa-arrow-left opacity-30 cursor-not-allowed"></i>
+                        {% endif %}
+
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="hover:text-white transition"><i
+                                class="fas fa-arrow-right hover:scale-110 transition cursor-pointer text-[#3be2c8]"></i></a>
+                        {% else %}
+                        <i class="fas fa-arrow-right opacity-30 cursor-not-allowed"></i>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                    {% for song in page_obj %}
+                    <div class="flex-none w-44 group cursor-pointer relative"
+                        onclick="playSong('{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
+                        <a href="{% url 'delete_song' song.id %}"
+                            onclick="event.stopPropagation(); return confirm('Are you sure you want to delete this song?')"
+                            class="absolute top-2 right-2 z-20 text-gray-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-300 drop-shadow-md bg-black/50 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-trash text-sm"></i>
+                        </a>
+                        <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                            <img src="{% if song.image %}{{ song.image.url }}{% endif %}"
+                                class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                            <div
+                                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                <a href="{% url 'play_song' song.id %}" onclick="event.stopPropagation();"
+                                    class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                        <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 italic">No popular songs available.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Popular Artists -->
+                <div class="mb-6 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Popular Artists</h2>
+                </div>
+
+                <div class="relative w-full overflow-hidden pb-10 px-2 pt-2">
+                    <!-- Fade overlays -->
+                    <div
+                        class="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[#111827] to-transparent pointer-events-none">
+                    </div>
+                    <div
+                        class="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[#111827] to-transparent pointer-events-none">
+                    </div>
+
+                    <div class="flex gap-8 w-max animate-autoSlide">
+                        <!-- Set 1 -->
+                        {% for artist in artists %}
+                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}'"
+                            class="flex-none w-28 flex flex-col items-center group cursor-pointer">
+                            <div
+                                class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-4 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
+                                <img src="{% if artist.image %}{{ artist.image.url }}{% endif %}"
+                                    class="w-24 h-24 object-cover rounded-full border-4 border-[#0b0f19]">
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">No popular artists available.</p>
+                        {% endfor %}
+
+                        <!-- Set 2 (Duplicated for infinite scroll) -->
+                        {% for artist in artists %}
+                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}'"
+                            class="flex-none w-28 flex flex-col items-center group cursor-pointer">
+                            <div
+                                class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-4 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
+                                <img src="{% if artist.image %}{{ artist.image.url }}{% endif %}"
+                                    class="w-24 h-24 object-cover rounded-full border-4 border-[#0b0f19]">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endblock %}
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Bar (Fixed Bottom) -->
+    <div
+        class="h-[90px] bg-[#0d1422]/95 backdrop-blur-xl border-t border-[#1e293b]/70 flex items-center justify-between px-10 z-50 fixed bottom-0 left-0 right-0 shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
+
+        <!-- Currently Playing Info (Left) - Added dynamic updates to this via JS -->
+        <div class="w-[25%] flex items-center gap-4 hidden md:flex">
+            <div id="player-img-container"
+                class="w-14 h-14 bg-gray-800 rounded-lg shadow-md overflow-hidden border border-white/5 hidden">
+                <img id="player-img" src="" class="w-full h-full object-cover">
+            </div>
+            <div class="flex flex-col truncate">
+                <span id="player-title" class="text-[15px] font-bold truncate tracking-wide"></span>
+                <span id="player-artist" class="text-xs text-gray-400 mt-0.5 font-medium truncate"></span>
+            </div>
+        </div>
+
+        <!-- Controls & Progress bar (Center) -->
+        <div class="flex-1 max-w-3xl flex flex-col items-center justify-center gap-2">
+            <div class="flex items-center gap-8 text-gray-300">
+                <i class="fas fa-step-backward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
+                <div id="player-play-btn" onclick="togglePlay()"
+                    class="w-12 h-12 bg-white text-[#0b0f19] rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]">
+                    <i class="fas fa-play ml-1 text-lg"></i>
+                </div>
+                <i class="fas fa-step-forward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
+            </div>
+
+            <div class="w-full flex items-center gap-4 text-[11px] font-medium tracking-wider text-gray-500">
+                <span id="player-current-time" class="w-8 text-right">0:00</span>
+                <div class="h-1.5 flex-1 bg-gray-800 rounded-full relative cursor-pointer group" onclick="seek(event)">
+                    <div id="player-progress-bar"
+                        class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[#2cdbbd] to-[#3be2c8] rounded-full shadow-[0_0_10px_rgba(59,226,200,0.5)]">
+                        <!-- Knob container needs absolute positioning inside the progress bar to move with it -->
+                        <div
+                            class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                    </div>
+                </div>
+                <span id="player-duration" class="w-8">0:00</span>
+            </div>
+        </div>
+
+        <!-- Volume (Right) -->
+        <div class="w-[25%] flex items-center justify-end gap-3 text-gray-400 hidden lg:flex">
+            <i class="fas fa-volume-up text-sm hover:text-white transition cursor-pointer"></i>
+            <div class="w-24 h-1.5 bg-gray-800 rounded-full relative cursor-pointer group">
+                <div class="absolute top-0 left-0 h-full w-[80%] bg-[#3be2c8] rounded-full group-hover:bg-[#2cdbbd]">
+                </div>
+                <!-- knob for volume on hover -->
+                <div
+                    class="absolute left-[80%] top-1/2 -translate-y-1/2 -translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden audio element -->
+    <audio id="audio-player"></audio>
+
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const playBtn = document.getElementById('player-play-btn');
+        const playIcon = playBtn.querySelector('i');
+        const progressBar = document.getElementById('player-progress-bar');
+        const currTimeDisplay = document.getElementById('player-current-time');
+        const durTimeDisplay = document.getElementById('player-duration');
+        let isPlaying = false;
+
+        function playSong(url, title, artist, imageUrl) {
+            // Update Player UI
+            document.getElementById('player-title').innerText = title;
+            document.getElementById('player-artist').innerText = artist;
+
+            if (imageUrl) {
+                document.getElementById('player-img-container').classList.remove('hidden');
+                document.getElementById('player-img').src = imageUrl;
+            }
+
+            audioPlayer.src = url;
+            audioPlayer.play();
+            isPlaying = true;
+            updatePlayButton();
+        }
+
+        function togglePlay() {
+            if (!audioPlayer.src) return;
+
+            if (isPlaying) {
+                audioPlayer.pause();
+            } else {
+                audioPlayer.play();
+            }
+            isPlaying = !isPlaying;
+            updatePlayButton();
+        }
+
+        function updatePlayButton() {
+            if (isPlaying) {
+                playIcon.classList.remove('fa-play', 'ml-1');
+                playIcon.classList.add('fa-pause');
+            } else {
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play', 'ml-1');
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        function seek(event) {
+            if (!audioPlayer.src) return;
+            const width = event.currentTarget.clientWidth;
+            const clickX = event.offsetX;
+            const duration = audioPlayer.duration;
+            audioPlayer.currentTime = (clickX / width) * duration;
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            const { currentTime, duration } = audioPlayer;
+            if (duration) {
+                const progressPercent = (currentTime / duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                durTimeDisplay.innerText = formatTime(duration);
+            }
+            currTimeDisplay.innerText = formatTime(currentTime);
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            isPlaying = false;
+            updatePlayButton();
+            progressBar.style.width = '0%';
+        });
+    </script>
+</body>
+
+</html>

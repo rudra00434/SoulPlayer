@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ playlist.name }} - SoulPlayer Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+
+    <div class="flex flex-1 overflow-hidden pb-20">
+        <!-- Sidebar -->
+        <div
+            class="w-72 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
+            <div class="text-3xl font-bold mb-12 tracking-wide text-white">SoulPlayer<span
+                    class="text-[#3be2c8]">.</span></div>
+
+            <nav class="flex flex-col gap-6 text-gray-400 font-semibold tracking-wide">
+                <a href="{% url 'index' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-home text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Home</a>
+                <a href="{% url 'search' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-search text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Search</a>
+                <a href="{% url 'playlists' %}" class="flex items-center gap-4 hover:text-white transition group"><i
+                        class="fas fa-book text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Your
+                    Library</a>
+            </nav>
+
+            <div class="mt-8 pt-8 border-t border-[#1e293b]/50">
+                <a href="{% url 'create_playlist' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group mb-5">
+                    <i class="fas fa-plus-square text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Create
+                    Playlist
+                </a>
+                <a href="{% url 'add_song' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition font-semibold group mb-5">
+                    <i class="fas fa-music text-xl w-6 group-hover:text-[#3be2c8] transition-colors"></i> Add Songs
+                </a>
+            </div>
+
+            <div class="mt-auto flex flex-col gap-2">
+                <div class="text-sm font-bold text-gray-600 tracking-widest mb-2 uppercase">My Playlists</div>
+                <div class="flex flex-col gap-3 text-sm text-gray-400 font-medium">
+                    <a href="#" class="hover:text-white transition truncate text-[#3be2c8]">• {{ playlist.name }}</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div
+            class="flex-1 flex flex-col overflow-y-auto custom-scrollbar relative bg-gradient-to-br from-[#111827] to-[#0b0f19]">
+
+            <!-- Top Nav -->
+            <header
+                class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
+                <div class="flex gap-4">
+                    <button onclick="history.back()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg"><i
+                            class="fas fa-chevron-left"></i></button>
+                    <button onclick="history.forward()"
+                        class="bg-[#1e293b]/70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#3be2c8] hover:text-[#0b0f19] transition-all shadow-lg disabled:opacity-30"><i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+            </header>
+
+            <div class="px-10 pb-32">
+
+                <!-- Playlist Header -->
+                <div class="flex items-end gap-8 mb-10 mt-4 group">
+                    <!-- Playlist Cover Art -->
+                    <div
+                        class="w-56 h-56 rounded-2xl shadow-2xl relative overflow-hidden bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center group-hover:shadow-[0_20px_50px_rgba(59,226,200,0.2)] transition-all duration-500">
+                        {% if songs and songs.first.image %}
+                        <!-- Collage logic if needed, simplify to first song image for now -->
+                        <img src="{{ songs.first.image.url }}"
+                            class="w-full h-full object-cover opacity-80 mix-blend-overlay">
+                        <i class="fas fa-music text-5xl text-white/50 absolute"></i>
+                        {% else %}
+                        <i class="fas fa-music text-6xl text-gray-600"></i>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex flex-col mb-2">
+                        <span class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-2">Playlist</span>
+                        <h1 class="text-6xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg text-white mb-6">
+                            {{ playlist.name }}
+                        </h1>
+                        <div class="flex items-center gap-2 text-sm text-gray-300 font-medium">
+                            <span class="font-bold text-white">SoulPlayer</span>
+                            <span class="text-gray-500">•</span>
+                            <span>{{ songs.count }} songs</span>
+                            <span class="text-gray-500">•</span>
+                            <span>{{ playlist.artists.count }} artists included</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-6 mb-10">
+                    <button
+                        class="w-14 h-14 bg-[#3be2c8] text-[#0b0f19] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.4)] hover:scale-105 hover:shadow-[0_0_25px_rgba(59,226,200,0.6)] transition-all">
+                        <i class="fas fa-play ml-1 text-xl"></i>
+                    </button>
+                    <button class="text-gray-400 hover:text-white transition"><i
+                            class="far fa-heart text-3xl"></i></button>
+                    <button class="text-gray-400 hover:text-white transition"><i
+                            class="fas fa-ellipsis-h text-2xl"></i></button>
+
+                    <a href="{% url 'add_to_playlist' playlist.id %}"
+                        class="ml-auto flex items-center gap-2 text-sm font-bold tracking-widest text-[#3be2c8] border border-[#3be2c8]/30 px-5 py-2.5 rounded-full hover:bg-[#3be2c8]/10 transition-colors">
+                        <i class="fas fa-plus"></i> ADD MORE SONGS
+                    </a>
+                </div>
+
+                <!-- Song List Table -->
+                <div class="w-full">
+                    <!-- Table Header -->
+                    <div
+                        class="grid grid-cols-[1fr_2fr_1fr_100px] gap-4 px-4 py-2 border-b border-white/10 text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
+                        <div class="flex items-center gap-4">
+                            <span>#</span>
+                            <span>Title</span>
+                        </div>
+                        <div>Artist</div>
+                        <div>Album/Genre</div>
+                        <div class="text-right"><i class="far fa-clock text-base"></i></div>
+                    </div>
+
+                    <!-- Song Rows -->
+                    <div class="flex flex-col gap-1">
+                        {% for song in songs %}
+                        <div
+                            class="grid grid-cols-[1fr_2fr_1fr_100px] gap-4 px-4 py-3 rounded-xl hover:bg-white/5 group transition-colors cursor-pointer items-center border border-transparent hover:border-white/5">
+
+                            <!-- Index & Title -->
+                            <div class="flex items-center gap-4 overflow-hidden">
+                                <!-- Number changes to play icon on hover -->
+                                <span class="w-4 text-center text-gray-500 font-medium group-hover:hidden">
+                                    {{ forloop.counter }}</span>
+                                <button class="w-4 text-center text-white hidden group-hover:block"
+                                    onclick="playSong('{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
+                                    <i class="fas fa-play text-xs text-[#3be2c8]"></i>
+                                </button>
+
+                                <img src="{% if song.image %}{{ song.image.url }}{% else %}https://placehold.co/40x40/1e293b/ffffff?text=M{% endif %}"
+                                    class="w-10 h-10 rounded shadow-sm object-cover">
+
+                                <div
+                                    class="truncate text-base font-bold text-white group-hover:text-[#3be2c8] transition-colors">
+                                    {{ song.title }}</div>
+                            </div>
+
+                            <!-- Artist -->
+                            <div
+                                class="text-sm font-medium text-gray-400 truncate group-hover:text-white transition-colors">
+                                {{ song.artist }}</div>
+
+                            <!-- Genre -->
+                            <div class="text-sm font-medium text-gray-400 truncate">{{ song.song_type }}</div>
+
+                            <!-- Duration & Actions -->
+                            <div class="flex items-center justify-end gap-4 text-sm font-medium text-gray-500">
+                                <a href="{% url 'delete_song' song.id %}"
+                                    class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Remove from App"><i class="fas fa-trash"></i></a>
+                                <span>{{ song.duration }}</span>
+                            </div>
+
+                        </div>
+                        {% empty %}
+                        <div class="py-16 text-center flex flex-col items-center">
+                            <i class="fas fa-drum text-4xl text-gray-600 mb-4"></i>
+                            <h3 class="text-xl font-bold text-gray-300">This playlist is currently empty.</h3>
+                            <p class="text-sm text-gray-500 mt-2">Find some songs you like and add them here.</p>
+                            <a href="{% url 'add_to_playlist' playlist.id %}"
+                                class="mt-6 px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-full font-bold text-sm tracking-wide transition-colors">Find
+                                Songs</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

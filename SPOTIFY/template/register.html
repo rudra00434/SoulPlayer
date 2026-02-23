@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - SoulPlayer Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+    </style>
+</head>
+
+<body class="text-white min-h-screen flex items-center justify-center selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+    <div class="bg-[#1e293b]/40 backdrop-blur-md border border-white/5 rounded-3xl p-10 w-full max-w-md shadow-2xl">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold tracking-wide text-white mb-2">Join SoulPlayer<span
+                    class="text-[#3be2c8]">.</span></h1>
+            <p class="text-gray-400">Create an account to build your library.</p>
+        </div>
+
+        <form method="POST" class="flex flex-col gap-5">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold text-gray-300 ml-1">{{ field.label }}</label>
+                <div class="relative">
+                    {{ field }}
+                </div>
+                {% if field.errors %}
+                <p class="text-red-400 text-xs ml-1">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit"
+                class="mt-4 bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-sm py-3.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-0.5 transition-all">SIGN
+                UP</button>
+        </form>
+
+        <p class="mt-8 text-center text-sm text-gray-400">
+            Already have an account? <a href="{% url 'user_login' %}"
+                class="text-[#3be2c8] font-semibold hover:underline">Log in</a>
+        </p>
+    </div>
+</body>
+
+</html>
