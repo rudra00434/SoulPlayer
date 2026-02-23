@@ -59,7 +59,7 @@
     </div>
 
     <!-- Header -->
-    <div class="w-full max-w-md flex justify-between items-center z-10 mb-6">
+    <div class="w-full max-w-sm flex justify-between items-center z-10 mb-4 md:mb-6">
         <a href="{% url 'index' %}"
             class="w-10 h-10 flex items-center justify-center text-white text-xl hover:bg-white/10 rounded-full transition transform hover:-translate-y-1">
             <i class="fas fa-chevron-down"></i>
@@ -76,7 +76,7 @@
 
     <!-- Main Player Card -->
     <div
-        class="w-full max-w-md z-10 flex flex-col gap-6 bg-[#111827]/30 backdrop-blur-xl p-6 md:p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5 mx-auto">
+        class="w-full max-w-sm z-10 flex flex-col gap-4 md:gap-5 bg-[#111827]/30 backdrop-blur-xl p-5 md:p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5 mx-auto">
 
         <!-- Album Art -->
         <div class="w-full aspect-square relative group mx-auto">
@@ -96,10 +96,10 @@
         </div>
 
         <!-- Song Info -->
-        <div class="flex justify-between items-start mt-2">
+        <div class="flex justify-between items-start mt-0">
             <div class="flex-1 min-w-0 pr-4 flex flex-col">
-                <h1 class="text-3xl font-extrabold truncate mb-1 tracking-tight drop-shadow-md">{{ song.title }}</h1>
-                <p class="text-gray-400 text-base font-medium truncate">{{ song.artist }}</p>
+                <h1 class="text-2xl font-extrabold truncate mb-1 tracking-tight drop-shadow-md">{{ song.title }}</h1>
+                <p class="text-gray-400 text-sm font-medium truncate">{{ song.artist }}</p>
             </div>
             <button
                 class="mt-2 text-2xl text-[#3be2c8] hover:scale-110 transition drop-shadow-[0_0_10px_rgba(59,226,200,0.4)]">
@@ -130,7 +130,7 @@
                 </a>
 
                 <button id="play-btn"
-                    class="w-[4.5rem] h-[4.5rem] bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center text-[#0b0f19] text-3xl shadow-[0_0_25px_rgba(59,226,200,0.5)] hover:shadow-[0_0_35px_rgba(59,226,200,0.7)] transition-all transform hover:scale-105 active:scale-95">
+                    class="w-16 h-16 md:w-[4.5rem] md:h-[4.5rem] bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center text-[#0b0f19] text-2xl md:text-3xl shadow-[0_0_25px_rgba(59,226,200,0.5)] hover:shadow-[0_0_35px_rgba(59,226,200,0.7)] transition-all transform hover:scale-105 active:scale-95">
                     <i class="fas fa-pause ml-0.5"></i>
                 </button>
 
