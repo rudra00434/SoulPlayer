@@ -1,7 +1,6 @@
 
 from pathlib import Path
 import os
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,10 +74,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-database_url = os.environ.get("DATABASE_URL")
-if database_url:
-    DATABASES['default'] = dj_database_url.parse(database_url)
 
 
 # Password validation
