@@ -18,7 +18,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-9$(xxe&i!!58*z^7h!0&p
 DEBUG = 'RENDER' not in os.environ
 
 # YouTube API Key
-YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', 'AIzaSyACqBYwztE1YBq3lQvAl557kf0BiDSNOx8')
+YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
 
 ALLOWED_HOSTS = ['*']
 

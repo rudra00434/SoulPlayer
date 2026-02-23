@@ -270,7 +270,7 @@ def voice_search(request):
 
 def podcasts(request):
     from django.conf import settings
-    youtube_api_key = getattr(settings, 'YOUTUBE_API_KEY', "AIzaSyACqBYwztE1YBq3lQvAl557kf0BiDSNOx8")
+    youtube_api_key = getattr(settings, 'YOUTUBE_API_KEY', '')
     query = "music podcast full episode"
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q={query}&type=video&key={youtube_api_key}"
     
