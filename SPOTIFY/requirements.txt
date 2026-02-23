@@ -5,3 +5,4 @@ psycopg2-binary==2.9.9
 whitenoise==6.6.0
 requests==2.32.3
 spacy==3.8.11
+pillow==10.4.0
