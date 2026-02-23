@@ -16,7 +16,7 @@ db.sqlite3
 db.sqlite3-journal
 
 # Media files
-media/
+# media/
 
 # Environment variables
 .env
