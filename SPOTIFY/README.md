@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/trivikram-s/django-spotify-clone/main/static/img/SoulPlayer-Logo.png" alt="SoulPlayer Logo" width="200" />
+  <img src="https://raw.githubusercontent.com/trivikram-s/django-spotify-clone/main/static/img/SoulPlayer-Logo.png" alt="SoulPlayer Logo" width="200"/>
 </div>
 
 <h1 align="center">SoulPlayer</h1>
