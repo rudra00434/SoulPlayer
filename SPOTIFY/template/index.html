@@ -713,10 +713,7 @@
             if (songId) {
                 fetch(`/record_play/${songId}/`, {
                     method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    credentials: 'same-origin'
                 }).then(response => {
                     console.log('Record play response:', response.status);
                 }).catch(err => console.error('Error recording play:', err));

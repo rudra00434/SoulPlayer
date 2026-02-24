@@ -20,7 +20,7 @@ DEBUG = 'RENDER' not in os.environ
 YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
 
 ALLOWED_HOSTS = ['*']
-
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
 # Application definition
 
