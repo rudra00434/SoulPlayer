@@ -3,7 +3,7 @@ from django.http import HttpResponse
 import requests
 from .models import Song,Artist,Playlist
 from django.core.paginator import Paginator 
-from .forms import SongForm, ArtistForm, PlaylistForm
+from .forms import SongForm, ArtistForm, PlaylistForm, UserUpdateForm, ProfileUpdateForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
@@ -11,6 +11,10 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 import spacy
 from django.db.models import Q
+from django.conf import settings
+from .models import UserProfile
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 # Load the spaCy model
 nlp = spacy.load("en_core_web_sm")
@@ -269,7 +273,7 @@ def voice_search(request):
     return render(request, 'voice_search.html')
 
 def podcasts(request):
-    from django.conf import settings
+
     youtube_api_key = getattr(settings, 'YOUTUBE_API_KEY', '')
     query = "music podcast full episode"
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q={query}&type=video&key={youtube_api_key}"
@@ -295,3 +299,57 @@ def podcasts(request):
         'videos': videos
     }
     return render(request, 'podcasts.html', context)
+
+@login_required(login_url="user_login")
+def profile(request):
+    # Ensure UserProfile exists (for users created before the signal was added)
+    if not hasattr(request.user, 'userprofile'):
+        
+        UserProfile.objects.create(user=request.user)
+        
+    if request.method == "POST":
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, instance=request.user.userprofile)
+        
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, f"Your profile has been updated!")
+            return redirect("profile")
+            
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.userprofile)
+        
+    context = {
+        "u_form": u_form,
+        "p_form": p_form,
+        "played_songs": request.user.userprofile.played_songs.all().order_by("-id")[:10], # Last 10 played
+        "favorite_artists": request.user.userprofile.favorite_artists.all()
+    }
+    return render(request, "profile.html", context)
+
+@login_required(login_url="user_login")
+def toggle_favorite_artist(request, pk):
+    artist = get_object_or_404(Artist, id=pk)
+    user_profile = request.user.userprofile
+    if artist in user_profile.favorite_artists.all():
+        user_profile.favorite_artists.remove(artist)
+    else:
+        user_profile.favorite_artists.add(artist)
+    return redirect("artist_detail", pk=pk)
+
+
+@csrf_exempt
+def record_play(request, pk):
+    if request.method == "POST" and request.user.is_authenticated:
+        
+        song = get_object_or_404(Song, id=pk)
+        
+        # Ensure UserProfile exists
+        if not hasattr(request.user, 'userprofile'):
+            UserProfile.objects.create(user=request.user)
+            
+        request.user.userprofile.played_songs.add(song)
+        return JsonResponse({"status": "success"})
+    return JsonResponse({"status": "error"}, status=400)

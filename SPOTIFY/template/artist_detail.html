@@ -44,13 +44,26 @@
                 <p class="text-xl text-gray-300 font-medium tracking-wide mb-6">
                     {{ artist.music_band }}
                 </p>
-                <div class="flex gap-4">
+                <div class="flex gap-4 items-center">
                     <button
                         class="bg-[#3be2c8] text-[#0b0f19] font-bold tracking-widest text-xs px-8 py-3 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:shadow-[0_6px_25px_rgba(59,226,200,0.6)] hover:scale-105 transition-all duration-300">
                         FOLLOW
                     </button>
+                    {% if user.is_authenticated %}
+                    <form action="{% url 'toggle_favorite_artist' artist.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="border border-white/30 text-white font-bold tracking-widest text-xs px-6 py-3 rounded-full hover:bg-white/10 transition-all duration-300 backdrop-blur-sm flex items-center gap-2">
+                            {% if artist in user.userprofile.favorite_artists.all %}
+                            <i class="fas fa-heart text-[#f472b6]"></i> favorited
+                            {% else %}
+                            <i class="far fa-heart"></i> Add to Favorites
+                            {% endif %}
+                        </button>
+                    </form>
+                    {% endif %}
                     <button
-                        class="border border-white/30 text-white font-bold tracking-widest text-xs px-8 py-3 rounded-full hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
+                        class="border border-white/30 text-white font-bold tracking-widest text-xs px-4 py-3 rounded-full hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
                         <i class="fas fa-ellipsis-h text-lg"></i>
                     </button>
                 </div>
@@ -90,7 +103,7 @@
             <tbody>
                 {% for song in songs %}
                 <tr class="group hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 cursor-pointer"
-                    onclick="playSong('{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
+                    onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
                     <td class="p-4 text-center text-gray-500 font-medium group-hover:text-white relative">
                         <span class="group-hover:opacity-0 transition-opacity">{{ forloop.counter }}</span>
                         <div

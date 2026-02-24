@@ -1,5 +1,6 @@
 from django.forms import ModelForm, TextInput, FileInput, CheckboxSelectMultiple
-from .models import Song , Artist ,Playlist
+from .models import Song, Artist, Playlist, UserProfile
+from django.contrib.auth.models import User
 
 class SongForm(ModelForm):
     class Meta:
@@ -32,4 +33,20 @@ class PlaylistForm(ModelForm):
             "name":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "Enter playlist name"}),
             "artists":CheckboxSelectMultiple(attrs={"class":"text-[#3be2c8] focus:ring-[#3be2c8] bg-white/5 border-white/10 rounded"}),
             "songs":CheckboxSelectMultiple(attrs={"class":"text-[#3be2c8] focus:ring-[#3be2c8] bg-white/5 border-white/10 rounded"}),
+        }
+        
+class ProfileUpdateForm(ModelForm):
+    class Meta:
+        model=UserProfile
+        fields=["bio"]
+        widgets={
+            "bio":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "Tell us about yourself..."}),
+        }
+class UserUpdateForm(ModelForm):
+    class Meta:
+        model=User
+        fields=["username", "email"]
+        widgets={
+            "username":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "Username"}),
+            "email":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "Email Address"}),
         }

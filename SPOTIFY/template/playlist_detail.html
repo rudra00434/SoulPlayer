@@ -174,7 +174,7 @@
                                 <span class="w-4 text-center text-gray-500 font-medium group-hover:hidden">
                                     {{ forloop.counter }}</span>
                                 <button class="w-4 text-center text-white hidden group-hover:block"
-                                    onclick="playSong('{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
+                                    onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
                                     <i class="fas fa-play text-xs text-[#3be2c8]"></i>
                                 </button>
 

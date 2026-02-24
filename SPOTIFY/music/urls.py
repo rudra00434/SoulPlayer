@@ -21,5 +21,7 @@ urlpatterns =[
     path('register/',views.register,name='register'),
     path('login/',views.user_login,name='user_login'),
     path('logout/',views.user_logout,name='user_logout'),
-
+    path('profile/',views.profile,name='profile'),
+    path('toggle_favorite_artist/<int:pk>/', views.toggle_favorite_artist, name='toggle_favorite_artist'),
+    path('record_play/<int:pk>/', views.record_play, name='record_play'),
 ]

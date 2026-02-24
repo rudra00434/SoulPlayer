@@ -89,7 +89,7 @@
             <!-- Song Items -->
             <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 mt-4 -mr-2">
                 {% for song in page_obj|slice:":5" %}
-                <div onclick="playSong('{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')"
+                <div onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')"
                     class="flex items-center group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all duration-300">
 
                     {% if song.image %}
@@ -178,10 +178,10 @@
                             <button type="submit"
                                 class="text-gray-400 hover:text-red-400 text-sm font-semibold tracking-wide transition">Logout</button>
                         </form>
-                        <div
-                            class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[#3be2c8] flex items-center justify-center font-bold text-sm ring-2 ring-[#0b0f19] shadow-[0_0_15px_rgba(59,226,200,0.3)] cursor-pointer hover:scale-105 transition uppercase">
+                        <a href="{% url 'profile' %}"
+                            class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[#3be2c8] flex items-center justify-center font-bold text-sm ring-2 ring-[#0b0f19] shadow-[0_0_15px_rgba(59,226,200,0.3)] cursor-pointer hover:scale-105 transition uppercase text-[#0b0f19]">
                             {{ user.username|make_list|first }}
-                        </div>
+                        </a>
                     </div>
                     {% else %}
                     <div class="flex items-center gap-4">
@@ -553,7 +553,7 @@
                 <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
                     {% for song in page_obj %}
                     <div class="flex-none w-44 group cursor-pointer relative"
-                        onclick="playSong('{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
+                        onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
                         <a href="{% url 'delete_song' song.id %}"
                             onclick="event.stopPropagation(); return confirm('Are you sure you want to delete this song?')"
                             class="absolute top-2 right-2 z-20 text-gray-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-300 drop-shadow-md bg-black/50 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -694,7 +694,7 @@
         const durTimeDisplay = document.getElementById('player-duration');
         let isPlaying = false;
 
-        function playSong(url, title, artist, imageUrl) {
+        function playSong(songId, url, title, artist, imageUrl) {
             // Update Player UI
             document.getElementById('player-title').innerText = title;
             document.getElementById('player-artist').innerText = artist;
@@ -708,6 +708,19 @@
             audioPlayer.play();
             isPlaying = true;
             updatePlayButton();
+
+            // Record play in background
+            if (songId) {
+                fetch(`/record_play/${songId}/`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(response => {
+                    console.log('Record play response:', response.status);
+                }).catch(err => console.error('Error recording play:', err));
+            }
         }
 
         function togglePlay() {
