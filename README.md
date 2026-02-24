@@ -45,6 +45,10 @@ SoulPlayer follows a classic **Model-View-Template (MVT)** architecture utilized
 </details>
 
 ---
+## System Architecture 
+
+<img width="2089" height="987" alt="diagram-export-2-25-2026-4_45_45-AM" src="https://github.com/user-attachments/assets/9176b0ed-e15f-452f-971b-1466d9861ad0" />
+
 
 ## 🌟 Core Features Deep-Dive
 
