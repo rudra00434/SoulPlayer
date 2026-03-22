@@ -221,19 +221,19 @@ pyOpenSSL==25.3.0
 pyparsing==3.1.4
 pypdf==6.7.5
 pyphen==0.17.2
-pypiwin32==223
+# pypiwin32 removed (Windows only)
 PySocks==1.7.1
 python-bidi==0.6.7
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 python-dotenv==1.1.1
 python-json-logger==3.3.0
-python-magic-bin==0.4.14
-PythonTurtle==0.3.2
-pyttsx3==2.99
+# python-magic-bin removed (Windows only)
+# PythonTurtle removed (GUI only)
+# pyttsx3 removed (Speech only/requires win32)
 pytz==2024.1
-pywin32==310
-pywinpty==2.0.15
+# pywin32 removed (Windows only)
+# pywinpty removed (Windows only)
 PyYAML==6.0.2
 pyzmq==26.3.0
 redis==7.2.0
