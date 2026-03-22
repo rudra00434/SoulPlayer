@@ -1,0 +1,399 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="px-6 md:px-10 pb-12 pt-6 min-h-[90vh] flex flex-col">
+    <!-- Header -->
+    <div class="flex items-center justify-between bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 mb-4 shadow-lg relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-[#3be2c8]/5 to-purple-500/5 pointer-events-none"></div>
+        <div class="flex items-center gap-4 relative z-10">
+            <a href="{% url 'jam_lobby' %}" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-red-500/20 hover:text-red-400 transition-colors border border-white/10">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold text-white flex items-center gap-2 tracking-wide">
+                    Live Jam
+                    {% if is_host %}
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-[#3be2c8]/20 text-[#3be2c8] border border-[#3be2c8]/30">HOST</span>
+                    {% else %}
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-500/20 text-purple-400 border border-purple-500/30">GUEST</span>
+                    {% endif %}
+                </h1>
+                <p class="text-xs text-gray-500 tracking-widest font-mono mt-0.5">ROOM: <span class="text-white font-bold select-all">{{ room.room_code }}</span></p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3 relative z-10">
+            <div id="connection-status" class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#3be2c8] bg-[#3be2c8]/10 px-3 py-1.5 rounded-lg border border-[#3be2c8]/20 animate-pulse">
+                <div class="w-2 h-2 rounded-full bg-[#3be2c8]"></div> Connected
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
+        
+        <!-- Left Pane: The Unified Audio Player -->
+        <div class="lg:col-span-8 flex flex-col bg-black/20 backdrop-blur-xl rounded-3xl border border-white/10 overflow-y-auto overflow-x-hidden relative shadow-2xl custom-scrollbar">
+            <!-- Dynamic Album Art Background Blur -->
+            {% if song %}
+            <div class="absolute inset-0 z-0 opacity-30 select-none pointer-events-none">
+                <div class="absolute inset-0 bg-black/50 z-10"></div>
+                <img src="{% if is_jiosaavn %}{{ song.remote_image_url }}{% else %}{{ song.image.url }}{% endif %}" class="w-full h-full object-cover blur-3xl scale-110">
+            </div>
+            {% endif %}
+
+            <div class="relative z-10 flex-1 flex flex-col items-center justify-center p-4">
+                {% if is_host %}
+                <div class="w-full max-w-sm mb-4 relative z-50">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="host-search-input" placeholder="Search for a track to play..." class="w-full bg-black/40 border border-white/20 rounded-full py-3 pl-12 pr-6 text-white text-sm focus:outline-none focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] transition-all placeholder-gray-500 font-bold tracking-wide shadow-inner">
+                    </div>
+                    <div id="search-results-dropdown" class="absolute top-full left-0 right-0 mt-2 bg-[#0f172a]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.8)] overflow-hidden hidden flex-col max-h-64 overflow-y-auto custom-scrollbar z-50">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if song %}
+                <!-- Main Player Card styling port from play_song.html -->
+                <div class="w-full max-w-sm z-10 flex flex-col gap-4 bg-[#111827]/50 backdrop-blur-xl p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5 mx-auto">
+                    
+                    <!-- Album Art contained inside the Card (Scaled Down) -->
+                    <div class="w-48 h-48 sm:w-56 sm:h-56 relative group mx-auto mb-1">
+                        <img src="{% if is_jiosaavn %}{{ song.remote_image_url }}{% else %}{{ song.image.url }}{% endif %}" class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
+                        {% if not is_host %}
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm rounded-[1.5rem]">
+                                <i class="fas fa-lock text-3xl text-gray-400 mb-2"></i>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest absolute bottom-4">Host Controls</p>
+                            </div>
+                        {% endif %}
+                        <!-- Glow behind art -->
+                        <div class="absolute inset-0 bg-gradient-to-tr from-[#3be2c8]/20 to-blue-500/20 opacity-0 group-hover:opacity-100 rounded-[1.5rem] transition duration-500 blur-xl -z-10"></div>
+                    </div>
+
+                    <!-- Song Info -->
+                    <div class="flex justify-between items-start mt-0 text-center">
+                        <div class="w-full min-w-0 flex flex-col items-center">
+                            <h2 class="text-2xl font-extrabold truncate mb-1 text-white tracking-tight drop-shadow-md">{{ song.title }}</h2>
+                            <p class="text-gray-400 text-sm font-medium truncate">{{ song.artist }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full mb-2">
+                        <input type="range" id="progress" value="0" min="0" max="100" class="w-full h-1.5 bg-gray-700/50 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-[#3be2c8] [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:scale-150 transition-all pointer-events-{% if is_host %}auto{% else %}none{% endif %}">
+                        <div class="flex justify-between text-xs text-gray-400 mt-2 font-mono tracking-wider font-semibold">
+                            <span id="current-time">0:00</span>
+                            <span id="duration">--:--</span>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="flex items-center justify-center gap-7 {% if not is_host %}opacity-50 pointer-events-none{% endif %} px-1 mb-2">
+                        <button class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:-translate-x-1 opacity-40 cursor-not-allowed">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+
+                        <button id="play-btn" class="w-16 h-16 md:w-[4.5rem] md:h-[4.5rem] bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center text-[#0b0f19] text-2xl md:text-3xl shadow-[0_0_25px_rgba(59,226,200,0.5)] hover:shadow-[0_0_35px_rgba(59,226,200,0.7)] transition-all transform hover:scale-105 active:scale-95">
+                            <i id="play-icon" class="fas fa-play ml-1"></i>
+                        </button>
+
+                        <button class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:translate-x-1 opacity-40 cursor-not-allowed">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                {% if is_jiosaavn %}
+                    <audio id="audio-player" src="{{ song.stream_url }}" autoplay></audio>
+                {% else %}
+                    <audio id="audio-player" src="{% if song.audio_link %}{{ song.audio_link }}{% else %}{{ song.audio_file.url }}{% endif %}" autoplay></audio>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center flex flex-col items-center">
+                    <div class="w-32 h-32 bg-white/5 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                        <i class="fas fa-music text-5xl text-gray-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-400 mb-2">Awaiting the Host</h2>
+                    <p class="text-sm text-gray-500">The host hasn't selected a track yet. Hang tight!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Pane: Real-Time Chat -->
+        <div class="lg:col-span-4 bg-[#0b0f19]/80 backdrop-blur-3xl rounded-3xl border border-white/10 flex flex-col shadow-2xl relative overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                    <i class="far fa-comments text-[#3be2c8]"></i> Room Chat
+                </h3>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar flex flex-col">
+                <!-- Messages will be injected here via JS -->
+                <div class="text-center mt-auto pb-2">
+                    <span class="text-[10px] text-gray-600 uppercase font-black tracking-widest bg-gray-600/10 px-3 py-1 rounded-full border border-gray-600/20">End of History</span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-white/5 border-t border-white/10 flex items-end gap-2 shrink-0">
+                <div class="flex-1 relative">
+                    <textarea id="chat-input" rows="1" placeholder="Type a message..." class="w-full bg-[#0b0f19]/50 border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-[#3be2c8] transition-colors resize-none overflow-hidden h-[46px] leading-tight custom-scrollbar"></textarea>
+                </div>
+                <button onclick="sendChatMessage()" class="w-[46px] h-[46px] bg-[#3be2c8]/20 hover:bg-[#3be2c8] text-[#3be2c8] hover:text-[#0b0f19] transition-all rounded-xl flex items-center justify-center shrink-0 border border-[#3be2c8]/30">
+                    <i class="fas fa-paper-plane text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Constants
+    const roomCode = "{{ room.room_code }}";
+    const isHost = {% if is_host %}true{% else %}false{% endif %};
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const chatSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/room/${roomCode}/`);
+
+    // Audio Elements
+    const audio = document.getElementById('audio-player');
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const progress = document.getElementById('progress');
+    const currentTimeEl = document.getElementById('current-time');
+    const durationEl = document.getElementById('duration');
+    const chatContainer = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+
+    // UI Updates
+    function appendMessage(username, text) {
+        const isSystem = username === 'System';
+        const isSelf = username === "{{ user.username }}";
+        
+        const div = document.createElement('div');
+        div.className = `w-full flex flex-col animate-fadeIn ${isSystem ? 'items-center mt-6 mb-2' : ''}`;
+        
+        if (isSystem) {
+            div.innerHTML = `<span class="text-[10px] font-bold uppercase tracking-widest text-[#3be2c8] bg-[#3be2c8]/10 px-3 py-1 rounded border border-[#3be2c8]/20">${text}</span>`;
+        } else {
+            div.innerHTML = `
+                <div class="flex gap-3 max-w-[85%] ${isSelf ? 'self-end bg-gradient-to-tr from-[#3be2c8]/20 to-purple-500/20 border-white/20' : 'self-start bg-white/5 border-white/10'} border p-3 rounded-2xl ${isSelf ? 'rounded-tr-sm' : 'rounded-tl-sm'} shadow-sm">
+                    ${!isSelf ? `<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#3be2c8] to-purple-500 flex items-center justify-center shrink-0 mt-0.5"><span class="text-xs text-[#0b0f19] font-black">${username.charAt(0).toUpperCase()}</span></div>` : ''}
+                    <div class="flex flex-col min-w-0">
+                        ${!isSelf ? `<span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">${username}</span>` : ''}
+                        <p class="text-sm text-gray-200 leading-snug break-words whitespace-pre-wrap">${text}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Audio Logic
+    if (audio) {
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progress.value = percent;
+                progress.style.background = `linear-gradient(to right, #3be2c8 ${percent}%, rgba(255,255,255,0.1) ${percent}%)`;
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+                durationEl.textContent = formatTime(audio.duration);
+            }
+        });
+
+        if (isHost) {
+            playBtn.addEventListener('click', () => {
+                if (audio.paused) {
+                    audio.play();
+                    chatSocket.send(JSON.stringify({'action': 'play', 'timestamp': audio.currentTime}));
+                } else {
+                    audio.pause();
+                    chatSocket.send(JSON.stringify({'action': 'pause', 'timestamp': audio.currentTime}));
+                }
+            });
+
+            audio.addEventListener('play', () => {
+                playIcon.classList.remove('fa-play', 'ml-1');
+                playIcon.classList.add('fa-pause', 'ml-0.5');
+            });
+            audio.addEventListener('pause', () => {
+                playIcon.classList.remove('fa-pause', 'ml-0.5');
+                playIcon.classList.add('fa-play', 'ml-1');
+            });
+
+            progress.addEventListener('change', () => {
+                const seekTime = (progress.value / 100) * audio.duration;
+                audio.currentTime = seekTime;
+                chatSocket.send(JSON.stringify({'action': 'play', 'timestamp': audio.currentTime}));
+            });
+        }
+    } // END of if (audio)
+
+    // --- HOST SEARCH LOGIC ---
+    if (isHost) {
+        const searchInput = document.getElementById('host-search-input');
+        const dropdown = document.getElementById('search-results-dropdown');
+        let searchTimeout;
+
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                if (query.length < 2) {
+                    dropdown.classList.add('hidden');
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    fetch('/api/search_songs/?q=' + encodeURIComponent(query), {
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'success' && data.results.length > 0) {
+                            dropdown.innerHTML = '';
+                            data.results.forEach(song => {
+                                const div = document.createElement('div');
+                                div.className = "flex items-center gap-3 p-3 hover:bg-white/10 cursor-pointer transition border-b border-white/5 last:border-0";
+                                div.innerHTML = `
+                                    <img src="${song.image_url}" class="w-10 h-10 rounded-lg object-cover">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-white text-sm font-bold truncate">${song.title}</p>
+                                        <p class="text-gray-400 text-xs truncate">${song.artist}</p>
+                                    </div>
+                                    <i class="fas fa-play text-[#3be2c8] text-xs opacity-0 group-hover:opacity-100"></i>
+                                `;
+                                
+                                div.addEventListener('click', () => {
+                                    searchInput.value = '';
+                                    dropdown.classList.add('hidden');
+                                    
+                                    // Update backend room database
+                                    fetch('/api/update_room_song/', {
+                                        method: 'POST',
+                                        credentials: 'same-origin',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': '{{ csrf_token }}'
+                                        },
+                                        body: JSON.stringify({
+                                            'room_code': roomCode,
+                                            'song_id': song.id
+                                        })
+                                    })
+                                    .then(r => r.json())
+                                    .then(updateData => {
+                                        if (updateData.status === 'success') {
+                                            // Tell guests to update
+                                            chatSocket.send(JSON.stringify({
+                                                'action': 'change_song',
+                                                'song_id': song.id
+                                            }));
+                                            // Reload self
+                                            window.location.reload();
+                                        }
+                                    });
+                                });
+                                dropdown.appendChild(div);
+                            });
+                            dropdown.classList.remove('hidden');
+                        } else {
+                            dropdown.innerHTML = '<div class="p-4 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">No tracks found</div>';
+                            dropdown.classList.remove('hidden');
+                        }
+                    });
+                }, 400); // 400ms debounce
+            });
+
+        // Close dropdown if clicked outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    // Chat Logic
+    function sendChatMessage() {
+        const text = chatInput.value.trim();
+        if (text) {
+            chatSocket.send(JSON.stringify({
+                'action': 'chat',
+                'message': text
+            }));
+            chatInput.value = '';
+            chatInput.style.height = '46px';
+        }
+    }
+
+    // Enter to Send
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendChatMessage();
+        }
+    });
+    
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function() {
+        this.style.height = '46px';
+        this.style.height = (this.scrollHeight) + 'px';
+        if (this.scrollHeight > 100) this.style.overflowY = 'auto';
+    });
+
+    // WebSocket Events
+    chatSocket.onopen = function() {
+        let status = document.getElementById('connection-status');
+        status.innerHTML = `<div class="w-2 h-2 rounded-full bg-[#3be2c8]"></div> Live`;
+        status.classList.remove('animate-pulse');
+    };
+
+    chatSocket.onclose = function() {
+        let status = document.getElementById('connection-status');
+        status.classList.remove('text-[#3be2c8]', 'bg-[#3be2c8]/10', 'border-[#3be2c8]/20');
+        status.classList.add('text-red-400', 'bg-red-400/10', 'border-red-400/20');
+        status.innerHTML = `<div class="w-2 h-2 rounded-full bg-red-400"></div> Offline`;
+        appendMessage('System', 'Connection lost to server.');
+    };
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+
+        if (data.action === 'chat') {
+            appendMessage(data.username, data.message);
+        } else if (data.action === 'play' && !isHost) {
+            if (audio) {
+                if (Math.abs(audio.currentTime - data.timestamp) > 2) {
+                    audio.currentTime = data.timestamp;
+                }
+                audio.play();
+                playIcon.classList.remove('fa-play', 'ml-1');
+                playIcon.classList.add('fa-pause', 'ml-0.5');
+            }
+        } else if (data.action === 'pause' && !isHost) {
+            if (audio) {
+                audio.pause();
+                playIcon.classList.remove('fa-pause', 'ml-0.5');
+                playIcon.classList.add('fa-play', 'ml-1');
+            }
+        } else if (data.action === 'change_song' && !isHost) {
+            window.location.reload(); // Reload to pick up db change
+        }
+    };
+</script>
+{% endblock %}

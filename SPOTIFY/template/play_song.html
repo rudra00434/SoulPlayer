@@ -40,17 +40,14 @@
     <!-- Background Blur Effect matched to deep blue theme -->
     <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-[#111827] to-[#0b0f19]"></div>
-        {% if song.image %}
+        {% if is_jiosaavn %}
+        <div class="absolute inset-0 bg-cover bg-center blur-[120px] opacity-20 scale-150"
+            style="background-image: url('{{ song.image_url }}');"></div>
+        <div class="absolute inset-0 bg-[#0b0f19]/80"></div>
+        {% elif song.image %}
         <div class="absolute inset-0 bg-cover bg-center blur-[120px] opacity-20 scale-150"
             style="background-image: url('{{ song.image.url }}');"></div>
         <div class="absolute inset-0 bg-[#0b0f19]/80"></div>
-        <!-- Decorative Glow Orbs -->
-        <div
-            class="absolute -top-32 -left-32 w-96 h-96 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[150px] opacity-10 animate-pulse">
-        </div>
-        <div
-            class="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600 rounded-full mix-blend-screen filter blur-[150px] opacity-10">
-        </div>
         {% else %}
         <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/30 rounded-full blur-[120px]"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#3be2c8]/20 rounded-full blur-[120px]">
@@ -65,7 +62,7 @@
             <i class="fas fa-chevron-down"></i>
         </a>
         <div class="text-center">
-            <h2 class="text-[10px] uppercase tracking-[0.2em] text-[#3be2c8] font-bold mb-1">Playing From Library</h2>
+            <h2 class="text-[10px] uppercase tracking-[0.2em] text-[#3be2c8] font-bold mb-1">{% if is_jiosaavn %}Streaming from JioSaavn{% else %}Playing From Library{% endif %}</h2>
             <p class="text-sm font-semibold tracking-wide text-gray-300">SoulPlayer</p>
         </div>
         <button
@@ -78,21 +75,26 @@
     <div
         class="w-full max-w-sm z-10 flex flex-col gap-4 md:gap-5 bg-[#111827]/30 backdrop-blur-xl p-5 md:p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5 mx-auto">
 
-        <!-- Album Art -->
         <div class="w-full aspect-square relative group mx-auto">
-            {% if song.image %}
+            {% if is_jiosaavn %}
+            <img src="{{ song.image_url }}" alt="{{ song.title }}"
+                class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
+            {% elif song.image %}
             <img src="{{ song.image.url }}" alt="{{ song.title }}"
                 class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
-            <!-- Glow behind art -->
-            <div
-                class="absolute inset-0 bg-gradient-to-tr from-[#3be2c8]/20 to-blue-500/20 opacity-0 group-hover:opacity-100 rounded-[1.5rem] transition duration-500 blur-xl -z-10">
-            </div>
+            {% elif song.remote_image_url %}
+            <img src="{{ song.remote_image_url }}" alt="{{ song.title }}"
+                class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
             {% else %}
             <div
                 class="w-full h-full bg-gradient-to-br from-gray-800 to-[#0b0f19] rounded-[1.5rem] flex items-center justify-center shadow-2xl border border-white/5">
                 <i class="fas fa-music text-6xl text-gray-600"></i>
             </div>
             {% endif %}
+            <!-- Glow behind art -->
+            <div
+                class="absolute inset-0 bg-gradient-to-tr from-[#3be2c8]/20 to-blue-500/20 opacity-0 group-hover:opacity-100 rounded-[1.5rem] transition duration-500 blur-xl -z-10">
+            </div>
         </div>
 
         <!-- Song Info -->
@@ -124,17 +126,17 @@
             </button>
 
             <div class="flex items-center gap-7">
-                <a href="{% if previous_song %}{% url 'play_song' previous_song.id %}{% else %}#{% endif %}"
+                <a href="{% if previous_song %}{% if is_jiosaavn %}{% url 'play_jiosaavn_song' previous_song.id %}{% else %}{% url 'play_song' previous_song.id %}{% endif %}{% else %}#{% endif %}"
                     class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:-translate-x-1 {% if not previous_song %}opacity-40 cursor-not-allowed hover:text-white hover:-translate-x-0{% endif %}">
                     <i class="fas fa-step-backward"></i>
                 </a>
 
                 <button id="play-btn"
                     class="w-16 h-16 md:w-[4.5rem] md:h-[4.5rem] bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center text-[#0b0f19] text-2xl md:text-3xl shadow-[0_0_25px_rgba(59,226,200,0.5)] hover:shadow-[0_0_35px_rgba(59,226,200,0.7)] transition-all transform hover:scale-105 active:scale-95">
-                    <i class="fas fa-pause ml-0.5"></i>
+                    <i id="play-icon" class="fas fa-pause ml-0.5"></i>
                 </button>
 
-                <a href="{% if next_song %}{% url 'play_song' next_song.id %}{% else %}#{% endif %}"
+                <a href="{% if next_song %}{% if is_jiosaavn %}{% url 'play_jiosaavn_song' next_song.id %}{% else %}{% url 'play_song' next_song.id %}{% endif %}{% else %}#{% endif %}"
                     class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:translate-x-1 {% if not next_song %}opacity-40 cursor-not-allowed hover:text-white hover:translate-x-0{% endif %}">
                     <i class="fas fa-step-forward"></i>
                 </a>
@@ -160,8 +162,30 @@
 
     </div>
 
+    {% if suggestions %}
+    <!-- Suggestions / Up Next -->
+    <div class="w-full max-w-sm z-10 mt-6 animate-fadeIn">
+        <h3 class="text-sm font-bold uppercase tracking-widest text-[#3be2c8] mb-4 flex items-center gap-2">
+            <i class="fas fa-forward"></i> Up Next
+        </h3>
+        <div class="flex flex-col gap-3 max-h-60 overflow-y-auto no-scrollbar pr-2">
+            {% for suggest in suggestions %}
+            <a href="{% url 'play_jiosaavn_song' suggest.id %}" 
+               class="flex items-center gap-3 bg-white/5 hover:bg-white/10 p-3 rounded-xl transition group border border-transparent hover:border-[#3be2c8]/30">
+                <img src="{{ suggest.image_url }}" class="w-12 h-12 rounded-lg object-cover shadow-md">
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-bold truncate group-hover:text-[#3be2c8] transition">{{ suggest.title }}</h4>
+                    <p class="text-xs text-gray-500 truncate">{{ suggest.artist }}</p>
+                </div>
+                <i class="fas fa-play text-xs text-[#3be2c8] opacity-0 group-hover:opacity-100 transition"></i>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <audio id="audio-player"
-        src="{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}"
+        src="{% if is_jiosaavn %}{{ song.stream_url }}{% elif song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}"
         autoplay></audio>
 
     <script>
@@ -218,8 +242,10 @@
             durationEl.textContent = formatTime(audio.duration);
         });
 
-        // Record play history in background
+        // Record play history
         const songId = '{{ song.id }}';
+        const isJioSaavn = {% if is_jiosaavn %}true{% else %}false{% endif %};
+
         if (songId) {
             function getCookie(name) {
                 let cookieValue = null;
@@ -237,17 +263,41 @@
             }
             const csrftoken = getCookie('csrftoken');
 
-            fetch(`/record_play/${songId}/`, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'Content-Type': 'application/json'
-                }
-            }).then(response => {
-                console.log('Record play response (Dedicated View):', response.status);
-            }).catch(err => console.error('Error recording play:', err));
+            if (isJioSaavn) {
+                // Record JioSaavn play
+                fetch(`/record_play_jiosaavn/${songId}/`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    console.log('Record JioSaavn play response (Player):', response.status);
+                }).catch(err => console.error('Error recording JioSaavn play:', err));
+            } else if (!isNaN(songId)) {
+                // Record local play (numeric IDs)
+                fetch(`/record_play/${songId}/`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    console.log('Record play response (Player):', response.status);
+                }).catch(err => console.error('Error recording play:', err));
+            }
         }
+
+        // Auto-navigate to next song when finished
+        audio.addEventListener('ended', () => {
+            const nextLink = document.querySelector('a[href*="/play/"], a[href*="/play_jiosaavn/"]').nextElementSibling;
+            // Since I have a dedicated next_song in context, I can just use that
+            {% if next_song %}
+                window.location.href = "{% if is_jiosaavn %}{% url 'play_jiosaavn_song' next_song.id %}{% else %}{% url 'play_song' next_song.id %}{% endif %}";
+            {% endif %}
+        });
 
     </script>
 </body>

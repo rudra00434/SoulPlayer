@@ -19,19 +19,24 @@ DEBUG = 'RENDER' not in os.environ
 # YouTube API Key
 YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
 
+# JioSaavn API Base URL (unofficial API, no key needed)
+JIOSAAVN_API_BASE = os.environ.get('JIOSAAVN_API_BASE', 'https://saavn.sumit.co')
+
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-     'music',
+    'music',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -57,14 +62,22 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'music.context_processors.sidebar_context',
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'mysite.wsgi.application'
+ASGI_APPLICATION = 'mysite.asgi.application'
 
-
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')],
+        },
+    },
+}
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 

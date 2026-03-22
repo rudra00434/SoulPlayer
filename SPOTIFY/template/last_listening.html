@@ -1,0 +1,91 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="px-10 pb-32 pt-8">
+
+    <!-- Header Section -->
+    <div class="relative w-full rounded-3xl overflow-hidden mb-12 shadow-[0_15px_40px_rgba(0,0,0,0.5)] group border border-white/5">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] z-0"></div>
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[150px] opacity-20 z-0"></div>
+        
+        <div class="relative z-10 p-10 md:p-14 flex items-center justify-between backdrop-blur-sm">
+            <div class="flex items-center gap-6">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.3)]">
+                    <i class="fas fa-history text-4xl text-[#0b0f19]"></i>
+                </div>
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-black tracking-tight drop-shadow-lg text-white mb-2">Last Listening</h1>
+                    <p class="text-gray-400 font-medium tracking-wide flex items-center gap-2">
+                        <span>Revisit the tracks that move you</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-500"></span>
+                        <span class="text-[#3be2c8] font-bold">{{ played_songs.count|default:"0" }} Tracks</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main List Container -->
+    <div class="bg-gradient-to-br from-[#1e293b]/40 to-[#0f172a]/40 backdrop-blur-xl rounded-3xl border border-white/5 p-8 shadow-xl relative overflow-hidden group/section">
+        <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-[#3be2c8]/10 rounded-full blur-[100px] transition-all duration-700 pointer-events-none"></div>
+
+        {% if played_songs %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+            {% for song in played_songs %}
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 hover:shadow-[0_10px_30px_rgba(0,0,0,0.4)] transition-all duration-300 group/song cursor-pointer"
+                onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')">
+
+                <div class="relative w-16 h-16 rounded-xl overflow-hidden shadow-lg flex-shrink-0">
+                    {% if song.image %}
+                    <img src="{{ song.image.url }}" alt="{{ song.title }}"
+                        class="w-full h-full object-cover group-hover/song:scale-110 transition-transform duration-500">
+                    {% elif song.remote_image_url %}
+                    <img src="{{ song.remote_image_url }}" alt="{{ song.title }}"
+                        class="w-full h-full object-cover group-hover/song:scale-110 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-full bg-gray-800 flex items-center justify-center">
+                        <i class="fas fa-music text-gray-500"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover/song:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                        <a href="{% if song.song_type == 'jiosaavn' %}{% url 'play_jiosaavn_song' song.jiosaavn_id %}{% else %}{% url 'play_song' song.id %}{% endif %}" onclick="event.stopPropagation();"
+                            class="w-10 h-10 bg-[#3be2c8] rounded-full flex items-center justify-center transform scale-50 group-hover/song:scale-100 transition-transform duration-300 delay-75 shadow-[0_0_15px_rgba(59,226,200,0.6)]">
+                            <i class="fas fa-play text-[#0b0f19] text-xs ml-0.5"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex-grow min-w-0 pr-2">
+                    <h3 class="text-base font-bold text-white truncate group-hover/song:text-[#3be2c8] transition-colors drop-shadow-sm">{{ song.title }}</h3>
+                    <p class="text-xs font-medium text-gray-400 truncate mt-1 tracking-wide">{{ song.artist }}</p>
+                    {% if song.song_type == 'jiosaavn' %}
+                    <span class="inline-block mt-1.5 px-1.5 py-0.5 bg-[#3be2c8]/10 text-[#3be2c8] text-[9px] uppercase font-bold rounded border border-[#3be2c8]/20">JioSaavn</span>
+                    {% else %}
+                    <span class="inline-block mt-1.5 px-1.5 py-0.5 bg-gray-500/10 text-gray-400 text-[9px] uppercase font-bold rounded border border-gray-500/20">Local Library</span>
+                    {% endif %}
+                </div>
+
+                <div class="text-xs font-semibold text-gray-500 opacity-0 group-hover/song:opacity-100 transition-opacity duration-300 flex-shrink-0 mr-2">
+                    <i class="fas fa-headphones text-[#3be2c8]"></i>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-24 text-center h-full relative z-10">
+            <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center border border-white/5 mb-8 shadow-inner">
+                <i class="fas fa-history text-4xl text-gray-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-300 mb-3 tracking-wide">No listening history yet</h3>
+            <p class="text-base text-gray-500 max-w-sm mb-10">Your recently played tracks will appear here in a beautiful grid. Start your musical journey now.</p>
+            <a href="{% url 'index' %}" class="px-10 py-4 bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] rounded-xl font-bold text-[13px] tracking-[0.2em] uppercase text-[#0b0f19] transition-all hover:scale-105 hover:shadow-[0_10px_30px_rgba(59,226,200,0.4)]">
+                DISCOVER MUSIC
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

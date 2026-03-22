@@ -5,12 +5,13 @@ from django.contrib.auth.models import User
 class SongForm(ModelForm):
     class Meta:
         model=Song
-        fields=["title","artist","image","audio_file","duration","song_type"]
+        fields=["title","artist","image","remote_image_url","audio_file","duration","song_type"]
         widgets={
             "title":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "Enter song title"}),
             "artist":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "Enter artist name"}),
             "duration":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "e.g., 3:45"}),
             "song_type":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "e.g., Pop"}),
+            "remote_image_url":TextInput(attrs={"class":"w-full bg-white/5 border border-white/10 focus:border-[#3be2c8] focus:ring-1 focus:ring-[#3be2c8] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all backdrop-blur-md", "placeholder": "https://example.com/image.jpg"}),
             "image":FileInput(attrs={"class":"w-full bg-white/5 text-gray-400 file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-[#3be2c8] file:to-[#2cdbbd] file:text-[#0b0f19] hover:file:shadow-[0_0_15px_rgba(59,226,200,0.4)] cursor-pointer transition-all rounded-xl"}),
             "audio_file":FileInput(attrs={"class":"w-full bg-white/5 text-gray-400 file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-[#3be2c8] file:to-[#2cdbbd] file:text-[#0b0f19] hover:file:shadow-[0_0_15px_rgba(59,226,200,0.4)] cursor-pointer transition-all rounded-xl"}),
         }

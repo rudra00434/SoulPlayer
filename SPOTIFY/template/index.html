@@ -42,6 +42,39 @@
             scrollbar-width: none;
         }
 
+        /* Playlist Dropdown */
+        .playlist-menu {
+            display: none;
+            position: absolute;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            min-width: 180px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .playlist-menu-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .playlist-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .playlist-menu-item:hover {
+            background: #3be2c8;
+            color: #0b0f19;
+        }
+
         @keyframes autoSlide {
             0% {
                 transform: translateX(0);
@@ -65,39 +98,50 @@
 <body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
 
     <div class="flex flex-1 overflow-hidden pb-20">
+        {% block sidebar %}
         <!-- Sidebar -->
         <div
-            class="w-72 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10">
+            class="w-80 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
             <div class="text-3xl font-bold mb-12 tracking-wide text-white">Playlist</div>
 
-            <!-- Nav Links -->
-            <nav class="flex flex-col gap-5 mb-8 text-sm font-medium">
-                <a href="{% url 'playlists' %}" class="flex items-center gap-4 text-[#3be2c8] cursor-pointer">
-                    <i class="fas fa-music text-lg w-5 text-center"></i>
+            <!-- Nav Links from Screenshot -->
+            <nav class="flex flex-col gap-6 mb-10 text-sm font-semibold">
+                <a href="{% url 'playlists' %}" class="flex items-center gap-4 text-[#3be2c8] transition cursor-pointer group">
+                    <i class="fas fa-music text-xl w-6 text-center"></i>
                     <span class="tracking-wide">My Playlist</span>
                 </a>
-                <div class="flex items-center gap-4 text-gray-500 hover:text-gray-300 transition cursor-pointer group">
-                    <i class="far fa-circle text-[10px] w-5 text-center group-hover:scale-110 transition"></i>
+                {% if user.is_authenticated %}
+                <a href="{% url 'last_listening' %}" class="flex items-center gap-4 {% if request.resolver_match.url_name == 'last_listening' %}text-white{% else %}text-gray-400{% endif %} hover:text-white transition cursor-pointer group mb-4">
+                    <i class="far fa-circle text-xl w-6 text-center {% if request.resolver_match.url_name == 'last_listening' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %}"></i>
                     <span class="tracking-wide">Last Listening</span>
-                </div>
-                <div class="flex items-center gap-4 text-gray-500 hover:text-gray-300 transition cursor-pointer group">
-                    <i class="far fa-circle text-[10px] w-5 text-center group-hover:scale-110 transition"></i>
+                </a>
+                
+                <a href="{% url 'jam_lobby' %}" class="flex items-center gap-4 text-[#3be2c8] hover:text-white transition cursor-pointer group mb-4">
+                    <i class="fas fa-broadcast-tower text-xl w-6 text-center drop-shadow-[0_0_5px_rgba(59,226,200,0.8)] animate-pulse"></i>
+                    <span class="tracking-wide font-bold">Live Jams</span>
+                </a>
+                {% endif %}
+                <a href="#" class="flex items-center gap-4 text-gray-400 hover:text-white transition cursor-pointer group">
+                    <i class="far fa-circle text-xl w-6 text-center group-hover:text-[#3be2c8]"></i>
                     <span class="tracking-wide">Recommended</span>
-                </div>
+                </a>
             </nav>
 
-            <!-- Song Items -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 mt-4 -mr-2">
-                {% for song in page_obj|slice:":5" %}
-                <div onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')"
+            <!-- Recent Songs (No header, matches screenshot) -->
+            <div id="sidebar-recent-list" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 -mr-2 mb-10">
+                {% for song in sidebar_recent_songs %}
+                <div data-song-id="{{ song.id }}" onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')"
                     class="flex items-center group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all duration-300">
 
                     {% if song.image %}
                     <img src="{{ song.image.url }}"
                         class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">
+                    {% elif song.remote_image_url %}
+                    <img src="{{ song.remote_image_url }}"
+                        class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">
                     {% else %}
                     <div
-                        class="w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center ml-1 border border-white/5 shadow-md group-hover:scale-105 transition">
+                        class="w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center border border-white/5 shadow-md group-hover:scale-105 transition">
                         <i class="fas fa-music text-gray-500 group-hover:text-[#3be2c8] transition-colors"></i>
                     </div>
                     {% endif %}
@@ -114,37 +158,28 @@
                     </div>
                 </div>
                 {% empty %}
-                <div class="text-gray-500 text-sm italic pl-2">No songs in library.</div>
-                <a href="{% url 'add_song' %}"
-                    class="block w-full text-center py-2 mt-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-[#3be2c8] transition-colors">
-                    + Add A Song
-                </a>
+                <div class="text-gray-500 text-sm italic pl-2">No recent tracks.</div>
                 {% endfor %}
             </div>
 
-            <!-- Bottom visualizer placeholder -->
-            <div class="mt-6 pt-6 flex items-end gap-1 px-2 border-t border-[#1e293b]/50 h-16">
-                <!-- Mini visualization bars -->
-                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full"
-                    style="animation-delay: 0.1s"></div>
-                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3"
-                    style="animation-delay: 0.3s"></div>
-                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5"
-                    style="animation-delay: 0.2s"></div>
-                <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2"
-                    style="animation-delay: 0.4s"></div>
-            </div>
-
-            <!-- Link to Original Tools -->
-            <div class="absolute bottom-6 left-8 flex gap-4 text-gray-500 text-sm">
-                <a href="{% url 'add_song' %}" class="hover:text-white transition" title="Add Song"><i
-                        class="fas fa-plus"></i></a>
-                <a href="{% url 'add_artist' %}" class="hover:text-white transition" title="Add Artist"><i
-                        class="fas fa-user-plus"></i></a>
-                <a href="{% url 'artists' %}" class="hover:text-white transition" title="Artists Gallery"><i
-                        class="fas fa-users"></i></a>
+            <!-- Bottom Toolset & Visualizer (Matches Screenshot) -->
+            <div class="mt-auto pt-6 flex items-end justify-between px-2 h-20 border-t border-white/5">
+                <!-- Visualizer -->
+                <div class="flex items-end gap-1.5 h-10">
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full" style="animation-delay: 0.1s"></div>
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3" style="animation-delay: 0.3s"></div>
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2" style="animation-delay: 0.4s"></div>
+                </div>
+                <!-- Icons -->
+                <div class="flex gap-5 text-gray-500 pb-1">
+                    <a href="{% url 'add_song' %}" class="hover:text-[#3be2c8] transition" title="Add Song"><i class="fas fa-plus text-lg"></i></a>
+                    <a href="{% url 'add_artist' %}" class="hover:text-[#3be2c8] transition" title="Add Artist"><i class="fas fa-user-plus text-lg"></i></a>
+                    <a href="{% url 'artists' %}" class="hover:text-[#3be2c8] transition" title="Artists Gallery"><i class="fas fa-users text-lg"></i></a>
+                </div>
             </div>
         </div>
+        {% endblock %}
 
         <!-- Main Content -->
         <div
@@ -153,15 +188,14 @@
             <!-- Top Nav -->
             <header
                 class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
-                <nav class="flex gap-10 text-gray-500 font-semibold text-sm tracking-widest">
-                    <a href="{% url 'index' %}"
-                        class="text-white border-b-2 border-[#3be2c8] pb-1 hover:text-white transition">Discover</a>
-                    <a href="{% url 'search' %}" class="hover:text-white pb-1 transition">Music Library</a>
-                    <a href="{% url 'voice_search' %}"
-                        class="hover:text-white pb-1 transition flex items-center gap-1.5"><i
-                            class="fas fa-microphone-alt text-[10px]"></i> Voice Search</a>
-                    <a href="{% url 'podcasts' %}" class="hover:text-white pb-1 transition">Podcasts</a>
-                    <a href="{% url 'create_playlist' %}" class="hover:text-white pb-1 transition">Create Playlist</a>
+                <nav class="flex gap-6 lg:gap-8 text-gray-500 font-semibold text-sm tracking-widest whitespace-nowrap overflow-x-auto no-scrollbar flex-1 mr-4">
+                    <a href="{% url 'index' %}" class="{% if request.resolver_match.url_name == 'index' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Discover</a>
+                    <a href="{% url 'search' %}" class="{% if request.resolver_match.url_name == 'search' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Library</a>
+                    <a href="{% url 'voice_search' %}" class="{% if request.resolver_match.url_name == 'voice_search' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition flex items-center gap-1.5"><i class="fas fa-microphone-alt text-[10px]"></i> Voice</a>
+                    <a href="{% url 'podcasts' %}" class="{% if request.resolver_match.url_name == 'podcasts' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Podcasts</a>
+                    <a href="{% url 'about' %}" class="{% if request.resolver_match.url_name == 'about' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">About</a>
+                    <a href="{% url 'contact' %}" class="{% if request.resolver_match.url_name == 'contact' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Contact</a>
+                    <a href="{% url 'create_playlist' %}" class="{% if request.resolver_match.url_name == 'create_playlist' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Create Playlist</a>
                 </nav>
 
                 <div class="flex items-center gap-6">
@@ -199,368 +233,375 @@
             <!-- Content Area -->
             <div class="px-10 pb-32">
                 {% block content %}
-                <!-- Hero Section Carousel -->
-                <div class="relative w-full h-[340px] rounded-3xl overflow-hidden mb-14 shadow-2xl mt-2 group"
-                    id="heroCarousel">
-                    <!-- Carousel Track -->
-                    <div id="heroTrack" class="flex h-full w-full transition-transform duration-700 ease-in-out">
+                <div class="px-10 pb-32">
+                    <!-- Hero Section Carousel -->
+                    <div class="relative w-full h-[340px] rounded-3xl overflow-hidden mb-14 shadow-2xl mt-2 group"
+                        id="heroCarousel">
+                        <!-- Carousel Track -->
+                        <div id="heroTrack" class="flex h-full w-full transition-transform duration-700 ease-in-out">
 
-                        <!-- Slide 1: Original SoulPlayer Library -->
-                        <div class="w-full h-full flex-shrink-0 relative flex items-center">
-                            <div class="absolute inset-0 bg-gradient-to-r from-[#1e293b] via-[#0f172a] to-[#020617]">
-                            </div>
-                            <div
-                                class="absolute -top-20 -right-20 w-80 h-80 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[100px] opacity-20">
-                            </div>
-                            <div
-                                class="absolute bottom-0 right-1/4 w-60 h-60 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20 relative animate-pulse">
-                            </div>
-                            <div class="relative z-10 p-14 max-w-2xl w-full">
-                                <div class="flex items-center gap-6 mb-6">
-                                    <div
-                                        class="w-20 h-20 rounded-full bg-gradient-to-tr from-[#3be2c8] to-blue-600 flex items-center justify-center shadow-[0_0_40px_rgba(59,226,200,0.6)] relative">
-                                        <div
-                                            class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_10s_linear_infinite]">
-                                        </div>
-                                        <i
-                                            class="fas fa-compact-disc text-4xl text-white animate-[spin_4s_linear_infinite]"></i>
-                                    </div>
-                                    <h1
-                                        class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-                                        SoulPlayer<br />Library</h1>
+                            <!-- Slide 1: Original SoulPlayer Library -->
+                            <div class="w-full h-full flex-shrink-0 relative flex items-center">
+                                <div class="absolute inset-0 bg-gradient-to-r from-[#1e293b] via-[#0f172a] to-[#020617]">
                                 </div>
-                                <p
-                                    class="text-gray-400 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
-                                    You were the shadow to my light Did you feel us Another start You fade<br>Away
-                                    afraid our aim is out of sight Wanna see us Alive</p>
-                                <div class="flex gap-5">
-                                    <button
-                                        class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-1 transition-all duration-300">PLAY</button>
-                                    <button
-                                        class="border border-[#3be2c8] bg-transparent text-[#3be2c8] font-bold tracking-widest text-xs px-10 py-3.5 rounded-full hover:bg-[#3be2c8]/10 transition-all duration-300 backdrop-blur-sm">FOLLOW</button>
+                                <div
+                                    class="absolute -top-20 -right-20 w-80 h-80 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[100px] opacity-20">
+                                </div>
+                                <div
+                                    class="absolute bottom-0 right-1/4 w-60 h-60 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20 relative animate-pulse">
+                                </div>
+                                <div class="relative z-10 p-14 max-w-2xl w-full">
+                                    <div class="flex items-center gap-6 mb-6">
+                                        <div
+                                            class="w-20 h-20 rounded-full bg-gradient-to-tr from-[#3be2c8] to-blue-600 flex items-center justify-center shadow-[0_0_40px_rgba(59,226,200,0.6)] relative">
+                                            <div
+                                                class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_10s_linear_infinite]">
+                                            </div>
+                                            <i
+                                                class="fas fa-compact-disc text-4xl text-white animate-[spin_4s_linear_infinite]"></i>
+                                        </div>
+                                        <h1
+                                            class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
+                                            SoulPlayer<br />Library</h1>
+                                    </div>
+                                    <p
+                                        class="text-gray-400 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
+                                        You were the shadow to my light Did you feel us Another start You fade<br>Away
+                                        afraid our aim is out of sight Wanna see us Alive</p>
+                                    <div class="flex gap-5">
+                                        <button
+                                            class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-1 transition-all duration-300">PLAY</button>
+                                        <button
+                                            class="border border-[#3be2c8] bg-transparent text-[#3be2c8] font-bold tracking-widest text-xs px-10 py-3.5 rounded-full hover:bg-[#3be2c8]/10 transition-all duration-300 backdrop-blur-sm">FOLLOW</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide 2: Top Global Hits -->
+                            <div class="w-full h-full flex-shrink-0 relative flex items-center">
+                                <div class="absolute inset-0 bg-gradient-to-r from-[#2e1065] via-[#1e1b4b] to-[#020617]">
+                                </div>
+                                <div
+                                    class="absolute -bottom-20 -left-20 w-80 h-80 bg-fuchsia-500 rounded-full mix-blend-screen filter blur-[120px] opacity-30">
+                                </div>
+                                <div
+                                    class="absolute top-0 right-1/3 w-72 h-72 bg-purple-500 rounded-full mix-blend-screen filter blur-[90px] opacity-20 relative animate-pulse">
+                                </div>
+                                <div class="relative z-10 p-14 max-w-2xl w-full">
+                                    <div class="flex items-center gap-6 mb-6">
+                                        <div
+                                            class="w-20 h-20 rounded-full bg-gradient-to-tr from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-[0_0_40px_rgba(217,70,239,0.5)] relative">
+                                            <div
+                                                class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_8s_linear_infinite_reverse]">
+                                            </div>
+                                            <i class="fas fa-globe text-4xl text-white"></i>
+                                        </div>
+                                        <h1
+                                            class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-fuchsia-200">
+                                            Global<br />Top 50</h1>
+                                    </div>
+                                    <p
+                                        class="text-fuchsia-100/70 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
+                                        The most played tracks right now. Updated daily. Discover what the world is
+                                        listening to.</p>
+                                    <div class="flex gap-5">
+                                        <button
+                                            class="bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(217,70,239,0.4)] hover:-translate-y-1 transition-all duration-300">LISTEN
+                                            NOW</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide 3: Weekly Discovery -->
+                            <div class="w-full h-full flex-shrink-0 relative flex items-center">
+                                <div class="absolute inset-0 bg-gradient-to-r from-[#451a03] via-[#2e1008] to-[#020617]">
+                                </div>
+                                <div
+                                    class="absolute -top-10 right-10 w-96 h-96 bg-amber-500 rounded-full mix-blend-screen filter blur-[130px] opacity-20 flex items-center justify-center">
+                                </div>
+                                <div
+                                    class="absolute bottom-1/4 -left-10 w-64 h-64 bg-orange-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 relative animate-[pulse_3s_ease-in-out_infinite]">
+                                </div>
+                                <div class="relative z-10 p-14 max-w-2xl w-full">
+                                    <div class="flex items-center gap-6 mb-6">
+                                        <div
+                                            class="w-20 h-20 rounded-full bg-gradient-tr from-amber-400 to-orange-600 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.5)] relative">
+                                            <div
+                                                class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_12s_linear_infinite]">
+                                            </div>
+                                            <i class="fas fa-magic text-4xl text-white"></i>
+                                        </div>
+                                        <h1
+                                            class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200">
+                                            Weekly<br />Discovery</h1>
+                                    </div>
+                                    <p
+                                        class="text-amber-100/70 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
+                                        A personalized mix of new releases and classic deep cuts curated just for your
+                                        taste.</p>
+                                    <div class="flex gap-5">
+                                        <button
+                                            class="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(245,158,11,0.4)] hover:-translate-y-1 transition-all duration-300">EXPLORE</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Slide 2: Top Global Hits -->
-                        <div class="w-full h-full flex-shrink-0 relative flex items-center">
-                            <div class="absolute inset-0 bg-gradient-to-r from-[#2e1065] via-[#1e1b4b] to-[#020617]">
-                            </div>
-                            <div
-                                class="absolute -bottom-20 -left-20 w-80 h-80 bg-fuchsia-500 rounded-full mix-blend-screen filter blur-[120px] opacity-30">
-                            </div>
-                            <div
-                                class="absolute top-0 right-1/3 w-72 h-72 bg-purple-500 rounded-full mix-blend-screen filter blur-[90px] opacity-20 relative animate-pulse">
-                            </div>
-                            <div class="relative z-10 p-14 max-w-2xl w-full">
-                                <div class="flex items-center gap-6 mb-6">
-                                    <div
-                                        class="w-20 h-20 rounded-full bg-gradient-to-tr from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-[0_0_40px_rgba(217,70,239,0.5)] relative">
-                                        <div
-                                            class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_8s_linear_infinite_reverse]">
-                                        </div>
-                                        <i class="fas fa-globe text-4xl text-white"></i>
-                                    </div>
-                                    <h1
-                                        class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-fuchsia-200">
-                                        Global<br />Top 50</h1>
-                                </div>
-                                <p
-                                    class="text-fuchsia-100/70 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
-                                    The most played tracks right now. Updated daily. Discover what the world is
-                                    listening to.</p>
-                                <div class="flex gap-5">
-                                    <button
-                                        class="bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(217,70,239,0.4)] hover:-translate-y-1 transition-all duration-300">LISTEN
-                                        NOW</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Navigation Arrows -->
+                        <button id="heroPrevBtn"
+                            class="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 z-20 hover:scale-105">
+                            <i class="fas fa-chevron-left text-lg pr-1"></i>
+                        </button>
+                        <button id="heroNextBtn"
+                            class="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 z-20 hover:scale-105">
+                            <i class="fas fa-chevron-right text-lg pl-1"></i>
+                        </button>
 
-                        <!-- Slide 3: Weekly Discovery -->
-                        <div class="w-full h-full flex-shrink-0 relative flex items-center">
-                            <div class="absolute inset-0 bg-gradient-to-r from-[#451a03] via-[#2e1008] to-[#020617]">
+                        <!-- Indicators -->
+                        <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+                            <div
+                                class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-white scale-125 hover:scale-125">
                             </div>
                             <div
-                                class="absolute -top-10 right-10 w-96 h-96 bg-amber-500 rounded-full mix-blend-screen filter blur-[130px] opacity-20 flex items-center justify-center">
+                                class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-[#516480] hover:bg-gray-300 hover:scale-125">
                             </div>
                             <div
-                                class="absolute bottom-1/4 -left-10 w-64 h-64 bg-orange-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 relative animate-[pulse_3s_ease-in-out_infinite]">
-                            </div>
-                            <div class="relative z-10 p-14 max-w-2xl w-full">
-                                <div class="flex items-center gap-6 mb-6">
-                                    <div
-                                        class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-orange-600 flex items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.5)] relative">
-                                        <div
-                                            class="absolute inset-1 border-2 border-white/30 rounded-full animate-[spin_12s_linear_infinite]">
-                                        </div>
-                                        <i class="fas fa-magic text-4xl text-white"></i>
-                                    </div>
-                                    <h1
-                                        class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200">
-                                        Weekly<br />Discovery</h1>
-                                </div>
-                                <p
-                                    class="text-amber-100/70 text-sm leading-relaxed mb-8 max-w-lg font-light tracking-wide drop-shadow">
-                                    A personalized mix of new releases and classic deep cuts curated just for your
-                                    taste.</p>
-                                <div class="flex gap-5">
-                                    <button
-                                        class="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(245,158,11,0.4)] hover:-translate-y-1 transition-all duration-300">EXPLORE</button>
-                                </div>
+                                class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-[#516480] hover:bg-gray-300 hover:scale-125">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Navigation Arrows -->
-                    <button id="heroPrevBtn"
-                        class="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 z-20 hover:scale-105">
-                        <i class="fas fa-chevron-left text-lg pr-1"></i>
-                    </button>
-                    <button id="heroNextBtn"
-                        class="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/50 z-20 hover:scale-105">
-                        <i class="fas fa-chevron-right text-lg pl-1"></i>
-                    </button>
+                    <!-- Custom Slider JS -->
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const track = document.getElementById('heroTrack');
+                            if (!track) return;
+                            const slides = track.children;
+                            const prevBtn = document.getElementById('heroPrevBtn');
+                            const nextBtn = document.getElementById('heroNextBtn');
+                            const dots = document.querySelectorAll('.hero-dot');
+                            const carousel = document.getElementById('heroCarousel');
 
-                    <!-- Indicators -->
-                    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-                        <div
-                            class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-white scale-125 hover:scale-125">
-                        </div>
-                        <div
-                            class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-[#516480] hover:bg-gray-300 hover:scale-125">
-                        </div>
-                        <div
-                            class="hero-dot w-2 h-2 rounded-full cursor-pointer transition-all duration-300 bg-[#516480] hover:bg-gray-300 hover:scale-125">
-                        </div>
-                    </div>
-                </div>
+                            let currentIndex = 0;
+                            const slideCount = slides.length;
+                            let autoSlideInterval;
 
-                <!-- Custom Slider JS -->
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        const track = document.getElementById('heroTrack');
-                        if (!track) return;
-                        const slides = track.children;
-                        const prevBtn = document.getElementById('heroPrevBtn');
-                        const nextBtn = document.getElementById('heroNextBtn');
-                        const dots = document.querySelectorAll('.hero-dot');
-                        const carousel = document.getElementById('heroCarousel');
+                            function updateSlider() {
+                                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                                // Update dots
+                                dots.forEach((dot, index) => {
+                                    if (index === currentIndex) {
+                                        dot.classList.remove('bg-[#516480]', 'hover:bg-gray-300');
+                                        dot.classList.add('bg-white', 'scale-125');
+                                    } else {
+                                        dot.classList.add('bg-[#516480]', 'hover:bg-gray-300');
+                                        dot.classList.remove('bg-white', 'scale-125');
+                                    }
+                                });
+                            }
 
-                        let currentIndex = 0;
-                        const slideCount = slides.length;
-                        let autoSlideInterval;
-
-                        function updateSlider() {
-                            track.style.transform = `translateX(-${currentIndex * 100}%)`;
-                            // Update dots
-                            dots.forEach((dot, index) => {
-                                if (index === currentIndex) {
-                                    dot.classList.remove('bg-[#516480]', 'hover:bg-gray-300');
-                                    dot.classList.add('bg-white', 'scale-125');
-                                } else {
-                                    dot.classList.add('bg-[#516480]', 'hover:bg-gray-300');
-                                    dot.classList.remove('bg-white', 'scale-125');
-                                }
-                            });
-                        }
-
-                        function nextSlide() {
-                            currentIndex = (currentIndex + 1) % slideCount;
-                            updateSlider();
-                        }
-
-                        function prevSlide() {
-                            currentIndex = (currentIndex - 1 + slideCount) % slideCount;
-                            updateSlider();
-                        }
-
-                        function startAutoSlide() {
-                            if (autoSlideInterval) clearInterval(autoSlideInterval);
-                            autoSlideInterval = setInterval(nextSlide, 5000);
-                        }
-
-                        function stopAutoSlide() {
-                            if (autoSlideInterval) clearInterval(autoSlideInterval);
-                        }
-
-                        nextBtn.addEventListener('click', () => {
-                            nextSlide();
-                            stopAutoSlide();
-                            startAutoSlide();
-                        });
-
-                        prevBtn.addEventListener('click', () => {
-                            prevSlide();
-                            stopAutoSlide();
-                            startAutoSlide();
-                        });
-
-                        dots.forEach((dot, index) => {
-                            dot.addEventListener('click', () => {
-                                currentIndex = index;
+                            function nextSlide() {
+                                currentIndex = (currentIndex + 1) % slideCount;
                                 updateSlider();
+                            }
+
+                            function prevSlide() {
+                                currentIndex = (currentIndex - 1 + slideCount) % slideCount;
+                                updateSlider();
+                            }
+
+                            function startAutoSlide() {
+                                if (autoSlideInterval) clearInterval(autoSlideInterval);
+                                autoSlideInterval = setInterval(nextSlide, 5000);
+                            }
+
+                            function stopAutoSlide() {
+                                if (autoSlideInterval) clearInterval(autoSlideInterval);
+                            }
+
+                            nextBtn.addEventListener('click', () => {
+                                nextSlide();
                                 stopAutoSlide();
                                 startAutoSlide();
                             });
+
+                            prevBtn.addEventListener('click', () => {
+                                prevSlide();
+                                stopAutoSlide();
+                                startAutoSlide();
+                            });
+
+                            dots.forEach((dot, index) => {
+                                dot.addEventListener('click', () => {
+                                    currentIndex = index;
+                                    updateSlider();
+                                    stopAutoSlide();
+                                    startAutoSlide();
+                                });
+                            });
+
+                            carousel.addEventListener('mouseenter', stopAutoSlide);
+                            carousel.addEventListener('mouseleave', startAutoSlide);
+
+                            startAutoSlide();
                         });
-
-                        carousel.addEventListener('mouseenter', stopAutoSlide);
-                        carousel.addEventListener('mouseleave', startAutoSlide);
-
-                        startAutoSlide();
-                    });
-                </script>
+                    </script>
 
 
-                <!-- Automatic Sliding Cards -->
-                <div class="mb-14">
-                    <h2 class="text-2xl font-bold tracking-wide mb-6">Moods & Genres</h2>
-                    <div class="relative w-full overflow-hidden rounded-2xl">
-                        <!-- Fade overlays -->
-                        <div
-                            class="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-[#111827] to-transparent pointer-events-none">
-                        </div>
-                        <div
-                            class="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-[#111827] to-transparent pointer-events-none">
-                        </div>
+                    <!-- Automatic Sliding Cards -->
+                    <div class="mb-14">
+                        <h2 class="text-2xl font-bold tracking-wide mb-6">Moods & Genres</h2>
+                        <div class="relative w-full overflow-hidden rounded-2xl">
+                            <!-- Fade overlays -->
+                            <div
+                                class="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-[#111827] to-transparent pointer-events-none">
+                            </div>
+                            <div
+                                class="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-[#111827] to-transparent pointer-events-none">
+                            </div>
 
-                        <div class="flex gap-6 w-max animate-autoSlide">
-                            <!-- Set 1 -->
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-heart absolute -right-4 -bottom-4 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Romantic Songs</h3>
-                                <p class="text-sm text-white/80 mt-1">Feel the love</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-microphone-alt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Arijit Singh Hits</h3>
-                                <p class="text-sm text-white/80 mt-1">Soulful melodies</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-dumbbell absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Workout Mix</h3>
-                                <p class="text-sm text-white/80 mt-1">Pump it up</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-compact-disc absolute -right-4 -bottom-4 text-7xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">90s Nostalgia</h3>
-                                <p class="text-sm text-white/80 mt-1">Golden era</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-coffee absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Lo-Fi Beats</h3>
-                                <p class="text-sm text-white/80 mt-1">Chill & study</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-bolt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Pop Anthems</h3>
-                                <p class="text-sm text-white/80 mt-1">Top chart hits</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-moon absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Chill Vibes</h3>
-                                <p class="text-sm text-white/80 mt-1">Relax your mind</p>
-                            </div>
-                            <!-- Set 2 -->
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-heart absolute -right-4 -bottom-4 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Romantic Songs</h3>
-                                <p class="text-sm text-white/80 mt-1">Feel the love</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-microphone-alt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Arijit Singh Hits</h3>
-                                <p class="text-sm text-white/80 mt-1">Soulful melodies</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-dumbbell absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Workout Mix</h3>
-                                <p class="text-sm text-white/80 mt-1">Pump it up</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-compact-disc absolute -right-4 -bottom-4 text-7xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">90s Nostalgia</h3>
-                                <p class="text-sm text-white/80 mt-1">Golden era</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-coffee absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Lo-Fi Beats</h3>
-                                <p class="text-sm text-white/80 mt-1">Chill & study</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-bolt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Pop Anthems</h3>
-                                <p class="text-sm text-white/80 mt-1">Top chart hits</p>
-                            </div>
-                            <div
-                                class="flex-none w-64 h-32 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
-                                <i
-                                    class="fas fa-moon absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
-                                <h3 class="text-xl font-bold text-white relative z-10">Chill Vibes</h3>
-                                <p class="text-sm text-white/80 mt-1">Relax your mind</p>
+                            <div class="flex gap-6 w-max animate-autoSlide">
+                                <!-- Set 1 -->
+                                <div onclick="window.location.href='{% url 'genre_detail' 'romance' %}';"
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-heart absolute -right-4 -bottom-4 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Romance</h3>
+                                    <p class="text-sm text-white/80 mt-1">Feel the love</p>
+                                </div>
+                                <div onclick="window.location.href='{% url 'genre_detail' 'indie' %}';"
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-guitar absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Indie</h3>
+                                    <p class="text-sm text-white/80 mt-1">Independent spirit</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-dumbbell absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Workout Mix</h3>
+                                    <p class="text-sm text-white/80 mt-1">Pump it up</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-compact-disc absolute -right-4 -bottom-4 text-7xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">90s Nostalgia</h3>
+                                    <p class="text-sm text-white/80 mt-1">Golden era</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-coffee absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Lo-Fi Beats</h3>
+                                    <p class="text-sm text-white/80 mt-1">Chill & study</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-bolt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Pop Anthems</h3>
+                                    <p class="text-sm text-white/80 mt-1">Top chart hits</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-moon absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Chill Vibes</h3>
+                                    <p class="text-sm text-white/80 mt-1">Relax your mind</p>
+                                </div>
+                                <!-- Set 2 -->
+                                <div onclick="window.location.href='{% url 'genre_detail' 'romance' %}';"
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-heart absolute -right-4 -bottom-4 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Romance</h3>
+                                    <p class="text-sm text-white/80 mt-1">Feel the love</p>
+                                </div>
+                                <div onclick="window.location.href='{% url 'genre_detail' 'indie' %}';"
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-guitar absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Indie</h3>
+                                    <p class="text-sm text-white/80 mt-1">Independent spirit</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-dumbbell absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Workout Mix</h3>
+                                    <p class="text-sm text-white/80 mt-1">Pump it up</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-compact-disc absolute -right-4 -bottom-4 text-7xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">90s Nostalgia</h3>
+                                    <p class="text-sm text-white/80 mt-1">Golden era</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-coffee absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Lo-Fi Beats</h3>
+                                    <p class="text-sm text-white/80 mt-1">Chill & study</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-bolt absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Pop Anthems</h3>
+                                    <p class="text-sm text-white/80 mt-1">Top chart hits</p>
+                                </div>
+                                <div
+                                    class="flex-none w-64 h-32 bg-gradient-to-br from-indigo-400 to-cyan-500 rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all">
+                                    <i
+                                        class="fas fa-moon absolute -right-2 -bottom-2 text-6xl text-white/20 group-hover:scale-110 transition-transform"></i>
+                                    <h3 class="text-xl font-bold text-white relative z-10">Chill Vibes</h3>
+                                    <p class="text-sm text-white/80 mt-1">Relax your mind</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Popular Song -->
-                <div class="mb-5 flex items-end justify-between">
-                    <h2 class="text-2xl font-bold tracking-wide">Popular Song</h2>
-                    <div class="flex gap-3 text-gray-500">
-                        {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}" class="hover:text-white transition"><i
-                                class="fas fa-arrow-left hover:scale-110 transition cursor-pointer text-[#3be2c8]"></i></a>
-                        {% else %}
-                        <i class="fas fa-arrow-left opacity-30 cursor-not-allowed"></i>
-                        {% endif %}
 
-                        {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}" class="hover:text-white transition"><i
-                                class="fas fa-arrow-right hover:scale-110 transition cursor-pointer text-[#3be2c8]"></i></a>
-                        {% else %}
-                        <i class="fas fa-arrow-right opacity-30 cursor-not-allowed"></i>
-                        {% endif %}
+
+                    <!-- Popular Song -->
+                    <div class="mb-5 flex items-end justify-between">
+                        <h2 class="text-2xl font-bold tracking-wide">Popular Song</h2>
+                        <div class="flex gap-3 text-gray-500">
+                            {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="hover:text-white transition"><i
+                                    class="fas fa-arrow-left hover:scale-110 transition cursor-pointer text-[#3be2c8]"></i></a>
+                            {% else %}
+                            <i class="fas fa-arrow-left opacity-30 cursor-not-allowed"></i>
+                            {% endif %}
+
+                            {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="hover:text-white transition"><i
+                                    class="fas fa-arrow-right hover:scale-110 transition cursor-pointer text-[#3be2c8]"></i></a>
+                            {% else %}
+                            <i class="fas fa-arrow-right opacity-30 cursor-not-allowed"></i>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
 
                 <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
                     {% for song in page_obj %}
                     <div class="flex-none w-44 group cursor-pointer relative"
                         onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
-                        <a href="{% url 'delete_song' song.id %}"
-                            onclick="event.stopPropagation(); return confirm('Are you sure you want to delete this song?')"
-                            class="absolute top-2 right-2 z-20 text-gray-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-300 drop-shadow-md bg-black/50 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <i class="fas fa-trash text-sm"></i>
-                        </a>
-                        <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
-                            <img src="{% if song.image %}{{ song.image.url }}{% endif %}"
+                        <form action="{% url 'delete_song' song.id %}" method="POST"
+                            onclick="event.stopPropagation();"
+                            class="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition duration-300">
+                            {% csrf_token %}
+                            <button type="submit"
+                                onclick="return confirm('Are you sure you want to delete this song?')"
+                                class="text-gray-400 hover:text-red-400 drop-shadow-md bg-black/50 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </form>                        <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                            <img src="{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}"
                                 class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
                             <div
                                 class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
@@ -575,6 +616,40 @@
                     </div>
                     {% empty %}
                     <p class="text-gray-500 italic">No popular songs available.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Trending on JioSaavn -->
+                <div class="mb-5 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Trending on <span class="text-[#3be2c8]">JioSaavn</span></h2>
+                    <span class="text-xs font-bold px-2 py-1 bg-[#3be2c8]/20 text-[#3be2c8] rounded uppercase tracking-widest border border-[#3be2c8]/30">Live Stream</span>
+                </div>
+
+                <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                    {% for song in trending_songs %}
+                    <div class="flex-none w-44 group cursor-pointer relative"
+                        onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                        <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                            <img src="{{ song.image_url }}"
+                                class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                            <div
+                                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                    class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                </a>
+                                <!-- Add to Playlist Button -->
+                                <button onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                    class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                        <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 italic">JioSaavn API currently unavailable.</p>
                     {% endfor %}
                 </div>
 
@@ -595,7 +670,7 @@
                     <div class="flex gap-8 w-max animate-autoSlide">
                         <!-- Set 1 -->
                         {% for artist in artists %}
-                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}'"
+                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}';"
                             class="flex-none w-28 flex flex-col items-center group cursor-pointer">
                             <div
                                 class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-4 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
@@ -609,7 +684,7 @@
 
                         <!-- Set 2 (Duplicated for infinite scroll) -->
                         {% for artist in artists %}
-                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}'"
+                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}';"
                             class="flex-none w-28 flex flex-col items-center group cursor-pointer">
                             <div
                                 class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-4 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
@@ -694,7 +769,10 @@
         const durTimeDisplay = document.getElementById('player-duration');
         let isPlaying = false;
 
-        function playSong(songId, url, title, artist, imageUrl) {
+        function playSong(songId, url, title, artist, imageUrl, source) {
+            // source: 'local' or 'jiosaavn' — determines which recording endpoint to use
+            source = source || 'local'; // default to local for backward compatibility
+
             // Update Player UI
             document.getElementById('player-title').innerText = title;
             document.getElementById('player-artist').innerText = artist;
@@ -709,25 +787,71 @@
             isPlaying = true;
             updatePlayButton();
 
-            // Record play in background
-            if (songId) {
-                // Manually parse CSRF token from document.cookie
-                function getCookie(name) {
-                    let cookieValue = null;
-                    if (document.cookie && document.cookie !== '') {
-                        const cookies = document.cookie.split(';');
-                        for (let i = 0; i < cookies.length; i++) {
-                            const cookie = cookies[i].trim();
-                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                                break;
-                            }
+            // --- Dynamic Sidebar Update ---
+            const sidebarList = document.getElementById('sidebar-recent-list');
+            if (sidebarList) {
+                const existingItem = sidebarList.querySelector(`[data-song-id="${songId}"]`);
+                if (existingItem) {
+                    sidebarList.prepend(existingItem);
+                } else {
+                    const newItem = document.createElement('div');
+                    newItem.setAttribute('data-song-id', songId);
+                    newItem.className = "flex items-center group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all duration-300";
+                    newItem.onclick = () => playSong(songId, url, title, artist, imageUrl, source);
+                    
+                    let imgHtml = '';
+                    if (imageUrl) {
+                        imgHtml = `<img src="${imageUrl}" class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">`;
+                    } else {
+                        imgHtml = `<div class="w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center border border-white/5 shadow-md group-hover:scale-105 transition"><i class="fas fa-music text-gray-500 group-hover:text-[#3be2c8] transition-colors"></i></div>`;
+                    }
+                    
+                    newItem.innerHTML = `
+                        ${imgHtml}
+                        <div class="ml-4 flex-1 overflow-hidden">
+                            <div class="text-sm font-semibold truncate group-hover:text-[#3be2c8] transition-colors">${title}</div>
+                            <div class="text-xs text-gray-500 truncate mt-0.5">${artist}</div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-white text-[#0b0f19] opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-lg transform translate-x-2 group-hover:translate-x-0 transition-all duration-300 hover:scale-110">
+                            <i class="fas fa-play text-xs ml-0.5"></i>
+                        </div>
+                    `;
+                    sidebarList.prepend(newItem);
+                    if (sidebarList.children.length > 10) sidebarList.removeChild(sidebarList.lastElementChild);
+                }
+            }
+
+            // --- Record play in user's listening history ---
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
                         }
                     }
-                    return cookieValue;
                 }
-                const csrftoken = getCookie('csrftoken');
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
 
+            if (source === 'jiosaavn' && songId) {
+                // JioSaavn song — use dedicated endpoint
+                fetch(`/record_play_jiosaavn/${songId}/`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    console.log('Record JioSaavn play response:', response.status);
+                }).catch(err => console.error('Error recording JioSaavn play:', err));
+            } else if (songId && !isNaN(songId)) {
+                // Local song (numeric DB ID)
                 fetch(`/record_play/${songId}/`, {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -793,6 +917,79 @@
             updatePlayButton();
             progressBar.style.width = '0%';
         });
+    </script>
+    <!-- Playlist Selection Menu -->
+    <div id="playlist-side-menu" class="playlist-menu shadow-2xl">
+        <div class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">Add to Playlist</div>
+        {% for playlist in playlists %}
+        <div class="playlist-menu-item" onclick="addToPlaylist('{{ playlist.id }}')">{{ playlist.name }}</div>
+        {% empty %}
+        <div class="px-4 py-3 text-xs text-gray-500 italic">No playlists found</div>
+        {% endfor %}
+    </div>
+
+    <script>
+        let currentJioSongId = null;
+        const playlistMenu = document.getElementById('playlist-side-menu');
+
+        function showPlaylistMenu(event, songId, title) {
+            currentJioSongId = songId;
+            const rect = event.currentTarget.getBoundingClientRect();
+            
+            playlistMenu.style.display = 'block';
+            playlistMenu.style.top = `${rect.bottom + window.scrollY + 10}px`;
+            playlistMenu.style.left = `${rect.left + window.scrollX - 100}px`;
+            
+            // Auto hide on click elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hidePlaylistMenu, { once: true });
+            }, 10);
+        }
+
+        function hidePlaylistMenu() {
+            playlistMenu.style.display = 'none';
+        }
+
+        function addToPlaylist(playlistId) {
+            if (!currentJioSongId) return;
+            
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+
+            const formData = new FormData();
+            formData.append('song_id', currentJioSongId);
+            formData.append('playlist_id', playlistId);
+
+            fetch("{% url 'add_jiosaavn_to_playlist' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                } else {
+                    alert(data.message || "Error adding song to playlist");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
     </script>
 </body>
 

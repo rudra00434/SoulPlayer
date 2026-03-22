@@ -103,7 +103,7 @@
             <tbody>
                 {% for song in songs %}
                 <tr class="group hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 cursor-pointer"
-                    onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
+                    onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')">
                     <td class="p-4 text-center text-gray-500 font-medium group-hover:text-white relative">
                         <span class="group-hover:opacity-0 transition-opacity">{{ forloop.counter }}</span>
                         <div
@@ -114,6 +114,8 @@
                     <td class="p-4 flex items-center gap-4">
                         {% if song.image %}
                         <img src="{{ song.image.url }}" class="w-12 h-12 rounded-lg object-cover shadow-md">
+                        {% elif song.remote_image_url %}
+                        <img src="{{ song.remote_image_url }}" class="w-12 h-12 rounded-lg object-cover shadow-md">
                         {% else %}
                         <div class="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center shadow-md">
                             <i class="fas fa-music text-gray-500"></i>
@@ -141,8 +143,57 @@
             class="w-20 h-20 bg-[#1e293b]/50 rounded-full flex items-center justify-center mb-6 shadow-lg border border-[#1e293b]">
             <i class="fas fa-compact-disc text-3xl text-gray-500 animate-[spin_4s_linear_infinite]"></i>
         </div>
-        <h3 class="text-2xl font-bold mb-2 tracking-wide text-white">No tracks available</h3>
-        <p class="text-gray-400 text-base font-light">This artist hasn't released any songs yet.</p>
+        <h3 class="text-2xl font-bold mb-2 tracking-wide text-white">No local tracks available</h3>
+        <p class="text-gray-400 text-base font-light">This artist hasn't been added to your local library yet.</p>
+    </div>
+    {% endif %}
+
+    <!-- JioSaavn Songs by Artist -->
+    {% if jiosaavn_songs %}
+    <div class="mt-14">
+        <div class="mb-6 flex items-end justify-between">
+            <h2 class="text-2xl font-bold tracking-wide flex items-center gap-3">
+                <i class="fas fa-stream text-[#3be2c8]"></i>
+                Stream {{ artist.name }} on <span class="text-[#3be2c8]">JioSaavn</span>
+            </h2>
+            <span class="text-xs font-bold px-2 py-1 bg-[#3be2c8]/20 text-[#3be2c8] rounded uppercase tracking-widest border border-[#3be2c8]/30">Live Stream</span>
+        </div>
+        <div class="bg-white/5 rounded-2xl border border-white/5 shadow-lg overflow-hidden backdrop-blur-sm">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-gray-400 text-xs tracking-wider uppercase border-b border-white/10 bg-white/5">
+                        <th class="p-4 font-semibold w-12 text-center">#</th>
+                        <th class="p-4 font-semibold">Title</th>
+                        <th class="p-4 font-semibold text-right">Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for song in jiosaavn_songs %}
+                    <tr class="group hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 cursor-pointer"
+                        onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                        <td class="p-4 text-center text-gray-500 font-medium group-hover:text-white relative">
+                            <span class="group-hover:opacity-0 transition-opacity">{{ forloop.counter }}</span>
+                            <div
+                                class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="fas fa-play text-[#3be2c8]"></i>
+                            </div>
+                        </td>
+                        <td class="p-4 flex items-center gap-4">
+                            <img src="{{ song.image_url }}" class="w-12 h-12 rounded-lg object-cover shadow-md">
+                            <div class="flex flex-col">
+                                <span class="text-white font-semibold text-[15px] group-hover:text-[#3be2c8] transition-colors">
+                                    {{ song.title }}</span>
+                                <span class="text-xs text-gray-400 mt-0.5">{{ song.album }}</span>
+                            </div>
+                        </td>
+                        <td class="p-4 text-right text-gray-400 font-medium text-sm">
+                            {{ song.duration }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     {% endif %}
 

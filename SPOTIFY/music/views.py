@@ -15,6 +15,7 @@ from django.conf import settings
 from .models import UserProfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from . import jiosavan
 
 # Load the spaCy model
 nlp = spacy.load("en_core_web_sm")
@@ -57,10 +58,34 @@ def index(request):
     page_obj = paginator.get_page(page_number)
     artists = Artist.objects.all()
     playlists = Playlist.objects.all()
-    context = {"page_obj": page_obj, "artists": artists, "playlists": playlists}
+    sidebar_playlists = Playlist.objects.all()[:5]
+    sidebar_recent_songs = Song.objects.all().order_by('-id')[:3]
+
+    # Fetch trending songs from JioSaavn
+    trending_songs = jiosavan.get_trending(limit=20)
+
+    # Common genres for UI cards
+    genres = [
+        {'id': 'romance', 'name': 'Romance', 'icon': 'fa-heart', 'color': 'from-pink-500 to-fuchsia-600'},
+        {'id': 'indie', 'name': 'Indie', 'icon': 'fa-headphones', 'color': 'from-blue-600 to-indigo-800'},
+        {'id': 'pop', 'name': 'Pop', 'icon': 'fa-bolt', 'color': 'from-purple-600 to-indigo-700'},
+        {'id': 'rock', 'name': 'Rock', 'icon': 'fa-drum', 'color': 'from-red-600 to-rose-700'},
+        {'id': 'hip-hop', 'name': 'Hip-Hop', 'icon': 'fa-microphone-alt', 'color': 'from-emerald-500 to-teal-600'},
+    ]
+
+    context = {
+        "page_obj": page_obj,
+        "artists": artists,
+        "playlists": playlists,
+        "trending_songs": trending_songs,
+        "genres": genres,
+        "sidebar_playlists": sidebar_playlists,
+        "sidebar_recent_songs": sidebar_recent_songs,
+    }
     return render(request, 'index.html', context)
 
 
+@login_required(login_url='user_login')
 def add_song(request):
     if request.method=='POST':
         form=SongForm(request.POST,request.FILES)
@@ -91,11 +116,15 @@ def play_song(request, pk):
     }
     return render(request, 'play_song.html', context)
 
-def delete_song(request,pk):
-    song=get_object_or_404(Song,id=pk)
-    song.delete()
+@login_required(login_url='user_login')
+def delete_song(request, pk):
+    if request.method == 'POST':
+        song = get_object_or_404(Song, id=pk)
+        song.delete()
+        return redirect('index')
     return redirect('index')
 
+@login_required(login_url='user_login')
 def update_song(request,pk):
     song=get_object_or_404(Song,id=pk)
     if request.method=='POST':
@@ -164,8 +193,7 @@ def search(request):
         # 2. Broadly search for Artists matching name or band
         artists = Artist.objects.filter(Q(name__icontains=target_name) | Q(music_band__icontains=target_name))
 
-        if is_play_command and songs.exists():
-            # Play the first matching song immediately
+        if is_play_command and songs.count() == 1:
             return redirect('play_song', pk=songs.first().id)
             
         if artists.exists() and not songs.exists():
@@ -175,12 +203,45 @@ def search(request):
         # Regular search fallback (Not playing immediately, or multiple songs found)
         query = target_name
 
+        # --- JIOSAAVN SEARCH ---
+        jiosaavn_songs = jiosavan.search_songs(target_name, limit=20)
+
+        # If voice command "play X" resulted in no local song but one JioSaavn song, play it
+        if is_play_command and not songs.exists() and len(jiosaavn_songs) > 0:
+            return redirect('play_jiosaavn_song', song_id=jiosaavn_songs[0]['id'])
+
     else:
         songs = []
+        jiosaavn_songs = []
         
-    context={"songs":songs, "query": query}
-    return render(request,'search.html',context)
+    # Common genres for UI cards
+    genres = [
+        {'id': 'romance', 'name': 'Romance', 'icon': 'fa-heart', 'color': 'from-pink-500 to-fuchsia-600'},
+        {'id': 'indie', 'name': 'Indie', 'icon': 'fa-headphones', 'color': 'from-blue-600 to-indigo-800'},
+        {'id': 'pop', 'name': 'Pop', 'icon': 'fa-bolt', 'color': 'from-purple-600 to-indigo-700'},
+        {'id': 'rock', 'name': 'Rock', 'icon': 'fa-drum', 'color': 'from-red-600 to-rose-700'},
+        {'id': 'hip-hop', 'name': 'Hip-Hop', 'icon': 'fa-microphone-alt', 'color': 'from-emerald-500 to-teal-600'},
+    ]
 
+    # Fetch all artists for the "Popular Artists" section
+    artists = Artist.objects.all()[:10]
+    
+    playlists = Playlist.objects.filter(user=request.user) if request.user.is_authenticated else []
+    sidebar_playlists = Playlist.objects.all()[:5]
+    sidebar_recent_songs = Song.objects.all().order_by('-id')[:3]
+    context = {
+        "songs": songs, 
+        "query": query, 
+        "jiosaavn_songs": jiosaavn_songs, 
+        "playlists": playlists, 
+        "genres": genres,
+        "artists": artists,
+        "sidebar_playlists": sidebar_playlists,
+        "sidebar_recent_songs": sidebar_recent_songs,
+    }
+    return render(request, 'search.html', context)
+
+@login_required(login_url='user_login')
 def add_artist(request):
     if request.method=='POST':
         form=ArtistForm(request.POST,request.FILES)
@@ -207,8 +268,13 @@ def artist_list(request):
 def artist_detail(request,pk):
     artist=get_object_or_404(Artist,id=pk)
     songs=Song.objects.filter(artist__icontains=artist.name)
+    
+    # Also fetch JioSaavn songs by this artist
+    jiosaavn_songs = jiosavan.search_songs(artist.name, limit=10)
+    
     context={"artist":artist,
-             "songs":songs}
+             "songs":songs,
+             "jiosaavn_songs": jiosaavn_songs}
     return render(request,'artist_detail.html',context)
 
 @login_required(login_url='user_login')
@@ -262,10 +328,16 @@ def add_to_playlist(request,pk):
     return render(request,'add_to_playlist.html',context)
         
 def genre_detail(request,genre):
-    songs=Song.objects.filter(song_type=genre)
+    # Use icontains for flexible matching (e.g. 'Romance' matches 'romance')
+    songs=Song.objects.filter(song_type__icontains=genre)
+    
+    # Also fetch JioSaavn songs for this genre
+    jiosaavn_songs = jiosavan.search_songs(f"{genre} songs", limit=10)
+    
     context={
         "songs":songs,
-        "genre":genre
+        "genre":genre,
+        "jiosaavn_songs": jiosaavn_songs,
     }
     return render(request,'genre_detail.html',context)
 
@@ -279,24 +351,33 @@ def podcasts(request):
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q={query}&type=video&key={youtube_api_key}"
     
     videos = []
-    try:
-        response = requests.get(url)
-        data = response.json()
-        if 'items' in data:
-            for item in data['items']:
-                video = {
-                    'title': item['snippet']['title'],
-                    'description': item['snippet']['description'],
-                    'thumbnail': item['snippet']['thumbnails']['high']['url'],
-                    'video_id': item['id']['videoId'],
-                    'channel_title': item['snippet']['channelTitle']
-                }
-                videos.append(video)
-    except Exception as e:
-        print(f"Error fetching data from YouTube API: {e}")
+    error_message = None
+    
+    if not youtube_api_key:
+        error_message = "YouTube API Key is missing. Please set YOUTUBE_API_KEY in your environment or settings.py."
+    else:
+        try:
+            response = requests.get(url, timeout=10)
+            data = response.json()
+            if 'items' in data:
+                for item in data['items']:
+                    video = {
+                        'title': item['snippet']['title'],
+                        'description': item['snippet']['description'],
+                        'thumbnail': item['snippet']['thumbnails']['high']['url'],
+                        'video_id': item['id']['videoId'],
+                        'channel_title': item['snippet']['channelTitle']
+                    }
+                    videos.append(video)
+            elif 'error' in data:
+                error_message = f"YouTube API Error: {data['error'].get('message', 'Unknown error')}"
+        except Exception as e:
+            error_message = f"Connection Error: Could not reach YouTube API. {str(e)}"
+            print(f"Error fetching data from YouTube API: {e}")
 
     context = {
-        'videos': videos
+        'videos': videos,
+        'error_message': error_message
     }
     return render(request, 'podcasts.html', context)
 
@@ -346,10 +427,276 @@ def record_play(request, pk):
         
         song = get_object_or_404(Song, id=pk)
         
-        # Ensure UserProfile exists
-        if not hasattr(request.user, 'userprofile'):
-            UserProfile.objects.create(user=request.user)
-            
-        request.user.userprofile.played_songs.add(song)
+        # Ensure UserProfile exists and add song
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        profile.played_songs.add(song)
         return JsonResponse({"status": "success"})
     return JsonResponse({"status": "error"}, status=400)
+
+@login_required(login_url='user_login')
+def last_listening(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    played_songs = profile.played_songs.all().order_by("-id")
+    return render(request, 'last_listening.html', {'played_songs': played_songs})
+
+import random, string
+from .models import ListeningRoom
+from .jiosavan import search_songs
+
+@login_required(login_url='user_login')
+def api_search_songs(request):
+    query = request.GET.get('q', '').strip()
+    if not query:
+        return JsonResponse({'status': 'success', 'results': []})
+    results = search_songs(query, limit=5)
+    return JsonResponse({'status': 'success', 'results': results})
+
+@csrf_exempt
+@login_required(login_url='user_login')
+def api_update_room_song(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'})
+        
+        room_code = data.get('room_code', '').upper()
+        song_id = data.get('song_id', '')
+        
+        room = ListeningRoom.objects.filter(room_code=room_code, host=request.user).first()
+        if room:
+            room.current_song_id = str(song_id)
+            room.save()
+            return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'error', 'message': 'Not authorized or room not found'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+@login_required(login_url='user_login')
+def jam_lobby(request):
+    return render(request, 'jam_lobby.html')
+
+@csrf_exempt
+@login_required(login_url='user_login')
+def create_room(request):
+    if request.method == 'POST':
+        import json
+        
+        # Parse logic differently because form data comes differently now
+        try:
+            data = json.loads(request.body)
+            current_song_id = data.get('song_id', '')
+        except:
+            current_song_id = request.POST.get('song_id', '')
+            
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        
+        ListeningRoom.objects.create(
+            host=request.user, 
+            room_code=code, 
+            current_song_id=str(current_song_id)
+        )
+        return JsonResponse({'status': 'success', 'room_code': code})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+
+@login_required(login_url='user_login')
+def jam_room(request, room_code):
+    room = get_object_or_404(ListeningRoom, room_code=room_code.upper())
+    
+    # We must fetch the song information to pass to the template
+    song = None
+    is_jiosaavn = False
+    if room.current_song_id:
+        if room.current_song_id.isdigit():
+            from .models import Song
+            song = Song.objects.filter(id=int(room.current_song_id)).first()
+        else:
+            # It's a jiosaavn ID. We need to fetch it from the API if it's not cached locally.
+            # Local cache check
+            from .models import Song
+            song = Song.objects.filter(jiosaavn_id=room.current_song_id).first()
+            if not song:
+                from .jiosavan import get_song_details
+                song_details = get_song_details(room.current_song_id)
+                if song_details:
+                    # Mock a temporary object for the template to parse
+                    class TempSong:
+                        def __init__(self, d):
+                            self.id = d.get('id', '')
+                            self.title = d.get('title', '')
+                            self.artist = d.get('artist', '')
+                            self.stream_url = d.get('stream_url', '')
+                            self.remote_image_url = d.get('image_url', '')
+                    song = TempSong(song_details)
+            is_jiosaavn = True
+            
+    is_host = request.user == room.host
+    context = {
+        'room': room,
+        'song': song,
+        'is_jiosaavn': is_jiosaavn,
+        'is_host': is_host,
+    }
+    return render(request, 'jam_room.html', context)
+
+
+@csrf_exempt
+def record_play_jiosaavn(request, song_id):
+    """Record a JioSaavn song play in user's listening history.
+    Syncs the song to local DB first if it doesn't exist."""
+    
+    if request.method == "POST" and request.user.is_authenticated:
+        # Check if this JioSaavn song already exists in local DB
+        song = Song.objects.filter(jiosaavn_id=song_id).first()
+        
+        if not song:
+            # Fetch details from JioSaavn and create local Song entry
+            details = jiosavan.get_song_details(song_id)
+            if details:
+                try:
+                    song = Song.objects.create(
+                        title=details['title'],
+                        artist=details['artist'],
+                        duration=details.get('duration', '0:00'),
+                        song_type='jiosaavn',
+                        audio_link=details['stream_url'],
+                        remote_image_url=details['image_url'],
+                        jiosaavn_id=song_id
+                    )
+                except Exception as e:
+                    print(f"Error syncing JioSaavn song: {e}")
+                    return JsonResponse({"status": "error", "message": str(e)}, status=500)
+            else:
+                return JsonResponse({"status": "error", "message": "Song not found on JioSaavn"}, status=404)
+        
+        # Ensure UserProfile exists and add song
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        profile.played_songs.add(song)
+        return JsonResponse({"status": "success"})
+    
+    return JsonResponse({"status": "error"}, status=400)
+
+def play_jiosaavn_song(request, song_id):
+    """Full-screen player for a JioSaavn song (fetched via API)."""
+    song = jiosavan.get_song_details(song_id)
+    if not song:
+        return render(request, 'play_song.html', {'error': 'Song not found on JioSaavn.'})
+
+    # Ensure db_song is available for unregistered users too
+    db_song = Song.objects.filter(jiosaavn_id=song_id).first()
+
+    # Record play history if authenticated
+    if request.user.is_authenticated:
+        # Sync to DB if not exists
+        if not db_song:
+            try:
+                db_song = Song.objects.create(
+                    title=song['title'],
+                    artist=song['artist'],
+                    duration=song.get('duration', '0:00'),
+                    song_type='jiosaavn',
+                    audio_link=song['stream_url'],
+                    remote_image_url=song['image_url'],
+                    jiosaavn_id=song_id
+                )
+            except Exception as e:
+                print(f"Error syncing JioSaavn song in view: {e}")
+        
+        if db_song:
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            profile.played_songs.add(db_song)
+
+    # Get similar song suggestions for "up next"
+    suggestions = jiosavan.get_song_suggestions(song_id, limit=8)
+
+    # Build previous/next matching the db list (same logic as local songs)
+    previous_song = None
+    next_song = None
+
+    # Implement linear Left/Right movement matching local player
+    if db_song:
+        jio_songs = list(Song.objects.filter(song_type='jiosaavn').order_by('id'))
+        if db_song in jio_songs:
+            current_index = jio_songs.index(db_song)
+            
+            if current_index > 0:
+                prev_db = jio_songs[current_index - 1]
+                previous_song = {'id': prev_db.jiosaavn_id}
+                
+            if current_index < len(jio_songs) - 1:
+                next_db = jio_songs[current_index + 1]
+                next_song = {'id': next_db.jiosaavn_id}
+
+    if not next_song and suggestions:
+        for sug in suggestions:
+            if str(sug.get('id')) == str(song_id):
+                continue
+            if previous_song and str(sug.get('id')) == str(previous_song.get('id')):
+                continue
+            next_song = sug
+            break
+        
+        if not next_song:
+            next_song = suggestions[0] if suggestions else None
+
+    context = {
+        "song": song,
+        "is_jiosaavn": True,
+        "suggestions": suggestions,
+        "previous_song": previous_song,
+        "next_song": next_song,
+    }
+    return render(request, 'play_song.html', context)
+
+
+def jiosaavn_search_api(request):
+    """JSON API endpoint for AJAX JioSaavn search (used by voice search etc)."""
+    query = request.GET.get('query', '')
+    if not query:
+        return JsonResponse({'results': []})
+    results = jiosavan.search_songs(query, limit=10)
+    return JsonResponse({'results': results})
+
+@login_required(login_url='user_login')
+def add_jiosaavn_to_playlist(request):
+    if request.method == 'POST':
+        song_id = request.POST.get('song_id')
+        playlist_id = request.POST.get('playlist_id')
+        
+        if not song_id or not playlist_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing data'}, status=400)
+            
+        playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
+        
+        # Check if song already exists in local DB
+        song = Song.objects.filter(jiosaavn_id=song_id).first()
+        
+        if not song:
+            # Sync from JioSaavn
+            details = jiosavan.get_song_details(song_id)
+            if details:
+                song = Song.objects.create(
+                    title=details['title'],
+                    artist=details['artist'],
+                    duration=details.get('duration', '3:00'),
+                    song_type='jiosaavn',
+                    audio_link=details['stream_url'],
+                    remote_image_url=details['image_url'],
+                    jiosaavn_id=song_id
+                )
+        
+        if song:
+            playlist.songs.add(song)
+            return JsonResponse({'status': 'success', 'message': f'"{song.title}" added to {playlist.name}'})
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+def about(request):
+    return render(request, 'about.html')
+
+def contact(request):
+    if request.method == 'POST':
+        messages.success(request, "Your message has been sent successfully!")
+        return redirect('contact')
+    return render(request, 'contact.html')

@@ -140,11 +140,20 @@
             <div class="space-y-2 overflow-y-auto pr-2 custom-scrollbar flex-grow relative z-10">
                 {% for song in played_songs %}
                 <div class="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-all duration-300 group/song cursor-pointer border border-transparent hover:border-white/5"
-                    onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
+                    onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')">
 
                     <div class="relative w-14 h-14 rounded-xl overflow-hidden shadow-md flex-shrink-0">
+                        {% if song.image %}
                         <img src="{{ song.image.url }}" alt="{{ song.title }}"
                             class="w-full h-full object-cover group-hover/song:scale-110 transition-transform duration-500">
+                        {% elif song.remote_image_url %}
+                        <img src="{{ song.remote_image_url }}" alt="{{ song.title }}"
+                            class="w-full h-full object-cover group-hover/song:scale-110 transition-transform duration-500">
+                        {% else %}
+                        <div class="w-full h-full bg-gray-800 flex items-center justify-center">
+                            <i class="fas fa-music text-gray-500"></i>
+                        </div>
+                        {% endif %}
                         <div
                             class="absolute inset-0 bg-black/40 opacity-0 group-hover/song:opacity-100 flex items-center justify-center transition-opacity duration-300 backdrop-blur-[2px]">
                             <i class="fas fa-play text-white text-sm ml-0.5"></i>
