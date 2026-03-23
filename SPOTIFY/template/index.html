@@ -838,7 +838,9 @@
             }
             const csrftoken = getCookie('csrftoken');
 
-            if (source === 'jiosaavn' && songId) {
+            const isAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
+
+            if (isAuthenticated && source === 'jiosaavn' && songId) {
                 // JioSaavn song — use dedicated endpoint
                 fetch(`/record_play_jiosaavn/${songId}/`, {
                     method: 'POST',
@@ -850,7 +852,7 @@
                 }).then(response => {
                     console.log('Record JioSaavn play response:', response.status);
                 }).catch(err => console.error('Error recording JioSaavn play:', err));
-            } else if (songId && !isNaN(songId)) {
+            } else if (isAuthenticated && songId && !isNaN(songId)) {
                 // Local song (numeric DB ID)
                 fetch(`/record_play/${songId}/`, {
                     method: 'POST',
