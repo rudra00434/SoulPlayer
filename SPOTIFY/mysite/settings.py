@@ -78,6 +78,22 @@ CHANNEL_LAYERS = {
         },
     },
 }
+# Cache configuration
+if 'REDIS_URL' in os.environ:
+    # Production — use Redis (you already have Redis for Channels)
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379'),
+        }
+    }
+else:
+    # Local development — use in-memory cache
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 

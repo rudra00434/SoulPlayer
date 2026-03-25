@@ -16,7 +16,7 @@ from .models import UserProfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from . import jiosavan
-
+from .jiosavan import get_trending_today
 # Load the spaCy model
 nlp = spacy.load("en_core_web_sm")
 
@@ -61,10 +61,10 @@ def index(request):
     sidebar_playlists = Playlist.objects.all()[:5]
     sidebar_recent_songs = Song.objects.all().order_by('-id')[:3]
 
-    # Fetch trending songs from JioSaavn
+    
     trending_songs = jiosavan.get_trending(limit=20)
+    trending_today_songs = get_trending_today(limit=20)   
 
-    # Common genres for UI cards
     genres = [
         {'id': 'romance', 'name': 'Romance', 'icon': 'fa-heart', 'color': 'from-pink-500 to-fuchsia-600'},
         {'id': 'indie', 'name': 'Indie', 'icon': 'fa-headphones', 'color': 'from-blue-600 to-indigo-800'},
@@ -78,6 +78,7 @@ def index(request):
         "artists": artists,
         "playlists": playlists,
         "trending_songs": trending_songs,
+        "trending_today_songs": trending_today_songs,   
         "genres": genres,
         "sidebar_playlists": sidebar_playlists,
         "sidebar_recent_songs": sidebar_recent_songs,
