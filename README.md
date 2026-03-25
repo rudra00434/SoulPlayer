@@ -50,8 +50,103 @@ SoulPlayer follows a classic **Model-View-Template (MVT)** architecture utilized
 ---
 ## System Architecture 
 
+### Original Architecture
 <img width="2089" height="987" alt="diagram-export-2-25-2026-4_45_45-AM" src="https://github.com/user-attachments/assets/9176b0ed-e15f-452f-971b-1466d9861ad0" />
 
+### Updated Architecture (with Live Jams, JioSaavn & WebSockets)
+
+```mermaid
+graph TB
+    subgraph Client["🖥️ Client Layer (Browser)"]
+        UI["Django Templates + Tailwind CSS"]
+        JS["Vanilla JS (ES6)"]
+        Audio["HTML5 Audio API"]
+        WSClient["WebSocket Client"]
+        SpeechAPI["Web Speech API"]
+    end
+
+    subgraph Server["⚙️ Django ASGI Server (Daphne)"]
+        subgraph HTTP["HTTP Layer"]
+            URLRouter["URL Router (urls.py)"]
+            Views["Views Controller (views.py)"]
+            NLP["spaCy NLP Engine"]
+            CtxProc["Context Processors"]
+        end
+
+        subgraph WS["WebSocket Layer"]
+            WSRouter["WebSocket Router (routing.py)"]
+            Consumer["ListeningRoomConsumer"]
+        end
+
+        subgraph Services["Service Layer"]
+            JioSaavn["JioSaavn API Module (jiosavan.py)"]
+            CacheLayer["Django Cache Framework"]
+        end
+    end
+
+    subgraph External["🌐 External APIs"]
+        JioAPI["JioSaavn API (saavn.sumit.co)"]
+        YTApi["YouTube Data API v3"]
+    end
+
+    subgraph Data["💾 Data Layer"]
+        SQLite["SQLite Database"]
+        Redis["Redis (Channels + Cache)"]
+    end
+
+    subgraph Models["📦 Django Models"]
+        Song["Song"]
+        Artist["Artist"]
+        Playlist["Playlist"]
+        UserProfile["UserProfile"]
+        ListeningRoom["ListeningRoom"]
+    end
+
+    %% Client to Server
+    UI -->|"HTTP GET/POST"| URLRouter
+    JS -->|"fetch() AJAX"| URLRouter
+    WSClient -->|"ws:// connection"| WSRouter
+    SpeechAPI -->|"Voice transcript"| JS
+
+    %% HTTP Flow
+    URLRouter --> Views
+    Views --> NLP
+    Views --> JioSaavn
+    Views --> Models
+    CtxProc -->|"Sidebar data"| UI
+
+    %% WebSocket Flow
+    WSRouter --> Consumer
+    Consumer -->|"Group broadcast"| Redis
+    Redis -->|"Real-time events"| Consumer
+
+    %% Service Layer
+    JioSaavn -->|"Search, Trending, Details"| JioAPI
+    JioSaavn -->|"Cache responses"| CacheLayer
+    CacheLayer --> Redis
+    Views -->|"Podcast fetch"| YTApi
+
+    %% Data Layer
+    Models --> SQLite
+    Consumer -->|"Room state"| SQLite
+
+    %% Audio Flow
+    Audio -->|"Stream from JioSaavn CDN"| JioAPI
+    JS -->|"Play/Pause/Seek events"| WSClient
+
+    %% Styling
+    classDef clientNode fill:#1e293b,stroke:#3be2c8,color:#fff
+    classDef serverNode fill:#0f172a,stroke:#818cf8,color:#fff
+    classDef externalNode fill:#1e1b4b,stroke:#f472b6,color:#fff
+    classDef dataNode fill:#0c0a09,stroke:#facc15,color:#fff
+
+    class UI,JS,Audio,WSClient,SpeechAPI clientNode
+    class URLRouter,Views,NLP,CtxProc,WSRouter,Consumer,JioSaavn,CacheLayer serverNode
+    class JioAPI,YTApi externalNode
+    class SQLite,Redis,Song,Artist,Playlist,UserProfile,ListeningRoom dataNode
+```
+
+---
 
 ## 🌟 Core Features Deep-Dive
 
