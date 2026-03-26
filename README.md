@@ -6,13 +6,12 @@
 
 <p align="center">
   <a href="#overview">Overview</a> •
-
   <a href="#architecture">Architecture</a> •
   <a href="#core-features">Features Deep-Dive</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#installation">Installation</a> •
   <a href="#license">License</a>
- </p>
+  </p>
 
 <p align="center">
   <b>A premium, feature-rich music streaming web application built with Django, Django Channels, and Tailwind CSS.</b>
