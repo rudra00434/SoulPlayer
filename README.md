@@ -335,8 +335,10 @@ SoulPlayer/
 │   ├── build.sh                   # Build script for Render
 │   ├── db.sqlite3                 # SQLite database
 │   ├── music/                     # Main Django app
-│   │   ├── models.py              # Song, Artist, Playlist, UserProfile, ListeningRoom
-│   │   ├── views.py               # All view controllers (39 URL handlers)
+│   │   ├── ml_Pipeline/           # Machine learning engines (Hybrid, Content-Based, Collaborative)
+│   │   ├── management/commands/   # Custom django-admin commands (train_recommendations)
+│   │   ├── models.py              # Song, Artist, Playlist, UserProfile, Recommendation, ListeningRoom
+│   │   ├── views.py               # All view controllers
 │   │   ├── urls.py                # URL routing
 │   │   ├── forms.py               # Django ModelForms with Tailwind styling
 │   │   ├── jiosavan.py            # JioSaavn API service module
@@ -348,16 +350,19 @@ SoulPlayer/
 │   │   ├── settings.py            # App settings (Redis, Cache, Channels)
 │   │   ├── asgi.py                # ASGI application (HTTP + WebSocket)
 │   │   └── urls.py                # Root URL configuration
-│   ├── template/                  # 23 HTML templates
+│   ├── template/                  # HTML templates
 │   │   ├── index.html             # Main discover page with hero carousel
+│   │   ├── immersive_player.html  # 3D XR Studio WebGL audio-reactive canvas
+│   │   ├── recommendations.html   # ML-powered "Made For You" interface
 │   │   ├── play_song.html         # Full-screen music player
 │   │   ├── search.html            # Search results with dual-source display
 │   │   ├── voice_search.html      # Voice search with Web Speech API
 │   │   ├── jam_lobby.html         # Live Jam lobby (create/join rooms)
 │   │   ├── jam_room.html          # Live Listening Room with chat
 │   │   ├── profile.html           # User dashboard
-│   │   └── ...                    # 16 more templates
+│   │   └── ...                    # Additional templates
 │   ├── static/                    # Static assets
+│   │   └── xr_backgrounds/        # Cinematic 3D environments for immersive player
 │   └── media/                     # User-uploaded media files
 └── README.md
 ```
