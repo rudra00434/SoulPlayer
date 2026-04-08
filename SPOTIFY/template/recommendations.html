@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Made For You — SoulPlayer</title>
+    <meta name="description" content="Your personalized music recommendations powered by SoulPlayer's ML engine.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Playlist Dropdown */
+        .playlist-menu {
+            display: none;
+            position: absolute;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            min-width: 180px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .playlist-menu-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .playlist-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .playlist-menu-item:hover {
+            background: #3be2c8;
+            color: #0b0f19;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shimmer-text {
+            background: linear-gradient(90deg, #3be2c8, #818cf8, #f472b6, #3be2c8);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+        }
+
+        .song-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .song-card:hover {
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+
+<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+
+    <div class="flex flex-1 overflow-hidden pb-20">
+        {% block sidebar %}
+        <!-- Sidebar -->
+        <div
+            class="w-80 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
+            <div class="text-3xl font-bold mb-12 tracking-wide text-white">Playlist</div>
+
+            <!-- Nav Links -->
+            <nav class="flex flex-col gap-6 mb-10 text-sm font-semibold">
+                <a href="{% url 'playlists' %}"
+                    class="flex items-center gap-4 text-[#3be2c8] transition cursor-pointer group">
+                    <i class="fas fa-music text-xl w-6 text-center"></i>
+                    <span class="tracking-wide">My Playlist</span>
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'last_listening' %}"
+                    class="flex items-center gap-4 text-gray-400 hover:text-white transition cursor-pointer group mb-4">
+                    <i class="far fa-circle text-xl w-6 text-center group-hover:text-[#3be2c8]"></i>
+                    <span class="tracking-wide">Last Listening</span>
+                </a>
+
+                <a href="{% url 'jam_lobby' %}"
+                    class="flex items-center gap-4 text-[#3be2c8] hover:text-white transition cursor-pointer group mb-4">
+                    <i
+                        class="fas fa-broadcast-tower text-xl w-6 text-center drop-shadow-[0_0_5px_rgba(59,226,200,0.8)] animate-pulse"></i>
+                    <span class="tracking-wide font-bold">Live Jams</span>
+                </a>
+                {% endif %}
+                <a href="{% url 'recommendations' %}"
+                    class="flex items-center gap-4 text-[#3be2c8] hover:text-white transition cursor-pointer group">
+                    <i class="fas fa-sparkles text-xl w-6 text-center text-[#3be2c8]"></i>
+                    <span class="tracking-wide font-bold">Recommended</span>
+                </a>
+            </nav>
+
+            <!-- Recent Songs -->
+            <div id="sidebar-recent-list" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 -mr-2 mb-10">
+                {% for song in sidebar_recent_songs %}
+                <div data-song-id="{{ song.id }}"
+                    onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')"
+                    class="flex items-center group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all duration-300">
+
+                    {% if song.image %}
+                    <img src="{{ song.image.url }}"
+                        class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">
+                    {% elif song.remote_image_url %}
+                    <img src="{{ song.remote_image_url }}"
+                        class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">
+                    {% else %}
+                    <div
+                        class="w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center border border-white/5 shadow-md group-hover:scale-105 transition">
+                        <i class="fas fa-music text-gray-500 group-hover:text-[#3be2c8] transition-colors"></i>
+                    </div>
+                    {% endif %}
+
+                    <div class="ml-4 flex-1 overflow-hidden">
+                        <div class="text-sm font-semibold truncate group-hover:text-[#3be2c8] transition-colors">
+                            {{ song.title }}</div>
+                        <div class="text-xs text-gray-500 truncate mt-0.5">{{ song.artist }}</div>
+                    </div>
+                    <div
+                        class="w-8 h-8 rounded-full bg-white text-[#0b0f19] opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-lg transform translate-x-2 group-hover:translate-x-0 transition-all duration-300 hover:scale-110">
+                        <i class="fas fa-play text-xs ml-0.5"></i>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-gray-500 text-sm italic pl-2">No recent tracks.</div>
+                {% endfor %}
+            </div>
+
+            <!-- Bottom Toolset -->
+            <div class="mt-auto pt-6 flex items-end justify-between px-2 h-20 border-t border-white/5">
+                <div class="flex items-end gap-1.5 h-10">
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1s_infinite] h-full"
+                        style="animation-delay: 0.1s"></div>
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.2s_infinite] h-2/3"
+                        style="animation-delay: 0.3s"></div>
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_0.8s_infinite] h-4/5"
+                        style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 bg-[#3be2c8] rounded-full animate-[bounce_1.1s_infinite] h-1/2"
+                        style="animation-delay: 0.4s"></div>
+                </div>
+                <div class="flex gap-5 text-gray-500 pb-1">
+                    <a href="{% url 'add_song' %}" class="hover:text-[#3be2c8] transition" title="Add Song"><i
+                            class="fas fa-plus text-lg"></i></a>
+                    <a href="{% url 'add_artist' %}" class="hover:text-[#3be2c8] transition" title="Add Artist"><i
+                            class="fas fa-user-plus text-lg"></i></a>
+                    <a href="{% url 'artists' %}" class="hover:text-[#3be2c8] transition" title="Artists Gallery"><i
+                            class="fas fa-users text-lg"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+        <!-- Main Content -->
+        <div
+            class="flex-1 flex flex-col overflow-y-auto no-scrollbar relative bg-gradient-to-br from-[#111827] to-[#0b0f19]">
+
+            <!-- Top Nav -->
+            <header
+                class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
+                <nav
+                    class="flex gap-6 lg:gap-8 text-gray-500 font-semibold text-sm tracking-widest whitespace-nowrap overflow-x-auto no-scrollbar flex-1 mr-4">
+                    <a href="{% url 'index' %}"
+                        class="hover:text-white pb-1 transition">Discover</a>
+                    <a href="{% url 'search' %}"
+                        class="hover:text-white pb-1 transition">Library</a>
+                    <a href="{% url 'voice_search' %}"
+                        class="hover:text-white pb-1 transition flex items-center gap-1.5"><i
+                            class="fas fa-microphone-alt text-[10px]"></i> Voice</a>
+                    <a href="{% url 'podcasts' %}"
+                        class="hover:text-white pb-1 transition">Podcasts</a>
+                    <a href="{% url 'recommendations' %}"
+                        class="text-white border-b-2 border-[#3be2c8] pb-1 transition">Made For You</a>
+                    <a href="{% url 'about' %}"
+                        class="hover:text-white pb-1 transition">About</a>
+                    <a href="{% url 'contact' %}"
+                        class="hover:text-white pb-1 transition">Contact</a>
+                </nav>
+
+                <div class="flex items-center gap-6">
+                    <form action="{% url 'search' %}" method="GET" class="relative group">
+                        <i
+                            class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-[#3be2c8] transition"></i>
+                        <input type="text" name="query" placeholder="Search Music..."
+                            class="bg-[#1e293b]/50 border border-transparent focus:border-[#3be2c8]/50 text-sm rounded-full pl-12 pr-6 py-2.5 w-64 focus:outline-none focus:bg-[#1e293b] text-white transition-all shadow-inner placeholder-gray-500 font-medium tracking-wide">
+                    </form>
+                    {% if user.is_authenticated %}
+                    <div class="flex items-center gap-4">
+                        <form action="{% url 'user_logout' %}" method="POST" class="inline">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="text-gray-400 hover:text-red-400 text-sm font-semibold tracking-wide transition">Logout</button>
+                        </form>
+                        <a href="{% url 'profile' %}"
+                            class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-[#3be2c8] flex items-center justify-center font-bold text-sm ring-2 ring-[#0b0f19] shadow-[0_0_15px_rgba(59,226,200,0.3)] cursor-pointer hover:scale-105 transition uppercase text-[#0b0f19]">
+                            {{ user.username|make_list|first }}
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center gap-4">
+                        <a href="{% url 'user_login' %}"
+                            class="text-white hover:text-[#3be2c8] text-sm font-semibold tracking-wide transition">Log
+                            in</a>
+                        <a href="{% url 'register' %}"
+                            class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-6 py-2.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-0.5 transition-all">SIGN
+                            UP</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="px-10 pb-32">
+
+                <!-- Hero Section: Made For You -->
+                <div class="relative w-full rounded-3xl overflow-hidden mb-14 shadow-2xl mt-2">
+                    <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#0f172a]"></div>
+                    <!-- Animated blobs -->
+                    <div class="absolute -top-20 -right-10 w-96 h-96 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[140px] opacity-20 animate-float"></div>
+                    <div class="absolute -bottom-20 -left-10 w-80 h-80 bg-[#818cf8] rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-float" style="animation-delay: -3s"></div>
+                    <div class="absolute top-1/2 right-1/4 w-64 h-64 bg-[#f472b6] rounded-full mix-blend-screen filter blur-[100px] opacity-15 animate-float" style="animation-delay: -1.5s"></div>
+
+                    <div class="relative z-10 px-14 py-16 flex items-center justify-between">
+                        <div class="max-w-2xl">
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="text-xs font-bold px-3 py-1.5 bg-[#3be2c8]/20 text-[#3be2c8] rounded-full uppercase tracking-widest border border-[#3be2c8]/30 flex items-center gap-1.5">
+                                    <i class="fas fa-brain text-[10px]"></i>
+                                    ML Powered
+                                </span>
+                                {% if source == 'cache' %}
+                                <span class="text-xs font-bold px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full uppercase tracking-widest border border-purple-500/30">
+                                    {{ algorithm }}
+                                </span>
+                                {% elif source == 'fallback' %}
+                                <span class="text-xs font-bold px-3 py-1.5 bg-amber-500/20 text-amber-300 rounded-full uppercase tracking-widest border border-amber-500/30">
+                                    Popular Picks
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
+                                <span class="shimmer-text">Made For You</span>
+                            </h1>
+                            <p class="text-gray-400 text-sm leading-relaxed max-w-lg font-light tracking-wide mb-2">
+                                Your personal mix of songs tailored by our recommendation engine.
+                                {% if source == 'cache' and updated_at %}
+                                    Updated {{ updated_at|timesince }} ago.
+                                {% elif source == 'realtime' %}
+                                    Freshly generated just for you.
+                                {% else %}
+                                    Discover popular songs while we learn your taste.
+                                {% endif %}
+                            </p>
+                            <p class="text-gray-500 text-xs font-medium tracking-widest">
+                                {{ total_count }} SONGS CURATED
+                            </p>
+                        </div>
+
+                        <!-- Decorative icon -->
+                        <div class="hidden lg:flex items-center justify-center">
+                            <div class="w-40 h-40 rounded-full bg-gradient-to-tr from-[#3be2c8]/20 to-[#818cf8]/20 flex items-center justify-center backdrop-blur-xl border border-white/5 shadow-[0_0_60px_rgba(59,226,200,0.2)]">
+                                <div class="w-28 h-28 rounded-full bg-gradient-to-br from-[#3be2c8] to-[#818cf8] flex items-center justify-center shadow-[0_0_40px_rgba(59,226,200,0.4)] animate-float">
+                                    <i class="fas fa-wand-magic-sparkles text-4xl text-white drop-shadow-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommended Songs Grid -->
+                {% if recommended_songs %}
+
+                <!-- All Recommended Songs -->
+                <div class="mb-6 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Your <span class="text-[#3be2c8]">Recommendations</span></h2>
+                    <span class="text-xs font-bold px-2 py-1 bg-white/5 text-gray-400 rounded uppercase tracking-widest border border-white/10">
+                        {{ total_count }} tracks
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 mb-14">
+                    {% for song in recommended_songs %}
+                    <div class="song-card group cursor-pointer relative"
+                        onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}', '{% if song.jiosaavn_id %}jiosaavn{% else %}local{% endif %}')">
+                        <div class="relative mb-3 overflow-hidden rounded-2xl shadow-lg aspect-square bg-gray-800/50">
+                            {% if song.image %}
+                            <img src="{{ song.image.url }}" alt="{{ song.title }}"
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500" loading="lazy">
+                            {% elif song.remote_image_url %}
+                            <img src="{{ song.remote_image_url }}" alt="{{ song.title }}"
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500" loading="lazy">
+                            {% else %}
+                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1e293b] to-[#0f172a]">
+                                <i class="fas fa-music text-3xl text-gray-600 group-hover:text-[#3be2c8] transition-colors"></i>
+                            </div>
+                            {% endif %}
+
+                            <!-- Hover overlay with play button -->
+                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                {% if song.jiosaavn_id %}
+                                <a href="{% url 'play_jiosaavn_song' song.jiosaavn_id %}" onclick="event.stopPropagation();"
+                                    class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                </a>
+                                {% else %}
+                                <a href="{% url 'play_song' song.id %}" onclick="event.stopPropagation();"
+                                    class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                </a>
+                                {% endif %}
+
+                                <!-- Add to Playlist -->
+                                <button
+                                    onclick="event.stopPropagation(); showPlaylistMenu(event, '{% if song.jiosaavn_id %}{{ song.jiosaavn_id }}{% else %}{{ song.id }}{% endif %}', '{{ song.title|escapejs }}')"
+                                    class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+
+                            <!-- Source badge -->
+                            {% if song.jiosaavn_id %}
+                            <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span class="text-[9px] font-bold px-2 py-1 bg-[#3be2c8]/90 text-[#0b0f19] rounded-full uppercase tracking-wider">JioSaavn</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Rank number -->
+                            <div class="absolute top-2 right-2 w-7 h-7 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                                <span class="text-[10px] font-bold text-white">{{ forloop.counter }}</span>
+                            </div>
+                        </div>
+
+                        <h3 class="font-bold text-[14px] truncate px-1 group-hover:text-[#3be2c8] transition-colors">{{ song.title }}</h3>
+                        <p class="text-xs text-gray-500 truncate px-1 mt-0.5 font-medium">{{ song.artist }}</p>
+                        {% if song.song_type and song.song_type != 'jiosaavn' %}
+                        <p class="text-[10px] text-gray-600 truncate px-1 mt-0.5 uppercase tracking-wider">{{ song.song_type }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                <!-- Empty State -->
+                <div class="flex flex-col items-center justify-center py-24 text-center">
+                    <div class="w-32 h-32 rounded-full bg-gradient-to-br from-[#3be2c8]/20 to-[#818cf8]/20 flex items-center justify-center mb-8 animate-float">
+                        <i class="fas fa-headphones text-5xl text-gray-600"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-300 mb-3">No Recommendations Yet</h3>
+                    <p class="text-gray-500 max-w-md text-sm leading-relaxed mb-8">
+                        Start listening to songs and we'll learn your taste. The more you play, 
+                        the better your recommendations become!
+                    </p>
+                    <a href="{% url 'index' %}"
+                        class="bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold tracking-widest text-xs px-10 py-3.5 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:-translate-y-1 transition-all duration-300">
+                        START LISTENING
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- How It Works Section -->
+                <div class="mb-14">
+                    <h2 class="text-lg font-bold tracking-wide text-gray-400 mb-6">How It Works</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#3be2c8]/20 transition-all duration-300 group">
+                            <div class="w-12 h-12 rounded-xl bg-[#3be2c8]/10 flex items-center justify-center mb-4 group-hover:bg-[#3be2c8]/20 transition-colors">
+                                <i class="fas fa-headphones text-[#3be2c8] text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-sm mb-2">Listen & Explore</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">Play songs you love. Your listening history helps us understand your taste.</p>
+                        </div>
+                        <div class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#818cf8]/20 transition-all duration-300 group">
+                            <div class="w-12 h-12 rounded-xl bg-[#818cf8]/10 flex items-center justify-center mb-4 group-hover:bg-[#818cf8]/20 transition-colors">
+                                <i class="fas fa-brain text-[#818cf8] text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-sm mb-2">ML Analysis</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">Our hybrid engine combines content similarity with collaborative filtering.</p>
+                        </div>
+                        <div class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#f472b6]/20 transition-all duration-300 group">
+                            <div class="w-12 h-12 rounded-xl bg-[#f472b6]/10 flex items-center justify-center mb-4 group-hover:bg-[#f472b6]/20 transition-colors">
+                                <i class="fas fa-wand-magic-sparkles text-[#f472b6] text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-sm mb-2">Personalized Mix</h3>
+                            <p class="text-xs text-gray-500 leading-relaxed">Get a unique playlist curated just for you, refreshed with every session.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Bar (Fixed Bottom) -->
+    <div
+        class="h-[90px] bg-[#0d1422]/95 backdrop-blur-xl border-t border-[#1e293b]/70 flex items-center justify-between px-10 z-50 fixed bottom-0 left-0 right-0 shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
+
+        <div class="w-[25%] flex items-center gap-4 hidden md:flex">
+            <div id="player-img-container"
+                class="w-14 h-14 bg-gray-800 rounded-lg shadow-md overflow-hidden border border-white/5 hidden">
+                <img id="player-img" src="" class="w-full h-full object-cover">
+            </div>
+            <div class="flex flex-col truncate">
+                <span id="player-title" class="text-[15px] font-bold truncate tracking-wide"></span>
+                <span id="player-artist" class="text-xs text-gray-400 mt-0.5 font-medium truncate"></span>
+            </div>
+        </div>
+
+        <div class="flex-1 max-w-3xl flex flex-col items-center justify-center gap-2">
+            <div class="flex items-center gap-8 text-gray-300">
+                <i class="fas fa-step-backward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
+                <div id="player-play-btn" onclick="togglePlay()"
+                    class="w-12 h-12 bg-white text-[#0b0f19] rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]">
+                    <i class="fas fa-play ml-1 text-lg"></i>
+                </div>
+                <i class="fas fa-step-forward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
+            </div>
+
+            <div class="w-full flex items-center gap-4 text-[11px] font-medium tracking-wider text-gray-500">
+                <span id="player-current-time" class="w-8 text-right">0:00</span>
+                <div class="h-1.5 flex-1 bg-gray-800 rounded-full relative cursor-pointer group"
+                    onclick="seek(event)">
+                    <div id="player-progress-bar"
+                        class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[#2cdbbd] to-[#3be2c8] rounded-full shadow-[0_0_10px_rgba(59,226,200,0.5)]">
+                        <div
+                            class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                    </div>
+                </div>
+                <span id="player-duration" class="w-8">0:00</span>
+            </div>
+        </div>
+
+        <div class="w-[25%] flex items-center justify-end gap-3 text-gray-400 hidden lg:flex">
+            <i class="fas fa-volume-up text-sm hover:text-white transition cursor-pointer"></i>
+            <div class="w-24 h-1.5 bg-gray-800 rounded-full relative cursor-pointer group">
+                <div class="absolute top-0 left-0 h-full w-[80%] bg-[#3be2c8] rounded-full group-hover:bg-[#2cdbbd]">
+                </div>
+                <div
+                    class="absolute left-[80%] top-1/2 -translate-y-1/2 -translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden audio element -->
+    <audio id="audio-player"></audio>
+
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const playBtn = document.getElementById('player-play-btn');
+        const playIcon = playBtn.querySelector('i');
+        const progressBar = document.getElementById('player-progress-bar');
+        const currTimeDisplay = document.getElementById('player-current-time');
+        const durTimeDisplay = document.getElementById('player-duration');
+        let isPlaying = false;
+
+        function playSong(songId, url, title, artist, imageUrl, source) {
+            source = source || 'local';
+
+            document.getElementById('player-title').innerText = title;
+            document.getElementById('player-artist').innerText = artist;
+
+            if (imageUrl) {
+                document.getElementById('player-img-container').classList.remove('hidden');
+                document.getElementById('player-img').src = imageUrl;
+            }
+
+            audioPlayer.src = url;
+            audioPlayer.play();
+            isPlaying = true;
+            updatePlayButton();
+
+            // --- Record play in user's listening history ---
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+            const isAuthenticated = {% if user.is_authenticated %} true{% else %} false{% endif %};
+
+            if (isAuthenticated && source === 'jiosaavn' && songId) {
+                fetch(`/record_play_jiosaavn/${songId}/`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
+                }).catch(err => console.error('Error recording JioSaavn play:', err));
+            } else if (isAuthenticated && songId && !isNaN(songId)) {
+                fetch(`/record_play/${songId}/`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
+                }).catch(err => console.error('Error recording play:', err));
+            }
+        }
+
+        function togglePlay() {
+            if (!audioPlayer.src) return;
+            if (isPlaying) { audioPlayer.pause(); } else { audioPlayer.play(); }
+            isPlaying = !isPlaying;
+            updatePlayButton();
+        }
+
+        function updatePlayButton() {
+            if (isPlaying) {
+                playIcon.classList.remove('fa-play', 'ml-1');
+                playIcon.classList.add('fa-pause');
+            } else {
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play', 'ml-1');
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        function seek(event) {
+            if (!audioPlayer.src) return;
+            const width = event.currentTarget.clientWidth;
+            const clickX = event.offsetX;
+            const duration = audioPlayer.duration;
+            audioPlayer.currentTime = (clickX / width) * duration;
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            const { currentTime, duration } = audioPlayer;
+            if (duration) {
+                const progressPercent = (currentTime / duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                durTimeDisplay.innerText = formatTime(duration);
+            }
+            currTimeDisplay.innerText = formatTime(currentTime);
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            isPlaying = false;
+            updatePlayButton();
+            progressBar.style.width = '0%';
+        });
+    </script>
+
+    <!-- Playlist Selection Menu -->
+    <div id="playlist-side-menu" class="playlist-menu shadow-2xl">
+        <div class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">
+            Add to Playlist</div>
+        {% for playlist in playlists %}
+        <div class="playlist-menu-item" onclick="addToPlaylist('{{ playlist.id }}')">{{ playlist.name }}</div>
+        {% empty %}
+        <div class="px-4 py-3 text-xs text-gray-500 italic">No playlists found</div>
+        {% endfor %}
+    </div>
+
+    <script>
+        let currentJioSongId = null;
+        const playlistMenu = document.getElementById('playlist-side-menu');
+
+        function showPlaylistMenu(event, songId, title) {
+            currentJioSongId = songId;
+            const rect = event.currentTarget.getBoundingClientRect();
+            playlistMenu.style.display = 'block';
+            playlistMenu.style.top = `${rect.bottom + window.scrollY + 10}px`;
+            playlistMenu.style.left = `${rect.left + window.scrollX - 100}px`;
+            setTimeout(() => {
+                document.addEventListener('click', hidePlaylistMenu, { once: true });
+            }, 10);
+        }
+
+        function hidePlaylistMenu() {
+            playlistMenu.style.display = 'none';
+        }
+
+        function addToPlaylist(playlistId) {
+            if (!currentJioSongId) return;
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+            const formData = new FormData();
+            formData.append('song_id', currentJioSongId);
+            formData.append('playlist_id', playlistId);
+
+            fetch("{% url 'add_jiosaavn_to_playlist' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrftoken },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                } else {
+                    alert(data.message || "Error adding song to playlist");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+
+</html>

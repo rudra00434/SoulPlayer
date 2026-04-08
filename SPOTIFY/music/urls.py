@@ -34,6 +34,8 @@ urlpatterns =[
     path('play_jiosaavn/<str:song_id>/', views.play_jiosaavn_song, name='play_jiosaavn_song'),
     path('api/jiosaavn/search/', views.jiosaavn_search_api, name='jiosaavn_search_api'),
     path('api/playlist/add_jiosaavn/', views.add_jiosaavn_to_playlist, name='add_jiosaavn_to_playlist'),
+    path('recommendations/', views.recommendations, name='recommendations'),
+    path('immersive/', views.immersive_player, name='immersive_player'),
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
 ]

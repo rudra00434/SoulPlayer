@@ -1,0 +1,754 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>XR Studio — SoulPlayer Immersive</title>
+    <meta name="description" content="Immersive 3D audio-reactive music experience — step inside the music.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Outfit',sans-serif;background:#000;color:#fff;overflow:hidden;height:100vh;width:100vw;}
+        #world{position:fixed;inset:0;z-index:1;}
+        #world canvas{display:block;}
+
+        .ui{position:fixed;z-index:10;pointer-events:none;}
+        .ui *{pointer-events:auto;}
+
+        /* Top bar */
+        .top-bar{top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 24px;gap:10px;flex-wrap:wrap;}
+        .back-btn{display:flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:8px 18px;border-radius:50px;background:rgba(0,0,0,0.45);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);transition:all .3s;flex-shrink:0;}
+        .back-btn:hover{background:rgba(59,226,200,0.2);border-color:rgba(59,226,200,0.4);}
+        .search-box{flex:1;max-width:440px;position:relative;}
+        .search-box input{width:100%;padding:10px 18px 10px 40px;border-radius:50px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.5);backdrop-filter:blur(20px);color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;outline:none;transition:all .3s;}
+        .search-box input:focus{border-color:rgba(59,226,200,0.5);box-shadow:0 0 20px rgba(59,226,200,0.1);}
+        .search-box input::placeholder{color:rgba(255,255,255,0.3);}
+        .search-box .si-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.35);font-size:13px;}
+        .search-box .ss{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:rgba(59,226,200,0.6);font-size:13px;display:none;}
+        .search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:rgba(11,15,25,0.96);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;max-height:340px;overflow-y:auto;display:none;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+        .search-results.visible{display:block;}
+        .search-results::-webkit-scrollbar{width:4px;}
+        .search-results::-webkit-scrollbar-thumb{background:#1e293b;border-radius:4px;}
+        .sr-item{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;transition:all .2s;}
+        .sr-item:hover{background:rgba(255,255,255,0.06);}
+        .sr-item img{width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0;}
+        .sr-item .m{flex:1;overflow:hidden;}
+        .sr-item .m h4{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .sr-item .m p{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .badge{font-size:9px;font-weight:700;padding:5px 12px;border-radius:50px;text-transform:uppercase;letter-spacing:1.5px;backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);transition:all .5s;flex-shrink:0;}
+
+        /* Genre bar */
+        .genre-bar{top:64px;left:50%;transform:translateX(-50%);display:flex;gap:5px;padding:6px 12px;background:rgba(0,0,0,0.5);backdrop-filter:blur(20px);border-radius:50px;border:1px solid rgba(255,255,255,0.06);max-width:94vw;overflow-x:auto;}
+        .genre-bar::-webkit-scrollbar{display:none;}
+        .genre-btn{padding:6px 14px;border-radius:50px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;cursor:pointer;transition:all .3s;white-space:nowrap;font-family:'Outfit',sans-serif;letter-spacing:.4px;}
+        .genre-btn:hover{background:rgba(255,255,255,0.08);color:#fff;}
+        .genre-btn.active{color:#0b0f19;font-weight:700;border-color:transparent;}
+
+        /* Song info */
+        .song-info-center{bottom:110px;left:50%;transform:translateX(-50%);text-align:center;width:100%;max-width:500px;padding:0 16px;}
+        .song-info-center .album-art{width:80px;height:80px;border-radius:14px;object-fit:cover;box-shadow:0 10px 40px rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.15);margin:0 auto 12px;display:none;}
+        .song-info-center .album-art.visible{display:block;}
+        .song-info-center .s-title{font-size:28px;font-weight:800;text-shadow:0 3px 30px rgba(0,0,0,0.8);line-height:1.2;letter-spacing:-0.5px;}
+        .song-info-center .s-artist{font-size:14px;color:rgba(255,255,255,0.55);margin-top:5px;font-weight:500;text-shadow:0 2px 10px rgba(0,0,0,0.6);}
+        .song-info-center .s-genre-tag{display:inline-block;margin-top:8px;font-size:8px;font-weight:700;padding:4px 12px;border-radius:50px;text-transform:uppercase;letter-spacing:2px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.3);}
+
+        /* Controls */
+        .controls{bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:10px 22px;background:rgba(0,0,0,0.5);backdrop-filter:blur(30px);border-radius:50px;border:1px solid rgba(255,255,255,0.08);}
+        .cb{width:38px;height:38px;border-radius:50%;border:none;background:transparent;color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;}
+        .cb:hover{color:#fff;transform:scale(1.1);}
+        .cb-play{width:50px;height:50px;background:linear-gradient(135deg,#3be2c8,#818cf8);color:#0b0f19;font-size:17px;box-shadow:0 0 30px rgba(59,226,200,0.4);transition:all .3s;}
+        .cb-play:hover{box-shadow:0 0 40px rgba(59,226,200,0.6);transform:scale(1.08);}
+        .pw{width:160px;height:4px;background:rgba(255,255,255,0.12);border-radius:4px;cursor:pointer;margin:0 6px;}
+        .pf{height:100%;border-radius:4px;width:0%;transition:width .1s linear;background:linear-gradient(90deg,#3be2c8,#818cf8);}
+        .td{font-size:10px;color:rgba(255,255,255,0.4);min-width:30px;text-align:center;}
+
+        /* Drawer */
+        .dt{bottom:28px;right:24px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.45);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;}
+        .dt:hover{background:rgba(59,226,200,0.2);}
+        .song-drawer{top:0;right:-400px;bottom:0;width:380px;background:rgba(8,12,20,0.95);backdrop-filter:blur(40px);border-left:1px solid rgba(255,255,255,0.05);transition:right .4s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:24px 18px;}
+        .song-drawer.open{right:0;}
+        .song-drawer::-webkit-scrollbar{width:4px;}
+        .song-drawer::-webkit-scrollbar-thumb{background:#1e293b;border-radius:4px;}
+        .dh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+        .dh-title{font-size:15px;font-weight:700;background:linear-gradient(90deg,#3be2c8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .dc{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;}
+        .dc:hover{background:rgba(255,100,100,0.2);}
+        .sli{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:2px;}
+        .sli:hover{background:rgba(255,255,255,0.05);}
+        .sli.active{background:rgba(59,226,200,0.1);border:1px solid rgba(59,226,200,0.15);}
+        .sli img{width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0;}
+        .sli .sm{flex:1;overflow:hidden;}
+        .sli .sm h4{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .sli .sm p{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+        /* Splash */
+        .splash{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at center,#0f172a 0%,#000 80%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s,visibility .8s;}
+        .splash.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+        .splash h1{font-size:42px;font-weight:800;background:linear-gradient(90deg,#3be2c8,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;}
+        .splash p{color:rgba(255,255,255,0.4);font-size:13px;max-width:440px;text-align:center;line-height:1.7;margin-bottom:32px;}
+        .splash-btn{padding:14px 44px;border-radius:50px;border:none;background:linear-gradient(135deg,#3be2c8,#818cf8);color:#0b0f19;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;box-shadow:0 0 40px rgba(59,226,200,0.4);transition:all .3s;}
+        .splash-btn:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(59,226,200,0.5);}
+        .splash .hint{margin-top:20px;font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:1px;}
+
+        @media(max-width:768px){
+            .song-info-center{bottom:130px;}
+            .song-info-center .s-title{font-size:22px;}
+            .controls{padding:8px 14px;gap:5px;}
+            .pw{width:90px;}
+            .top-bar{padding:12px 14px;}
+            .song-drawer{width:100%;right:-100%;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="splash" id="splash">
+    <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#3be2c8,#818cf8);display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 0 60px rgba(59,226,200,0.4)">
+        <i class="fas fa-vr-cardboard" style="font-size:28px;color:#0b0f19"></i>
+    </div>
+    <h1>XR Studio</h1>
+    <p>Step inside a 3D world that reacts to music. Drag to look around 360°. Switch genres to transform your environment. Search any song to play.</p>
+    <button class="splash-btn" id="enterBtn">ENTER WORLD</button>
+    <div class="hint">🖱 DRAG TO LOOK AROUND &bull; SCROLL TO ZOOM</div>
+</div>
+
+<div id="world"></div>
+
+<!-- Top Bar -->
+<div class="ui top-bar" id="topBar" style="opacity:0;transition:opacity .5s">
+    <a href="{% url 'index' %}" class="back-btn"><i class="fas fa-arrow-left"></i> Exit</a>
+    <div class="search-box" id="searchBox">
+        <i class="fas fa-search si-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search songs..." autocomplete="off">
+        <i class="fas fa-spinner fa-spin ss" id="searchSpinner"></i>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+    <span class="badge" id="genreBadge" style="background:rgba(59,226,200,0.15);color:#3be2c8;border-color:rgba(59,226,200,0.3)">Cosmic</span>
+</div>
+
+<!-- Genre Bar -->
+<div class="ui genre-bar" id="genreBar" style="opacity:0;transition:opacity .5s">
+    <button class="genre-btn active" data-genre="default" style="background:#3be2c8;color:#0b0f19">🌌 Cosmic</button>
+    <button class="genre-btn" data-genre="romance">💖 Romance</button>
+    <button class="genre-btn" data-genre="pop">⚡ Pop</button>
+    <button class="genre-btn" data-genre="rock">🔥 Rock</button>
+    <button class="genre-btn" data-genre="hiphop">👑 Hip-Hop</button>
+    <button class="genre-btn" data-genre="indie">🎧 Indie</button>
+    <button class="genre-btn" data-genre="edm">💫 EDM</button>
+    <button class="genre-btn" data-genre="classical">🎻 Classical</button>
+    <button class="genre-btn" data-genre="lofi">☕ Lo-Fi</button>
+</div>
+
+<!-- Song Info -->
+<div class="ui song-info-center" id="songInfo" style="opacity:0;transition:opacity .5s">
+    <img class="album-art" id="albumArt" src="" alt="">
+    <div class="s-title" id="songTitle">Explore the world</div>
+    <div class="s-artist" id="songArtist">Drag to look around</div>
+    <span class="s-genre-tag" id="genreTag" style="display:none"></span>
+</div>
+
+<!-- Controls -->
+<div class="ui controls" id="controls" style="opacity:0;transition:opacity .5s">
+    <button class="cb" id="prevBtn"><i class="fas fa-step-backward"></i></button>
+    <button class="cb cb-play" id="playPauseBtn"><i class="fas fa-play" style="margin-left:2px"></i></button>
+    <button class="cb" id="nextBtn"><i class="fas fa-step-forward"></i></button>
+    <span class="td" id="curTime">0:00</span>
+    <div class="pw" id="progressBar"><div class="pf" id="progressFill"></div></div>
+    <span class="td" id="totTime">0:00</span>
+</div>
+
+<button class="ui dt" id="drawerToggle" style="opacity:0;transition:opacity .5s"><i class="fas fa-list"></i></button>
+
+<!-- Song Drawer -->
+<div class="ui song-drawer" id="songDrawer">
+    <div class="dh">
+        <span class="dh-title">Queue</span>
+        <button class="dc" id="drawerClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="songList">
+        {% for song in immersive_songs %}
+        <div class="sli" data-idx="{{ forloop.counter0 }}" data-id="{{ song.id }}" data-title="{{ song.title|escapejs }}" data-artist="{{ song.artist|escapejs }}" data-url="{{ song.stream_url }}" data-image="{{ song.image_url }}" data-duration="{{ song.duration }}">
+            <img src="{{ song.image_url }}" alt="" loading="lazy">
+            <div class="sm"><h4>{{ song.title }}</h4><p>{{ song.artist }}</p></div>
+        </div>
+        {% empty %}
+        <p style="color:rgba(255,255,255,0.3);text-align:center;padding:40px 0;font-size:13px">No songs available.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<audio id="xrAudio" crossorigin="anonymous" preload="auto"></audio>
+
+<!-- Three.js + OrbitControls -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════════════
+   GENRE THEMES — each transforms the 3D world
+   ═══════════════════════════════════════════ */
+const THEMES = {
+    default: {
+        name:'Cosmic', sky1:0x020510, sky2:0x0a0520, fog:0x030308, fogDensity:0.012,
+        ground:0x0a1628, gridColor:0x1a3a5a, primary:0x3be2c8, secondary:0x818cf8,
+        accent:0xf472b6, barEmissive:0x3be2c8, ambientIntensity:0.15,
+        pointColor:0x3be2c8, pointIntensity:1.5, particleColor:0x3be2c8,
+        accentHex:'#3be2c8', accent2Hex:'#818cf8',
+    },
+    romance: {
+        name:'Romance', sky1:0x1a0510, sky2:0x200818, fog:0x0a0208, fogDensity:0.015,
+        ground:0x1a0a14, gridColor:0x3a1a2a, primary:0xff69b4, secondary:0xff1493,
+        accent:0xffb6c1, barEmissive:0xff69b4, ambientIntensity:0.12,
+        pointColor:0xff69b4, pointIntensity:1.2, particleColor:0xff69b4,
+        accentHex:'#ff69b4', accent2Hex:'#ff1493',
+    },
+    pop: {
+        name:'Pop', sky1:0x0a0515, sky2:0x15082a, fog:0x050210, fogDensity:0.010,
+        ground:0x14081e, gridColor:0x3a1a4a, primary:0xffdd00, secondary:0xff6600,
+        accent:0xff00ff, barEmissive:0xffdd00, ambientIntensity:0.18,
+        pointColor:0xffdd00, pointIntensity:1.8, particleColor:0xff6600,
+        accentHex:'#ffdd00', accent2Hex:'#ff6600',
+    },
+    rock: {
+        name:'Rock', sky1:0x150502, sky2:0x200805, fog:0x0a0202, fogDensity:0.018,
+        ground:0x1a0a08, gridColor:0x4a1a0a, primary:0xff3300, secondary:0xff6600,
+        accent:0xffaa00, barEmissive:0xff3300, ambientIntensity:0.10,
+        pointColor:0xff3300, pointIntensity:2.0, particleColor:0xff6600,
+        accentHex:'#ff3300', accent2Hex:'#ff6600',
+    },
+    hiphop: {
+        name:'Hip-Hop', sky1:0x0a0518, sky2:0x12082a, fog:0x050210, fogDensity:0.013,
+        ground:0x100818, gridColor:0x2a1240, primary:0x9b59b6, secondary:0xf1c40f,
+        accent:0x8e44ad, barEmissive:0x9b59b6, ambientIntensity:0.14,
+        pointColor:0xf1c40f, pointIntensity:1.5, particleColor:0x9b59b6,
+        accentHex:'#9b59b6', accent2Hex:'#f1c40f',
+    },
+    indie: {
+        name:'Indie', sky1:0x050f18, sky2:0x081520, fog:0x020810, fogDensity:0.016,
+        ground:0x081210, gridColor:0x1a3a2a, primary:0x3498db, secondary:0x1abc9c,
+        accent:0x2ecc71, barEmissive:0x3498db, ambientIntensity:0.12,
+        pointColor:0x1abc9c, pointIntensity:1.0, particleColor:0x2ecc71,
+        accentHex:'#3498db', accent2Hex:'#1abc9c',
+    },
+    edm: {
+        name:'EDM', sky1:0x020808, sky2:0x041010, fog:0x010402, fogDensity:0.008,
+        ground:0x041210, gridColor:0x0a3a2a, primary:0x00ff88, secondary:0x00aaff,
+        accent:0xff00ff, barEmissive:0x00ff88, ambientIntensity:0.20,
+        pointColor:0x00ff88, pointIntensity:2.5, particleColor:0x00aaff,
+        accentHex:'#00ff88', accent2Hex:'#00aaff',
+    },
+    classical: {
+        name:'Classical', sky1:0x0f0d05, sky2:0x181208, fog:0x080602, fogDensity:0.020,
+        ground:0x14100a, gridColor:0x3a2a1a, primary:0xffd700, secondary:0xdaa520,
+        accent:0xf5e6cc, barEmissive:0xffd700, ambientIntensity:0.18,
+        pointColor:0xffd700, pointIntensity:1.0, particleColor:0xdaa520,
+        accentHex:'#ffd700', accent2Hex:'#daa520',
+    },
+    lofi: {
+        name:'Lo-Fi', sky1:0x070d12, sky2:0x0a1218, fog:0x030608, fogDensity:0.018,
+        ground:0x0a0e12, gridColor:0x1a2a3a, primary:0x8ecae6, secondary:0x219ebc,
+        accent:0xffb703, barEmissive:0x8ecae6, ambientIntensity:0.12,
+        pointColor:0xffb703, pointIntensity:0.8, particleColor:0x8ecae6,
+        accentHex:'#8ecae6', accent2Hex:'#ffb703',
+    },
+};
+
+let T = THEMES.default;
+
+/* ═══════ DOM ═══════ */
+const $=id=>document.getElementById(id);
+const audio=$('xrAudio');
+
+/* ═══════ STATE ═══════ */
+let isPlaying=false, currentIndex=-1, playlist=[];
+let audioCtx, analyser, dataArray, sourceNode, audioConnected=false, analysisOk=false;
+
+document.querySelectorAll('#songList .sli').forEach((el,i)=>{
+    playlist.push({id:el.dataset.id,title:el.dataset.title,artist:el.dataset.artist,url:el.dataset.url,image:el.dataset.image,duration:el.dataset.duration,element:el});
+    el.addEventListener('click',()=>{loadSong(i);$('songDrawer').classList.remove('open');});
+});
+
+/* ═══════════════════════════════════════════
+   THREE.JS 3D WORLD
+   ═══════════════════════════════════════════ */
+const container = $('world');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(T.fog, T.fogDensity);
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 500);
+camera.position.set(0, 12, 0.1);
+
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.3;
+renderer.outputEncoding = THREE.sRGBEncoding;
+container.appendChild(renderer.domElement);
+
+// OrbitControls — 360° look-around
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.rotateSpeed = 0.4;
+controls.enablePan = false;
+controls.minDistance = 1;
+controls.maxDistance = 60;
+controls.target.set(0, 8, 0);
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.maxPolarAngle = Math.PI * 0.85;
+controls.minPolarAngle = Math.PI * 0.15;
+
+/* ─── GROUND ─── */
+const groundGeo = new THREE.CircleGeometry(120, 64);
+const groundMat = new THREE.MeshStandardMaterial({
+    color: T.ground, roughness:0.85, metalness:0.15, transparent:true, opacity:0.9
+});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -0.05;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Grid
+const gridHelper = new THREE.GridHelper(200, 80, T.gridColor, T.gridColor);
+gridHelper.material.transparent = true;
+gridHelper.material.opacity = 0.25;
+scene.add(gridHelper);
+
+/* ─── SKYBOX (gradient sphere) ─── */
+const skyGeo = new THREE.SphereGeometry(200, 32, 32);
+const skyCanvas = document.createElement('canvas');
+skyCanvas.width = 512; skyCanvas.height = 512;
+const skyCtx = skyCanvas.getContext('2d');
+function paintSky(c1, c2){
+    const g = skyCtx.createLinearGradient(0,0,0,512);
+    const col1 = new THREE.Color(c1), col2 = new THREE.Color(c2);
+    g.addColorStop(0, '#'+col1.getHexString());
+    g.addColorStop(0.5, '#'+col2.getHexString());
+    g.addColorStop(1, '#'+col1.getHexString());
+    skyCtx.fillStyle = g;
+    skyCtx.fillRect(0,0,512,512);
+    // Stars
+    for(let i=0;i<300;i++){
+        skyCtx.beginPath();
+        skyCtx.arc(Math.random()*512, Math.random()*512, Math.random()*1.5+0.3, 0, Math.PI*2);
+        skyCtx.fillStyle = `rgba(255,255,255,${Math.random()*0.6+0.2})`;
+        skyCtx.fill();
+    }
+    skyTexture.needsUpdate = true;
+}
+const skyTexture = new THREE.CanvasTexture(skyCanvas);
+const skyMat = new THREE.MeshBasicMaterial({map:skyTexture, side:THREE.BackSide});
+const sky = new THREE.Mesh(skyGeo, skyMat);
+scene.add(sky);
+paintSky(T.sky1, T.sky2);
+
+/* ─── AUDIO FREQUENCY BARS (circle of 64 columns) ─── */
+const BAR_COUNT = 64;
+const BAR_RADIUS = 30;
+const bars = [];
+const barGeo = new THREE.BoxGeometry(1.2, 1, 1.2);
+for(let i=0; i<BAR_COUNT; i++){
+    const angle = (i / BAR_COUNT) * Math.PI * 2;
+    const mat = new THREE.MeshStandardMaterial({
+        color: T.primary, emissive: T.barEmissive, emissiveIntensity:0.3,
+        roughness:0.4, metalness:0.6, transparent:true, opacity:0.85
+    });
+    const bar = new THREE.Mesh(barGeo, mat);
+    bar.position.set(Math.cos(angle)*BAR_RADIUS, 0.5, Math.sin(angle)*BAR_RADIUS);
+    bar.lookAt(0, 0.5, 0);
+    bar.userData = {angle, baseY:0.5};
+    scene.add(bar);
+    bars.push(bar);
+}
+
+/* ─── CENTRAL AUDIO-REACTIVE ORB ─── */
+const orbGeo = new THREE.IcosahedronGeometry(4, 4);
+const orbOrigPos = orbGeo.attributes.position.array.slice();
+const orbMat = new THREE.MeshStandardMaterial({
+    color: T.primary, emissive: T.primary, emissiveIntensity:0.2,
+    wireframe:true, transparent:true, opacity:0.5
+});
+const orb = new THREE.Mesh(orbGeo, orbMat);
+orb.position.set(0, 10, 0);
+scene.add(orb);
+
+// Inner solid orb
+const orbInnerGeo = new THREE.IcosahedronGeometry(3, 3);
+const orbInnerMat = new THREE.MeshStandardMaterial({
+    color: T.secondary, emissive: T.secondary, emissiveIntensity:0.15,
+    transparent:true, opacity:0.15, roughness:0.2, metalness:0.8
+});
+const orbInner = new THREE.Mesh(orbInnerGeo, orbInnerMat);
+orbInner.position.set(0, 10, 0);
+scene.add(orbInner);
+
+// Core glow
+const coreGeo = new THREE.SphereGeometry(1.5, 16, 16);
+const coreMat = new THREE.MeshBasicMaterial({color:T.primary, transparent:true, opacity:0.7});
+const core = new THREE.Mesh(coreGeo, coreMat);
+core.position.set(0, 10, 0);
+scene.add(core);
+
+/* ─── LIGHT PILLARS ─── */
+const PILLAR_COUNT = 8;
+const PILLAR_RADIUS = 45;
+const pillars = [];
+const pillarGeo = new THREE.CylinderGeometry(0.15, 0.3, 40, 8);
+for(let i=0; i<PILLAR_COUNT; i++){
+    const angle = (i/PILLAR_COUNT) * Math.PI*2;
+    const mat = new THREE.MeshBasicMaterial({
+        color: i%2===0 ? T.primary : T.accent,
+        transparent:true, opacity:0.15
+    });
+    const pillar = new THREE.Mesh(pillarGeo, mat);
+    pillar.position.set(Math.cos(angle)*PILLAR_RADIUS, 20, Math.sin(angle)*PILLAR_RADIUS);
+    pillar.userData = {angle, baseOpacity:0.15};
+    scene.add(pillar);
+    pillars.push(pillar);
+}
+
+/* ─── PARTICLE SYSTEM ─── */
+const PARTICLE_COUNT = 2500;
+const particleGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(PARTICLE_COUNT*3);
+const pVelocity = [];
+for(let i=0;i<PARTICLE_COUNT;i++){
+    pPos[i*3]   = (Math.random()-0.5)*150;
+    pPos[i*3+1] = Math.random()*60;
+    pPos[i*3+2] = (Math.random()-0.5)*150;
+    pVelocity.push({
+        x:(Math.random()-0.5)*0.02,
+        y:Math.random()*0.02+0.01,
+        z:(Math.random()-0.5)*0.02
+    });
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const particleMat = new THREE.PointsMaterial({
+    color:T.particleColor, size:0.4, transparent:true, opacity:0.6,
+    blending:THREE.AdditiveBlending, sizeAttenuation:true
+});
+const particles = new THREE.Points(particleGeo, particleMat);
+scene.add(particles);
+
+/* ─── FLOATING RING GEOMETRY ─── */
+const torusGeo = new THREE.TorusGeometry(8, 0.08, 8, 100);
+const torusMat = new THREE.MeshBasicMaterial({color:T.accent, transparent:true, opacity:0.3});
+const torus = new THREE.Mesh(torusGeo, torusMat);
+torus.position.set(0, 10, 0);
+torus.rotation.x = Math.PI/2;
+scene.add(torus);
+
+const torus2Geo = new THREE.TorusGeometry(12, 0.05, 8, 120);
+const torus2Mat = new THREE.MeshBasicMaterial({color:T.secondary, transparent:true, opacity:0.2});
+const torus2 = new THREE.Mesh(torus2Geo, torus2Mat);
+torus2.position.set(0, 10, 0);
+scene.add(torus2);
+
+/* ─── LIGHTING ─── */
+const ambientLight = new THREE.AmbientLight(0xffffff, T.ambientIntensity);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(T.pointColor, T.pointIntensity, 80);
+pointLight.position.set(0, 15, 0);
+scene.add(pointLight);
+
+const pointLight2 = new THREE.PointLight(T.accent, 0.5, 60);
+pointLight2.position.set(20, 10, 20);
+scene.add(pointLight2);
+
+/* ═══════ AUDIO ═══════ */
+function initAudio(){
+    if(audioCtx) return;
+    audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.82;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+}
+function connectAudio(){
+    if(audioConnected||!audioCtx) return;
+    try{
+        sourceNode = audioCtx.createMediaElementSource(audio);
+        sourceNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        audioConnected=true; analysisOk=true;
+    }catch(e){analysisOk=false;}
+}
+
+/* ═══════ ANIMATION LOOP ═══════ */
+const clock = new THREE.Clock();
+function animate(){
+    requestAnimationFrame(animate);
+    const time = clock.getElapsedTime();
+    controls.update();
+
+    // Audio data
+    let freqData=null, bass=0, mid=0, treble=0;
+    if(analysisOk && analyser && isPlaying){
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(freqData);
+        for(let i=0;i<8;i++) bass+=freqData[i]; bass/=8;
+        for(let i=8;i<40;i++) mid+=freqData[i]; mid/=32;
+        for(let i=40;i<80;i++) treble+=freqData[i]; treble/=40;
+    } else if(isPlaying){
+        bass = (Math.sin(time*3.5)*0.5+0.5)*160+Math.random()*30;
+        mid  = (Math.sin(time*7)*0.5+0.5)*120+Math.random()*20;
+        treble=(Math.sin(time*11)*0.5+0.5)*100+Math.random()*20;
+    }
+    const bn=bass/255, mn=mid/255, tn=treble/255;
+
+    // ── Frequency Bars ──
+    for(let i=0; i<BAR_COUNT; i++){
+        const bar = bars[i];
+        let h = 1;
+        if(freqData && isPlaying){
+            const idx = Math.floor((i/BAR_COUNT)*(freqData.length*0.7));
+            h = 1 + (freqData[idx]/255)*25;
+        } else if(isPlaying){
+            h = 1 + (Math.sin(time*4+i*0.3)*0.5+0.5)*15;
+        }
+        bar.scale.y = h;
+        bar.position.y = h/2;
+        bar.material.emissiveIntensity = 0.15 + (h/25)*0.8;
+        bar.material.opacity = 0.5 + (h/25)*0.4;
+    }
+
+    // ── Central Orb ──
+    const pos = orbGeo.attributes.position.array;
+    for(let i=0;i<pos.length;i+=3){
+        const ox=orbOrigPos[i],oy=orbOrigPos[i+1],oz=orbOrigPos[i+2];
+        const len=Math.sqrt(ox*ox+oy*oy+oz*oz);
+        const nx=ox/len,ny=oy/len,nz=oz/len;
+        const disp = bn*3 + Math.sin(time*2+i*0.02)*mn*1.5;
+        pos[i]=ox+nx*disp; pos[i+1]=oy+ny*disp; pos[i+2]=oz+nz*disp;
+    }
+    orbGeo.attributes.position.needsUpdate=true;
+    orb.rotation.y += 0.005;
+    orb.rotation.x += 0.002;
+    orbMat.opacity = 0.3 + bn*0.5;
+    orbMat.emissiveIntensity = 0.1 + bn*0.6;
+
+    // Inner orb
+    const innerScale = 1 + bn*0.6;
+    orbInner.scale.set(innerScale, innerScale, innerScale);
+    orbInner.rotation.y -= 0.003;
+    orbInnerMat.opacity = 0.08 + bn*0.2;
+
+    // Core
+    const coreScale = 1 + bn*2;
+    core.scale.set(coreScale, coreScale, coreScale);
+    coreMat.opacity = 0.4 + bn*0.5;
+
+    // ── Torus rings ──
+    torus.rotation.z = time*0.3;
+    torus.scale.set(1+mn*0.5, 1+mn*0.5, 1);
+    torusMat.opacity = 0.15 + mn*0.4;
+
+    torus2.rotation.x = time*0.2;
+    torus2.rotation.z = time*0.15;
+    torus2.scale.set(1+tn*0.3, 1+tn*0.3, 1+tn*0.3);
+    torus2Mat.opacity = 0.1 + tn*0.3;
+
+    // ── Pillars ──
+    for(let i=0; i<PILLAR_COUNT; i++){
+        const p = pillars[i];
+        const react = i%3===0 ? bn : i%3===1 ? mn : tn;
+        const scale = 1 + react*0.8;
+        p.scale.y = scale;
+        p.position.y = 20*scale;
+        p.material.opacity = 0.08 + react*0.35;
+    }
+
+    // ── Particles ──
+    const pp = particleGeo.attributes.position.array;
+    for(let i=0;i<PARTICLE_COUNT;i++){
+        pp[i*3]   += pVelocity[i].x + (isPlaying ? Math.sin(time+i)*0.01*bn : 0);
+        pp[i*3+1] += pVelocity[i].y * (1 + bn*2);
+        pp[i*3+2] += pVelocity[i].z + (isPlaying ? Math.cos(time+i)*0.01*bn : 0);
+        if(pp[i*3+1]>60){pp[i*3+1]=0;pp[i*3]=(Math.random()-0.5)*150;pp[i*3+2]=(Math.random()-0.5)*150;}
+    }
+    particleGeo.attributes.position.needsUpdate=true;
+    particleMat.size = 0.3 + bn*0.8;
+    particleMat.opacity = 0.3 + bn*0.5;
+
+    // ── Point light pulse ──
+    pointLight.intensity = T.pointIntensity * (1 + bn*2);
+    pointLight2.intensity = 0.3 + mn*1.5;
+    pointLight2.position.x = Math.cos(time*0.5)*25;
+    pointLight2.position.z = Math.sin(time*0.5)*25;
+
+    // ── Grid pulse ──
+    gridHelper.material.opacity = 0.15 + bn*0.2;
+
+    renderer.render(scene, camera);
+}
+
+/* ═══════ APPLY THEME ═══════ */
+function applyTheme(genre){
+    T = THEMES[genre] || THEMES.default;
+
+    // Sky
+    paintSky(T.sky1, T.sky2);
+
+    // Fog
+    scene.fog.color.setHex(T.fog);
+    scene.fog.density = T.fogDensity;
+
+    // Ground
+    groundMat.color.setHex(T.ground);
+    gridHelper.material.color.setHex(T.gridColor);
+
+    // Bars
+    bars.forEach(b=>{b.material.color.setHex(T.primary);b.material.emissive.setHex(T.barEmissive);});
+
+    // Orb
+    orbMat.color.setHex(T.primary);orbMat.emissive.setHex(T.primary);
+    orbInnerMat.color.setHex(T.secondary);orbInnerMat.emissive.setHex(T.secondary);
+    coreMat.color.setHex(T.primary);
+
+    // Pillars
+    pillars.forEach((p,i)=>{p.material.color.setHex(i%2===0?T.primary:T.accent);});
+
+    // Particles
+    particleMat.color.setHex(T.particleColor);
+
+    // Rings
+    torusMat.color.setHex(T.accent);
+    torus2Mat.color.setHex(T.secondary);
+
+    // Lights
+    ambientLight.intensity = T.ambientIntensity;
+    pointLight.color.setHex(T.pointColor);
+    pointLight.intensity = T.pointIntensity;
+    pointLight2.color.setHex(T.accent);
+
+    // UI
+    $('genreBadge').textContent = T.name;
+    $('genreBadge').style.color = T.accentHex;
+    $('genreBadge').style.borderColor = T.accentHex+'4d';
+    $('genreBadge').style.background = T.accentHex+'26';
+    $('genreTag').textContent = T.name;
+    $('genreTag').style.display = 'inline-block';
+    $('genreTag').style.color = T.accentHex;
+    $('genreTag').style.borderColor = T.accentHex+'4d';
+    $('playPauseBtn').style.background = `linear-gradient(135deg,${T.accentHex},${T.accent2Hex})`;
+    $('playPauseBtn').style.boxShadow = `0 0 30px ${T.accentHex}66`;
+    $('progressFill').style.background = `linear-gradient(90deg,${T.accentHex},${T.accent2Hex})`;
+
+    document.querySelectorAll('.genre-btn').forEach(b=>{
+        b.classList.remove('active');b.style.background='';b.style.color='';b.style.borderColor='';
+        if(b.dataset.genre===genre){
+            b.classList.add('active');b.style.background=T.accentHex;b.style.color='#0b0f19';b.style.borderColor='transparent';
+        }
+    });
+}
+
+/* ═══════ PLAYBACK ═══════ */
+function loadSong(idx){
+    if(idx<0||idx>=playlist.length) return;
+    const s=playlist[idx];
+    currentIndex=idx;
+    audio.src=s.url;
+    $('songTitle').textContent=s.title;
+    $('songArtist').textContent=s.artist;
+    if(s.image){$('albumArt').src=s.image;$('albumArt').classList.add('visible');}
+    playlist.forEach(p=>{if(p.element)p.element.classList.remove('active');});
+    if(s.element)s.element.classList.add('active');
+    autoDetectGenre(s.title+' '+s.artist);
+    doPlay();
+}
+function doPlay(){initAudio();connectAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();audio.play().catch(()=>{});isPlaying=true;$('playPauseBtn').innerHTML='<i class="fas fa-pause"></i>';}
+function doPause(){audio.pause();isPlaying=false;$('playPauseBtn').innerHTML='<i class="fas fa-play" style="margin-left:2px"></i>';}
+function fmtTime(s){if(isNaN(s))return'0:00';const m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec;}
+
+function autoDetectGenre(text){
+    const t=text.toLowerCase();
+    const map={
+        romance:['love','romantic','romance','dil','ishq','pyaar','tum hi','heart','piya','sanam','tere'],
+        rock:['rock','metal','punk','guitar','shred','headbang','anthem'],
+        hiphop:['hip hop','hip-hop','rap','trap','drill','flow','bars','diss','hood'],
+        pop:['pop','dance','party','club','disco','banger'],
+        indie:['indie','alternative','folk','acoustic','unplugged'],
+        edm:['edm','electronic','techno','house','dubstep','trance','remix','dj','rave'],
+        classical:['classical','symphony','orchestra','piano','violin','raag','raga','sitar'],
+        lofi:['lofi','lo-fi','chill','study','relax','ambient','calm','sleep'],
+    };
+    for(const[genre,kws] of Object.entries(map)){
+        for(const kw of kws){if(t.includes(kw)){applyTheme(genre);return;}}
+    }
+}
+
+/* ═══════ SEARCH ═══════ */
+let searchTimer=null;
+$('searchInput').addEventListener('input',()=>{
+    clearTimeout(searchTimer);
+    const q=$('searchInput').value.trim();
+    if(q.length<2){$('searchResults').classList.remove('visible');return;}
+    $('searchSpinner').style.display='block';
+    searchTimer=setTimeout(()=>{
+        fetch('/api/jiosaavn/search/?query='+encodeURIComponent(q))
+        .then(r=>r.json()).then(data=>{
+            $('searchSpinner').style.display='none';
+            const res=data.results||[];
+            if(!res.length){$('searchResults').innerHTML='<div style="padding:20px;text-align:center;color:rgba(255,255,255,0.3);font-size:13px">No results</div>';$('searchResults').classList.add('visible');return;}
+            $('searchResults').innerHTML=res.map((s,i)=>`<div class="sr-item" data-i="${i}"><img src="${s.image_url}" alt=""><div class="m"><h4>${s.title}</h4><p>${s.artist}</p></div></div>`).join('');
+            $('searchResults').classList.add('visible');
+            $('searchResults').querySelectorAll('.sr-item').forEach((el,i)=>{
+                el.addEventListener('click',()=>{
+                    const s=res[i];
+                    const div=document.createElement('div');div.className='sli';
+                    div.innerHTML=`<img src="${s.image_url}" alt=""><div class="sm"><h4>${s.title}</h4><p>${s.artist}</p></div>`;
+                    $('songList').prepend(div);
+                    const ns={id:s.id,title:s.title,artist:s.artist,url:s.stream_url,image:s.image_url,duration:s.duration,element:div};
+                    playlist.unshift(ns);
+                    playlist.forEach((p,idx)=>{if(p.element){p.element.onclick=()=>{loadSong(idx);$('songDrawer').classList.remove('open');};}});
+                    loadSong(0);
+                    $('searchResults').classList.remove('visible');
+                    $('searchInput').value='';
+                });
+            });
+        }).catch(()=>{$('searchSpinner').style.display='none';});
+    },400);
+});
+document.addEventListener('click',e=>{if(!$('searchBox').contains(e.target))$('searchResults').classList.remove('visible');});
+
+/* ═══════ EVENTS ═══════ */
+$('enterBtn').addEventListener('click',()=>{
+    $('splash').classList.add('hidden');
+    [$('topBar'),$('songInfo'),$('controls'),$('drawerToggle'),$('genreBar')].forEach(el=>el.style.opacity='1');
+    if(playlist.length) loadSong(0);
+    animate();
+});
+
+$('playPauseBtn').addEventListener('click',()=>{isPlaying?doPause():doPlay();});
+$('prevBtn').addEventListener('click',()=>{loadSong(currentIndex>0?currentIndex-1:playlist.length-1);});
+$('nextBtn').addEventListener('click',()=>{loadSong(currentIndex<playlist.length-1?currentIndex+1:0);});
+
+audio.addEventListener('timeupdate',()=>{
+    const{currentTime:ct,duration:d}=audio;
+    if(d){$('progressFill').style.width=(ct/d*100)+'%';$('totTime').textContent=fmtTime(d);}
+    $('curTime').textContent=fmtTime(ct);
+});
+audio.addEventListener('ended',()=>{
+    if(currentIndex<playlist.length-1) loadSong(currentIndex+1);
+    else{doPause();$('progressFill').style.width='0%';}
+});
+$('progressBar').addEventListener('click',e=>{if(!audio.duration)return;const r=$('progressBar').getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration;});
+$('drawerToggle').addEventListener('click',()=>$('songDrawer').classList.add('open'));
+$('drawerClose').addEventListener('click',()=>$('songDrawer').classList.remove('open'));
+document.querySelectorAll('.genre-btn').forEach(btn=>{btn.addEventListener('click',()=>applyTheme(btn.dataset.genre));});
+
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+applyTheme('default');
+})();
+</script>
+</body>
+</html>

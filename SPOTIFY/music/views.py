@@ -152,13 +152,13 @@ def search(request):
     if query:
         query_lower = query.lower().strip()
         
-        # --- NLP PROCESSING ---
+        
         is_play_command = False
         target_name = query_lower
         
         if nlp:
             doc = nlp(query_lower)
-            # Detect play command by checking for verbs like "play", "stream", "listen"
+            
             is_play_command = any(token.lemma_ in ["play", "stream", "listen", "start", "hear"] for token in doc)
             
             # Words to strip out so the search is cleaner
@@ -701,3 +701,51 @@ def contact(request):
         messages.success(request, "Your message has been sent successfully!")
         return redirect('contact')
     return render(request, 'contact.html')
+
+@login_required(login_url='user_login')
+def recommendations(request):
+    """Personalized 'Made For You' recommendations page powered by ML pipeline."""
+    from .recommendation import get_recommendations_for_user
+
+    rec_data = get_recommendations_for_user(request.user, n=30)
+    
+    # Separate local songs and JioSaavn songs for template rendering
+    local_songs = []
+    jiosaavn_songs = []
+    for song in rec_data['songs']:
+        if song.jiosaavn_id and song.song_type == 'jiosaavn':
+            jiosaavn_songs.append(song)
+        else:
+            local_songs.append(song)
+
+    playlists = Playlist.objects.filter(user=request.user) if request.user.is_authenticated else []
+
+    context = {
+        'recommended_songs': rec_data['songs'],
+        'local_songs': local_songs,
+        'jiosaavn_songs': jiosaavn_songs,
+        'algorithm': rec_data['algorithm'],
+        'updated_at': rec_data['updated_at'],
+        'source': rec_data['source'],
+        'total_count': len(rec_data['songs']),
+        'playlists': playlists,
+    }
+    return render(request, 'recommendations.html', context)
+
+def immersive_player(request):
+    """Immersive 3D audio-reactive music visualizer with optional WebXR VR mode."""
+    trending_songs = jiosavan.get_trending(limit=20)
+    trending_today = get_trending_today(limit=10)
+
+    # Combine and deduplicate
+    seen_ids = set()
+    all_songs = []
+    for song in trending_songs + trending_today:
+        if song['id'] not in seen_ids:
+            seen_ids.add(song['id'])
+            all_songs.append(song)
+
+    context = {
+        'immersive_songs': all_songs[:30],
+    }
+    return render(request, 'immersive_player.html', context)

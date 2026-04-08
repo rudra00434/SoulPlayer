@@ -126,9 +126,9 @@
                     <span class="tracking-wide font-bold">Live Jams</span>
                 </a>
                 {% endif %}
-                <a href="#"
-                    class="flex items-center gap-4 text-gray-400 hover:text-white transition cursor-pointer group">
-                    <i class="far fa-circle text-xl w-6 text-center group-hover:text-[#3be2c8]"></i>
+                <a href="{% url 'recommendations' %}"
+                    class="flex items-center gap-4 {% if request.resolver_match.url_name == 'recommendations' %}text-[#3be2c8]{% else %}text-gray-400{% endif %} hover:text-white transition cursor-pointer group">
+                    <i class="fas fa-sparkles text-xl w-6 text-center {% if request.resolver_match.url_name == 'recommendations' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %}"></i>
                     <span class="tracking-wide">Recommended</span>
                 </a>
             </nav>
@@ -213,6 +213,9 @@
                             class="fas fa-microphone-alt text-[10px]"></i> Voice</a>
                     <a href="{% url 'podcasts' %}"
                         class="{% if request.resolver_match.url_name == 'podcasts' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Podcasts</a>
+                    <a href="{% url 'immersive_player' %}"
+                        class="{% if request.resolver_match.url_name == 'immersive_player' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white text-[#818cf8]{% endif %} pb-1 transition flex items-center gap-1.5"><i
+                            class="fas fa-vr-cardboard text-[10px]"></i> XR Studio</a>
                     <a href="{% url 'about' %}"
                         class="{% if request.resolver_match.url_name == 'about' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">About</a>
                     <a href="{% url 'contact' %}"

@@ -68,3 +68,13 @@ class ListeningRoom(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f"Room {self.room_code} hosted by {self.host.username}"
+
+
+class Recommendation(models.Model):
+    user=models.OneToOneField(User,on_delete=models.CASCADE,related_name='recommendation_cache')
+    recommended_songs=models.JSONField(default=list)
+    algorithm_version = models.CharField(max_length=20,default='v1')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Recommendations for {self.user.username}"
