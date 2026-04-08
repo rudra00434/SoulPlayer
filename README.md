@@ -59,8 +59,9 @@ SoulPlayer follows a classic **Model-View-Template (MVT)** architecture utilized
 graph TB
     subgraph Client["🖥️ Client Layer (Browser)"]
         UI["Django Templates + Tailwind CSS"]
+        XR["3D XR Studio (Three.js + Canvas)"]
         JS["Vanilla JS (ES6)"]
-        Audio["HTML5 Audio API"]
+        Audio["HTML5 Audio/Web Audio API"]
         WSClient["WebSocket Client"]
         SpeechAPI["Web Speech API"]
     end
@@ -80,6 +81,7 @@ graph TB
 
         subgraph Services["Service Layer"]
             JioSaavn["JioSaavn API Module (jiosavan.py)"]
+            ML["Hybrid ML Recommender Engine"]
             CacheLayer["Django Cache Framework"]
         end
     end
@@ -99,6 +101,7 @@ graph TB
         Artist["Artist"]
         Playlist["Playlist"]
         UserProfile["UserProfile"]
+        RecommendationModel["Recommendation"]
         ListeningRoom["ListeningRoom"]
     end
 
@@ -112,6 +115,7 @@ graph TB
     URLRouter --> Views
     Views --> NLP
     Views --> JioSaavn
+    Views --> ML
     Views --> Models
     CtxProc -->|"Sidebar data"| UI
 
@@ -140,10 +144,10 @@ graph TB
     classDef externalNode fill:#1e1b4b,stroke:#f472b6,color:#fff
     classDef dataNode fill:#0c0a09,stroke:#facc15,color:#fff
 
-    class UI,JS,Audio,WSClient,SpeechAPI clientNode
-    class URLRouter,Views,NLP,CtxProc,WSRouter,Consumer,JioSaavn,CacheLayer serverNode
+    class UI,XR,JS,Audio,WSClient,SpeechAPI clientNode
+    class URLRouter,Views,NLP,CtxProc,WSRouter,Consumer,JioSaavn,ML,CacheLayer serverNode
     class JioAPI,YTApi externalNode
-    class SQLite,Redis,Song,Artist,Playlist,UserProfile,ListeningRoom dataNode
+    class SQLite,Redis,Song,Artist,Playlist,UserProfile,RecommendationModel,ListeningRoom dataNode
 ```
 
 ---
@@ -196,6 +200,19 @@ SoulPlayer isn't just limited to local database music. It uses the `requests` li
 * **Responsive Layout:** Full desktop layout with sidebar, top navigation, and bottom player bar. Mobile-optimized with responsive breakpoints.
 * **Add to Playlist:** Context menu dropdown for adding JioSaavn songs to user playlists directly from any song card.
 
+### 8. 🤖 Machine Learning Recommendation Engine
+SoulPlayer features a hybrid, personalized recommendation pipeline designed to analyze listening habits and song features.
+* **Hybrid Recommender System:** Blends Content-Based Filtering (using TF-IDF on genres, tags, and artists) and Collaborative Filtering (analyzing patterns from mathematically similar users). 
+* **Prioritized Engine Logic:** Implements a multi-tier fallback: Cache → Real-time Hybrid calculation → Trending/Popularity fallback (for cold-start new users).
+* **Asynchronous Training:** Features a dedicated `train_recommendations` background command to pre-compute and store heavy vector math in the database.
+* **Made For You Interface:** A premium glassmorphism "Recommended" interface dynamically serving AI-curated feeds to listeners.
+
+### 9. 🕶️ 3D Immersive XR Studio (Three.js)
+SoulPlayer escapes the flat 2D player limitation with a full 3D interactive WebGL environment using **Three.js**.
+* **True 3D Audio-Reactive World:** 360° mouse look-around camera controls (OrbitControls) drops users onto a reflective grid floor with 64 dynamic frequency pillars, floating particles, and a central deforming orb. Web Audio API live-analyzes track frequencies to dynamically warp geometries and scale lights.
+* **Cinematic Genre Themes:** 9 custom environmental themes (Cosmic, Romance, Pop, Rock, Hip-Hop, Indie, EDM, Classical, Lo-Fi) that alter sky gradients, lighting colors, fog densities, and waveform aesthetics.
+* **Auto Genre Detection:** The engine parses metadata keywords ("metal", "dj", "acoustic", etc.) upon playing a track and automatically switches the 3D environment's theme to match the vibe.
+* **Live In-World JioSaavn Search:** Fully functional in-world floating UI that lets users search the entire music catalog and enqueue tracks without terminating the 3D WebGL context.
 ---
 
 ## 🛠️ Tech Stack
@@ -207,6 +224,7 @@ SoulPlayer isn't just limited to local database music. It uses the `requests` li
 *   **Database:** SQLite (Development & Free Tier Production ready)
 *   **Caching:** Redis (Production) / In-memory LocMemCache (Development)
 *   **NLP Engine:** spaCy (`en_core_web_sm`)
+*   **Machine Learning:** Pandas, Scikit-Learn (TF-IDF Vectorization, Cosine Similarity)
 *   **External APIs:** JioSaavn API (unofficial, no key needed), YouTube Data API v3
 *   **API Interactions:** Python `requests` module
 
@@ -214,6 +232,7 @@ SoulPlayer isn't just limited to local database music. It uses the `requests` li
 *   **Templating:** Django Template Engine
 *   **Styling:** Tailwind CSS (via CDN)
 *   **Interactivity:** Vanilla JS (ES6) with WebSocket API for real-time features
+*   **3D / AR / VR:** Three.js (WebGL rendering engine and audio analysis)
 *   **Icons:** FontAwesome 6
 *   **Typography:** Google Fonts (Outfit)
 
