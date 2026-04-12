@@ -18,6 +18,7 @@ class Song(models.Model):
     
     def __str__(self):
         return self.title
+
 class Artist(models.Model):
     name=models.CharField(max_length=200)
     image=models.ImageField(upload_to='artist_images/')
@@ -37,6 +38,18 @@ class Playlist(models.Model):
 
     def __str__(self):
         return self.name
+
+class LikedSong(models.Model):
+    user = models.ForeignKey(User, related_name='liked_songs', on_delete=models.CASCADE)
+    song = models.ForeignKey(Song, related_name='liked_by', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'song')  # Prevents duplicate likes
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} liked {self.song.title}"
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -59,6 +72,7 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
             instance.userprofile.save()
         else:
             UserProfile.objects.create(user=instance)
+
 class ListeningRoom(models.Model):
     host=models.ForeignKey(User,related_name='listening_rooms',on_delete=models.CASCADE)
     room_code = models.CharField(max_length=10,unique=True,db_index=True)

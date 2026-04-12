@@ -1,7 +1,9 @@
+import random
+from collections import Counter
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse 
 import requests
-from .models import Song,Artist,Playlist
+from .models import Song,Artist,Playlist,LikedSong
 from django.core.paginator import Paginator 
 from .forms import SongForm, ArtistForm, PlaylistForm, UserUpdateForm, ProfileUpdateForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -749,3 +751,114 @@ def immersive_player(request):
         'immersive_songs': all_songs[:30],
     }
     return render(request, 'immersive_player.html', context)
+
+@login_required(login_url='user_login')
+def liked_songs(request):
+    liked = LikedSong.objects.filter(user=request.user).select_related('song')
+    songs = [like.song for like in liked]
+    
+    recommended_songs = []
+    recommendation_title = "More of what you like"
+    
+    if songs:
+        # Find the most common artist in user's liked songs
+        artists = [s.artist for s in songs if s.artist and s.artist != 'Unknown Artist']
+        if artists:
+            # Get the most common artist (or randomly pick one of the top 3)
+            most_common = Counter(artists).most_common(3)
+            chosen_artist_tuple = random.choice(most_common)
+            chosen_artist = chosen_artist_tuple[0]
+            
+            # Use JioSaavn API to find more songs by this artist
+            jiosavan_results = jiosavan.search_songs(chosen_artist, limit=12)
+            
+            # Filter out songs the user already liked
+            liked_jiosaavn_ids = {s.jiosaavn_id for s in songs if s.song_type == 'jiosaavn'}
+            liked_local_titles = {s.title.lower() for s in songs if s.song_type != 'jiosaavn'}
+            
+            for s in jiosavan_results:
+                if s['id'] not in liked_jiosaavn_ids and s['title'].lower() not in liked_local_titles:
+                    recommended_songs.append(s)
+                if len(recommended_songs) >= 5: # Limit to 5 for UI consistency
+                    break
+                    
+            recommendation_title = f"More hits of {chosen_artist}"
+            
+    # Default fallback
+    if not recommended_songs:
+        recommended_songs = jiosavan.get_trending(limit=5)
+        
+    context = {
+        'songs': songs,
+        'recommended_songs': recommended_songs[:5],
+        'recommendation_title': recommendation_title
+    }
+    return render(request, 'liked_songs.html', context)
+
+
+@csrf_exempt
+@login_required(login_url='user_login')
+def toggle_like_song(request, pk):
+    """Toggle like/unlike for a local DB song. Returns JSON for AJAX."""
+    if request.method == 'POST':
+        song = get_object_or_404(Song, id=pk)
+        liked, created = LikedSong.objects.get_or_create(user=request.user, song=song)
+        if not created:
+            # Already liked → unlike it
+            liked.delete()
+            return JsonResponse({'status': 'unliked', 'liked': False})
+        return JsonResponse({'status': 'liked', 'liked': True})
+    return JsonResponse({'status': 'error', 'message': 'POST required'}, status=400)
+
+
+@csrf_exempt
+@login_required(login_url='user_login')
+def toggle_like_jiosaavn(request, song_id):
+    """Toggle like/unlike for a JioSaavn song. Auto-syncs to local DB if needed."""
+    if request.method == 'POST':
+        # Check if JioSaavn song already exists in local DB
+        song = Song.objects.filter(jiosaavn_id=song_id).first()
+
+        if not song:
+            # Sync from JioSaavn API first
+            details = jiosavan.get_song_details(song_id)
+            if details:
+                try:
+                    song = Song.objects.create(
+                        title=details['title'],
+                        artist=details['artist'],
+                        duration=details.get('duration', '0:00'),
+                        song_type='jiosaavn',
+                        audio_link=details['stream_url'],
+                        remote_image_url=details['image_url'],
+                        jiosaavn_id=song_id
+                    )
+                except Exception as e:
+                    return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Song not found on JioSaavn'}, status=404)
+
+        # Toggle like
+        liked, created = LikedSong.objects.get_or_create(user=request.user, song=song)
+        if not created:
+            liked.delete()
+            return JsonResponse({'status': 'unliked', 'liked': False})
+        return JsonResponse({'status': 'liked', 'liked': True})
+    return JsonResponse({'status': 'error', 'message': 'POST required'}, status=400)
+
+
+@login_required(login_url='user_login')
+def check_liked(request):
+    """Check if a song is liked by the current user. Used by AJAX on page load."""
+    song_id = request.GET.get('song_id', '')
+    jiosaavn_id = request.GET.get('jiosaavn_id', '')
+
+    if song_id:
+        is_liked = LikedSong.objects.filter(user=request.user, song_id=song_id).exists()
+    elif jiosaavn_id:
+        song = Song.objects.filter(jiosaavn_id=jiosaavn_id).first()
+        is_liked = LikedSong.objects.filter(user=request.user, song=song).exists() if song else False
+    else:
+        is_liked = False
+
+    return JsonResponse({'liked': is_liked})

@@ -38,4 +38,8 @@ urlpatterns =[
     path('immersive/', views.immersive_player, name='immersive_player'),
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
+    path('liked-songs/', views.liked_songs, name='liked_songs'),
+    path('api/like/song/<int:pk>/', views.toggle_like_song, name='toggle_like_song'),
+    path('api/like/jiosaavn/<str:song_id>/', views.toggle_like_jiosaavn, name='toggle_like_jiosaavn'),
+    path('api/check_liked/', views.check_liked, name='check_liked'),
 ]

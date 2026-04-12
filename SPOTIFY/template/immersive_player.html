@@ -881,23 +881,131 @@
                 }
             });
 
-            /* ─── VR GALLERY SCENE ─── */
+            /* ─── VR GALLERY SCENE (Premium Concert Stage) ─── */
             let inVRGallery = false;
             const galleryScene = new THREE.Scene();
-            galleryScene.background = new THREE.Color(0x000000);
+            galleryScene.background = new THREE.Color(0x020010);
+            galleryScene.fog = new THREE.FogExp2(0x020010, 0.012);
 
-            const vrGrid = new THREE.GridHelper(200, 100, 0xffffff, 0x444444);
-            galleryScene.add(vrGrid);
+            // === STARFIELD BACKGROUND ===
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 2000;
+            const starPositions = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount * 3; i += 3) {
+                starPositions[i] = (Math.random() - 0.5) * 300;
+                starPositions[i + 1] = Math.random() * 150;
+                starPositions[i + 2] = (Math.random() - 0.5) * 300;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            const starMat = new THREE.PointsMaterial({ color: 0xaabbff, size: 0.4, transparent: true, opacity: 0.8 });
+            const starField = new THREE.Points(starGeo, starMat);
+            galleryScene.add(starField);
 
-            galleryScene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-            dirLight.position.set(0, 20, 10);
-            galleryScene.add(dirLight);
+            // === STAGE PLATFORM ===
+            const stageGeo = new THREE.CylinderGeometry(12, 14, 0.6, 64);
+            const stageMat = new THREE.MeshStandardMaterial({
+                color: 0x0a0a1a, metalness: 0.9, roughness: 0.2
+            });
+            const stageMesh = new THREE.Mesh(stageGeo, stageMat);
+            stageMesh.position.set(0, -6.3, 0);
+            stageMesh.receiveShadow = true;
+            galleryScene.add(stageMesh);
+
+            // === GLOWING STAGE EDGE RINGS ===
+            const ringColors = [0x3be2c8, 0x818cf8, 0xf472b6];
+            const stageRings = [];
+            ringColors.forEach((col, i) => {
+                const ringGeo = new THREE.TorusGeometry(13 + i * 2.5, 0.08, 16, 100);
+                const ringMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.6 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                ring.position.y = -5.9 + i * 0.15;
+                galleryScene.add(ring);
+                stageRings.push(ring);
+            });
+
+            // === VERTICAL LIGHT BEAMS (Spotlights) ===
+            const beamGeo = new THREE.CylinderGeometry(0.15, 1.2, 50, 8, 1, true);
+            const beamPositions = [
+                { x: -10, z: -8, color: 0x3be2c8 },
+                { x: 10, z: -8, color: 0x818cf8 },
+                { x: -8, z: 10, color: 0xf472b6 },
+                { x: 8, z: 10, color: 0xfbbf24 },
+            ];
+            const beams = [];
+            beamPositions.forEach(bp => {
+                const bMat = new THREE.MeshBasicMaterial({
+                    color: bp.color, transparent: true, opacity: 0.12, side: THREE.DoubleSide
+                });
+                const beam = new THREE.Mesh(beamGeo, bMat);
+                beam.position.set(bp.x, 18, bp.z);
+                galleryScene.add(beam);
+                beams.push(beam);
+            });
+
+            // === ORBITING RING LIGHTS ===
+            const orbitRingGeo = new THREE.TorusGeometry(20, 0.12, 16, 100);
+            const orbitRing1Mat = new THREE.MeshBasicMaterial({ color: 0x3be2c8, transparent: true, opacity: 0.3 });
+            const orbitRing1 = new THREE.Mesh(orbitRingGeo, orbitRing1Mat);
+            orbitRing1.position.y = 10;
+            galleryScene.add(orbitRing1);
+
+            const orbitRing2Mat = new THREE.MeshBasicMaterial({ color: 0x818cf8, transparent: true, opacity: 0.25 });
+            const orbitRing2 = new THREE.Mesh(new THREE.TorusGeometry(25, 0.08, 16, 100), orbitRing2Mat);
+            orbitRing2.position.y = 15;
+            galleryScene.add(orbitRing2);
+
+            // === LIGHTING ===
+            galleryScene.add(new THREE.AmbientLight(0x222244, 0.4));
+
+            const spotLight1 = new THREE.SpotLight(0x3be2c8, 2, 80, Math.PI / 6, 0.5, 1);
+            spotLight1.position.set(-10, 30, 0);
+            spotLight1.target.position.set(0, 0, 0);
+            galleryScene.add(spotLight1);
+            galleryScene.add(spotLight1.target);
+
+            const spotLight2 = new THREE.SpotLight(0x818cf8, 2, 80, Math.PI / 6, 0.5, 1);
+            spotLight2.position.set(10, 30, 0);
+            spotLight2.target.position.set(0, 0, 0);
+            galleryScene.add(spotLight2);
+            galleryScene.add(spotLight2.target);
+
+            const spotLight3 = new THREE.SpotLight(0xf472b6, 1.5, 80, Math.PI / 8, 0.5, 1);
+            spotLight3.position.set(0, 35, -10);
+            spotLight3.target.position.set(0, 0, 0);
+            galleryScene.add(spotLight3);
+            galleryScene.add(spotLight3.target);
+
+            // Rim light from behind for silhouette glow
+            const rimLight = new THREE.PointLight(0x3be2c8, 1.5, 40);
+            rimLight.position.set(0, 5, -15);
+            galleryScene.add(rimLight);
+
+            // === FLOATING PARTICLES around stage ===
+            const gParticleCount = 500;
+            const gParticleGeo = new THREE.BufferGeometry();
+            const gpp = new Float32Array(gParticleCount * 3);
+            const gpVelocity = [];
+            for (let i = 0; i < gParticleCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 8 + Math.random() * 30;
+                gpp[i * 3] = Math.cos(angle) * radius;
+                gpp[i * 3 + 1] = Math.random() * 40;
+                gpp[i * 3 + 2] = Math.sin(angle) * radius;
+                gpVelocity.push({ y: 0.01 + Math.random() * 0.03 });
+            }
+            gParticleGeo.setAttribute('position', new THREE.BufferAttribute(gpp, 3));
+            const gParticleMat = new THREE.PointsMaterial({
+                color: 0x3be2c8, size: 0.25, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending
+            });
+            const gParticles = new THREE.Points(gParticleGeo, gParticleMat);
+            galleryScene.add(gParticles);
 
             let avatarMixer = null;
             let avatarModel = null;
             let lastTime = 0;
 
+            // === LOAD DANCING AVATAR ===
             if (typeof THREE.FBXLoader !== 'undefined') {
                 const loader = new THREE.FBXLoader();
                 loader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/fbx/Samba%20Dancing.fbx', (fbx) => {
@@ -905,6 +1013,7 @@
                     avatarModel.scale.set(0.18, 0.18, 0.18);
                     avatarModel.position.set(0, -6, 0);
 
+                    // Colorful holographic material (rainbow normals)
                     const holoMaterial = new THREE.MeshNormalMaterial({ skinning: true });
 
                     avatarModel.traverse(function (child) {
@@ -1236,19 +1345,93 @@
                 gridHelper.material.opacity = 0.15 + bn * 0.2;
 
                 if (inVRGallery) {
-                    galleryScene.rotation.y = time * 0.05;
-
+                    // === AVATAR ANIMATION ===
                     if (avatarMixer) {
                         let dt = time - lastTime;
                         if (dt > 0.1 || dt < 0) dt = 0.016;
                         if (isPlaying) {
-                            avatarMixer.timeScale = 1.0 + (bn * 0.5); // Dance faster to music bass
+                            avatarMixer.timeScale = 0.8 + (bn * 1.2);
                         } else {
-                            avatarMixer.timeScale = 0.5; // Slow idle when paused
+                            avatarMixer.timeScale = 0.3;
                         }
                         avatarMixer.update(dt);
                     }
                     lastTime = time;
+
+                    // === AVATAR EMISSIVE PULSE ===
+                    if (avatarModel) {
+                        avatarModel.traverse(function (child) {
+                            if (child.isMesh && child.material.emissiveIntensity !== undefined) {
+                                child.material.emissiveIntensity = 0.4 + bn * 1.5;
+                                child.material.opacity = 0.7 + bn * 0.3;
+                            }
+                        });
+                    }
+
+                    // === STAGE RING PULSE ===
+                    stageRings.forEach((ring, i) => {
+                        const sc = 1.0 + (i === 0 ? bn : i === 1 ? mn : tn) * 0.3;
+                        ring.scale.set(sc, sc, 1);
+                        ring.material.opacity = 0.3 + (i === 0 ? bn : mn) * 0.7;
+                        ring.rotation.z = time * (0.2 + i * 0.15);
+                    });
+
+                    // === LIGHT BEAMS PULSE ===
+                    beams.forEach((beam, i) => {
+                        const pulse = i % 2 === 0 ? bn : mn;
+                        beam.material.opacity = 0.06 + pulse * 0.2;
+                        beam.scale.x = 1 + pulse * 0.5;
+                        beam.scale.z = 1 + pulse * 0.5;
+                        beam.rotation.y = time * 0.3 + i * Math.PI / 2;
+                    });
+
+                    // === SPOTLIGHT SWEEP ===
+                    spotLight1.position.x = Math.sin(time * 0.6) * 15;
+                    spotLight1.position.z = Math.cos(time * 0.6) * 15;
+                    spotLight1.intensity = 1.5 + bn * 3;
+
+                    spotLight2.position.x = Math.sin(time * 0.6 + Math.PI) * 15;
+                    spotLight2.position.z = Math.cos(time * 0.6 + Math.PI) * 15;
+                    spotLight2.intensity = 1.5 + mn * 3;
+
+                    spotLight3.intensity = 1.0 + tn * 4;
+                    rimLight.intensity = 1.0 + bn * 3;
+                    rimLight.color.setHSL((time * 0.05) % 1, 0.8, 0.5);
+
+                    // === ORBITING RINGS ===
+                    orbitRing1.rotation.x = Math.sin(time * 0.3) * 0.5;
+                    orbitRing1.rotation.z = time * 0.4;
+                    orbitRing1.scale.setScalar(1 + bn * 0.15);
+                    orbitRing1Mat.opacity = 0.15 + bn * 0.4;
+
+                    orbitRing2.rotation.x = Math.cos(time * 0.2) * 0.4;
+                    orbitRing2.rotation.z = -time * 0.25;
+                    orbitRing2.scale.setScalar(1 + mn * 0.1);
+                    orbitRing2Mat.opacity = 0.1 + mn * 0.35;
+
+                    // === FLOATING PARTICLES ===
+                    const gpArr = gParticleGeo.attributes.position.array;
+                    for (let i = 0; i < gParticleCount; i++) {
+                        gpArr[i * 3 + 1] += gpVelocity[i].y * (1 + bn * 3);
+                        if (gpArr[i * 3 + 1] > 45) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const radius = 8 + Math.random() * 30;
+                            gpArr[i * 3] = Math.cos(angle) * radius;
+                            gpArr[i * 3 + 1] = 0;
+                            gpArr[i * 3 + 2] = Math.sin(angle) * radius;
+                        }
+                    }
+                    gParticleGeo.attributes.position.needsUpdate = true;
+                    gParticleMat.size = 0.2 + bn * 0.6;
+                    gParticleMat.opacity = 0.3 + bn * 0.6;
+
+                    // === STARFIELD TWINKLE ===
+                    starMat.opacity = 0.5 + tn * 0.5;
+                    starField.rotation.y = time * 0.01;
+
+                    // === STAGE PLATFORM GLOW ===
+                    stageMat.emissive = new THREE.Color(0x1a0a30);
+                    stageMat.emissiveIntensity = 0.2 + bn * 0.8;
 
                     renderer.render(galleryScene, camera);
                 } else {

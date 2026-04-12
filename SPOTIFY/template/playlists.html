@@ -17,7 +17,7 @@
     {% if playlists %}
     <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         <!-- Liked Songs Static Card -->
-        <div
+        <div onclick="window.location.href='{% url 'liked_songs' %}';"
             class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 aspect-square rounded-2xl p-6 relative overflow-hidden shadow-lg group cursor-pointer hover:-translate-y-2 transition-transform duration-300 flex flex-col justify-end">
             <div class="mt-auto relative z-10">
                 <h3 class="text-3xl font-bold tracking-wide text-white drop-shadow-md mb-2">Liked<br>Songs
