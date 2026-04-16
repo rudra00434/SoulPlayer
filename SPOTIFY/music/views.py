@@ -451,7 +451,29 @@ def api_search_songs(request):
     query = request.GET.get('q', '').strip()
     if not query:
         return JsonResponse({'status': 'success', 'results': []})
-    results = search_songs(query, limit=5)
+        
+    results = []
+    
+    # 1. Search Local Database first
+    from django.db.models import Q
+    from .models import Song
+    local_songs = Song.objects.filter(Q(title__icontains=query) | Q(artist__icontains=query), jiosaavn_id__isnull=True)[:5]
+    for ls in local_songs:
+        img_url = ls.image.url if ls.image else (ls.remote_image_url if ls.remote_image_url else 'https://placehold.co/40x40/1e293b/ffffff?text=M')
+        results.append({
+            'id': ls.id,
+            'title': ls.title,
+            'artist': ls.artist,
+            'image_url': img_url,
+            'source': 'local'
+        })
+        
+    # 2. Search JioSaavn API and neatly merge them
+    from .jiosavan import search_songs
+    jio_results = search_songs(query, limit=5)
+    if jio_results:
+        results.extend(jio_results)
+        
     return JsonResponse({'status': 'success', 'results': results})
 
 @csrf_exempt

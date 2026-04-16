@@ -106,10 +106,10 @@
                     </div>
                 </div>
                 
-                {% if is_jiosaavn %}
+                {% if is_jiosaavn and song.stream_url %}
                     <audio id="audio-player" src="{{ song.stream_url }}" autoplay></audio>
                 {% else %}
-                    <audio id="audio-player" src="{% if song.audio_link %}{{ song.audio_link }}{% else %}{{ song.audio_file.url }}{% endif %}" autoplay></audio>
+                    <audio id="audio-player" src="{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}" autoplay></audio>
                 {% endif %}
                 
                 {% else %}
