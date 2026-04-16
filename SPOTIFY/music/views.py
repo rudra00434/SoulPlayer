@@ -18,7 +18,7 @@ from .models import UserProfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from . import jiosavan
-from .jiosavan import get_trending_today
+from .jiosavan import get_trending_today, get_artist_songs, search_albums, get_album_details
 # Load the spaCy model
 nlp = spacy.load("en_core_web_sm")
 
@@ -61,11 +61,16 @@ def index(request):
     artists = Artist.objects.all()
     playlists = Playlist.objects.all()
     sidebar_playlists = Playlist.objects.all()[:5]
-    sidebar_recent_songs = Song.objects.all().order_by('-id')[:3]
+    sidebar_recent_songs = Song.objects.all().order_by('-id')[:5]
 
     
     trending_songs = jiosavan.get_trending(limit=20)
-    trending_today_songs = get_trending_today(limit=20)   
+    trending_today_songs = get_trending_today(limit=20)
+    arijit_songs = get_artist_songs('Arijit Singh', limit=20)
+    armaan_songs = get_artist_songs('Armaan Malik', limit=20)
+    kk_songs = get_artist_songs('KK', limit=20)
+    nostalgia_songs = jiosavan.get_nostalgia_songs(limit=20)
+    top_albums = search_albums('bollywood hits', limit=10)
 
     genres = [
         {'id': 'romance', 'name': 'Romance', 'icon': 'fa-heart', 'color': 'from-pink-500 to-fuchsia-600'},
@@ -80,7 +85,12 @@ def index(request):
         "artists": artists,
         "playlists": playlists,
         "trending_songs": trending_songs,
-        "trending_today_songs": trending_today_songs,   
+        "trending_today_songs": trending_today_songs,
+        "arijit_songs": arijit_songs,
+        "armaan_songs": armaan_songs,
+        "kk_songs": kk_songs,
+        "nostalgia_songs": nostalgia_songs,
+        "top_albums": top_albums,
         "genres": genres,
         "sidebar_playlists": sidebar_playlists,
         "sidebar_recent_songs": sidebar_recent_songs,
@@ -408,7 +418,7 @@ def profile(request):
     context = {
         "u_form": u_form,
         "p_form": p_form,
-        "played_songs": request.user.userprofile.played_songs.all().order_by("-id")[:10], # Last 10 played
+        "played_songs": request.user.userprofile.played_songs.all().order_by("-id"),
         "favorite_artists": request.user.userprofile.favorite_artists.all()
     }
     return render(request, "profile.html", context)
@@ -470,7 +480,7 @@ def api_search_songs(request):
         
     # 2. Search JioSaavn API and neatly merge them
     from .jiosavan import search_songs
-    jio_results = search_songs(query, limit=5)
+    jio_results = search_songs(query, limit=10)
     if jio_results:
         results.extend(jio_results)
         
@@ -654,35 +664,19 @@ def play_jiosaavn_song(request, song_id):
     # Get similar song suggestions for "up next"
     suggestions = jiosavan.get_song_suggestions(song_id, limit=8)
 
-    # Build previous/next matching the db list (same logic as local songs)
+    # Build previous/next dynamically from suggestions instead of purely local DB 
+    # to guarantee the left/right buttons always function for streaming
     previous_song = None
     next_song = None
 
-    # Implement linear Left/Right movement matching local player
-    if db_song:
-        jio_songs = list(Song.objects.filter(jiosaavn_id__isnull=False).order_by('id'))
-        if db_song in jio_songs:
-            current_index = jio_songs.index(db_song)
-            
-            if current_index > 0:
-                prev_db = jio_songs[current_index - 1]
-                previous_song = {'id': prev_db.jiosaavn_id}
-                
-            if current_index < len(jio_songs) - 1:
-                next_db = jio_songs[current_index + 1]
-                next_song = {'id': next_db.jiosaavn_id}
-
-    if not next_song and suggestions:
-        for sug in suggestions:
-            if str(sug.get('id')) == str(song_id):
-                continue
-            if previous_song and str(sug.get('id')) == str(previous_song.get('id')):
-                continue
-            next_song = sug
-            break
-        
-        if not next_song:
-            next_song = suggestions[0] if suggestions else None
+    if suggestions:
+        candidates = [s for s in suggestions if str(s.get('id')) != str(song_id)]
+        if len(candidates) >= 2:
+            next_song = candidates[0]
+            previous_song = candidates[-1] # use the last suggestion as previous
+        elif len(candidates) == 1:
+            next_song = candidates[0]
+            previous_song = None
 
     context = {
         "song": song,
@@ -906,4 +900,45 @@ def check_liked(request):
     else:
         is_liked = False
 
-    return JsonResponse({'liked': is_liked})
+    return JsonResponse({'liked': is_liked})
+
+# ==========================================
+# INTERNET RADIO VIEWS
+# ==========================================
+from . import radio_api
+
+def radio_stations(request):
+    """View to browse live internet radio stations."""
+    stations = radio_api.get_top_indian_stations(limit=50)
+    
+    context = {
+        'stations': stations,
+        'total_stations': len(stations)
+    }
+    return render(request, 'radio_stations.html', context)
+
+def play_radio(request, station_uuid):
+    """View to play a live internet radio stream in the global player."""
+    station = radio_api.get_station_by_uuid(station_uuid)
+    
+    if not station:
+        return render(request, 'play_radio.html', {'error': 'Radio station stream could not be loaded or is offline.'})
+        
+    context = {
+        'station': station,
+    }
+    return render(request, 'play_radio.html', context)
+
+
+def album_detail(request, album_id):
+    """View to show the details of an album and its tracklist."""
+    album = get_album_details(album_id)
+    if not album:
+        from django.http import Http404
+        raise Http404("Album not found or API error")
+    
+    context = {
+        'album': album,
+        'songs': album.get('songs', []),
+    }
+    return render(request, 'album_detail.html', context)

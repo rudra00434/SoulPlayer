@@ -151,10 +151,11 @@ class HybridRecommender:
                 .filter(song_type=genre)
                 .exclude(id__in=exclude_ids)
                 .annotate(play_count=Count('played_songs'))
-                .order_by('-play_count')[:n]
+                .order_by('-play_count')[:n*4]
                 .values_list('id', flat=True)
             )
             if songs:
+                random.shuffle(songs) # Randomize so each new user gets a completely unique cold-start mix
                 genre_buckets[genre] = songs
 
         # Round-robin sample from each genre for diversity

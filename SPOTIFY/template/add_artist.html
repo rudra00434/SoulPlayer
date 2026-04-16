@@ -33,6 +33,16 @@
                 {% endif %}
             </div>
 
+            <!-- Bio -->
+            <div class="space-y-2">
+                <label for="{{ form.bio.id_for_label }}"
+                    class="text-xs font-bold tracking-widest text-[#3be2c8] uppercase block drop-shadow-sm">Artist Bio</label>
+                {{ form.bio }}
+                {% if form.bio.errors %}
+                <p class="text-red-400 text-xs mt-1">{{ form.bio.errors.0 }}</p>
+                {% endif %}
+            </div>
+
             <!-- Image -->
             <div class="space-y-2">
                 <label for="{{ form.image.id_for_label }}"

@@ -102,10 +102,12 @@
         <!-- Sidebar -->
         <div
             class="w-80 bg-[#0b0f19] flex-shrink-0 flex flex-col px-8 py-10 border-r border-[#1e293b]/50 relative z-10 hidden md:flex">
-            <div class="text-3xl font-bold mb-12 tracking-wide text-white">Playlist</div>
+            <div class="text-3xl font-black mb-4 tracking-tighter text-white drop-shadow-md">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-[#3be2c8]">Playlist</span>
+            </div>
 
-            <!-- Nav Links from Screenshot -->
-            <nav class="flex flex-col gap-6 mb-10 text-sm font-semibold">
+            <!-- Navigation List -->
+            <nav class="flex flex-col gap-4 font-semibold text-sm mb-4">
                 <a href="{% url 'playlists' %}"
                     class="flex items-center gap-4 text-[#3be2c8] transition cursor-pointer group">
                     <i class="fas fa-music text-xl w-6 text-center"></i>
@@ -113,14 +115,14 @@
                 </a>
                 {% if user.is_authenticated %}
                 <a href="{% url 'last_listening' %}"
-                    class="flex items-center gap-4 {% if request.resolver_match.url_name == 'last_listening' %}text-white{% else %}text-gray-400{% endif %} hover:text-white transition cursor-pointer group mb-4">
+                    class="flex items-center gap-4 {% if request.resolver_match.url_name == 'last_listening' %}text-white{% else %}text-gray-400{% endif %} hover:text-white transition cursor-pointer group">
                     <i
                         class="far fa-circle text-xl w-6 text-center {% if request.resolver_match.url_name == 'last_listening' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %}"></i>
                     <span class="tracking-wide">Last Listening</span>
                 </a>
 
                 <a href="{% url 'jam_lobby' %}"
-                    class="flex items-center gap-4 text-[#3be2c8] hover:text-white transition cursor-pointer group mb-4">
+                    class="flex items-center gap-4 text-[#3be2c8] hover:text-white transition cursor-pointer group">
                     <i
                         class="fas fa-broadcast-tower text-xl w-6 text-center drop-shadow-[0_0_5px_rgba(59,226,200,0.8)] animate-pulse"></i>
                     <span class="tracking-wide font-bold">Live Jams</span>
@@ -128,8 +130,16 @@
                 {% endif %}
                 <a href="{% url 'recommendations' %}"
                     class="flex items-center gap-4 {% if request.resolver_match.url_name == 'recommendations' %}text-[#3be2c8]{% else %}text-gray-400{% endif %} hover:text-white transition cursor-pointer group">
-                    <i class="fas fa-sparkles text-xl w-6 text-center {% if request.resolver_match.url_name == 'recommendations' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %}"></i>
+                    <i
+                        class="fas fa-fire text-xl w-6 text-center {% if request.resolver_match.url_name == 'recommendations' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %}"></i>
                     <span class="tracking-wide">Recommended</span>
+                </a>
+
+                <a href="{% url 'radio_stations' %}"
+                    class="flex items-center gap-4 {% if request.resolver_match.url_name == 'radio_stations' %}text-[#3be2c8]{% else %}text-gray-400{% endif %} hover:text-white transition cursor-pointer group">
+                    <i
+                        class="fas fa-satellite-dish text-xl w-6 text-center {% if request.resolver_match.url_name == 'radio_stations' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %} drop-shadow-[0_0_5px_rgba(59,226,200,0.5)]"></i>
+                    <span class="tracking-wide">Radio Stations</span>
                 </a>
             </nav>
 
@@ -621,8 +631,7 @@
                         {% for song in page_obj %}
                         <div class="flex-none w-44 group cursor-pointer relative"
                             onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% endif %}')">
-                            <form action="{% url 'delete_song' song.id %}" method="POST"
-                                onclick="event.stopPropagation();"
+                            <form action="" method="POST" onclick="event.stopPropagation();"
                                 class="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition duration-300">
                                 {% csrf_token %}
                                 <button type="submit"
@@ -727,162 +736,360 @@
                         {% endfor %}
                     </div>
 
-                    <!-- Popular Artists -->
-                    <div class="mb-6 flex items-end justify-between">
-                        <h2 class="text-2xl font-bold tracking-wide">Popular Artists</h2>
+                    <!-- Arijit Singh Songs -->
+                    <div class="mb-5 flex items-end justify-between">
+                        <h2 class="text-2xl font-bold tracking-wide"><span class="text-pink-400">Arijit Singh</span>
+                            Songs
+                        </h2>
+                        <span
+                            class="text-xs font-bold px-2 py-1 bg-pink-500/20 text-pink-400 rounded uppercase tracking-widest border border-pink-500/30 flex items-center gap-1.5">
+                            <i class="fas fa-heart text-[9px]"></i>
+                            Top Artist
+                        </span>
                     </div>
 
-                    <div class="relative w-full overflow-hidden pb-10 px-2 pt-2">
-                        <!-- Fade overlays -->
-                        <div
-                            class="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[#111827] to-transparent pointer-events-none">
-                        </div>
-                        <div
-                            class="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[#111827] to-transparent pointer-events-none">
-                        </div>
-
-                        <div class="flex gap-8 w-max animate-autoSlide">
-                            <!-- Set 1 -->
-                            {% for artist in artists %}
-                            <div onclick="window.location.href='{% url 'artist_detail' artist.id %}';"
-                                class="flex-none w-28 flex flex-col items-center group cursor-pointer">
+                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                        {% for song in arijit_songs %}
+                        <div class="flex-none w-44 group cursor-pointer relative"
+                            onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                                <img src="{{ song.image_url }}"
+                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
                                 <div
-                                    class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-4 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
-                                    <img src="{% if artist.image %}{{ artist.image.url }}{% endif %}"
-                                        class="w-24 h-24 object-cover rounded-full border-4 border-[#0b0f19]">
+                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                    <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                    </a>
+                                    <button
+                                        onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
                                 </div>
                             </div>
-                            {% empty %}
-                            <p class="text-gray-500 italic">No popular artists available.</p>
-                            {% endfor %}
+                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">Arijit Singh songs currently unavailable.</p>
+                        {% endfor %}
+                    </div>
 
-                            <!-- Set 2 (Duplicated for infinite scroll) -->
-                            {% for artist in artists %}
-                            <div onclick="window.location.href='{% url 'artist_detail' artist.id %}';"
-                                class="flex-none w-28 flex flex-col items-center group cursor-pointer">
+                    <!-- Armaan Malik Songs -->
+                    <div class="mb-5 flex items-end justify-between">
+                        <h2 class="text-2xl font-bold tracking-wide"><span class="text-purple-400">Armaan Malik</span>
+                            Songs
+                        </h2>
+                        <span
+                            class="text-xs font-bold px-2 py-1 bg-purple-500/20 text-purple-400 rounded uppercase tracking-widest border border-purple-500/30 flex items-center gap-1.5">
+                            <i class="fas fa-microphone-alt text-[9px]"></i>
+                            Top Artist
+                        </span>
+                    </div>
+
+                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                        {% for song in armaan_songs %}
+                        <div class="flex-none w-44 group cursor-pointer relative"
+                            onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                                <img src="{{ song.image_url }}"
+                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
                                 <div
-                                    class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-4 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
-                                    <img src="{% if artist.image %}{{ artist.image.url }}{% endif %}"
-                                        class="w-24 h-24 object-cover rounded-full border-4 border-[#0b0f19]">
+                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                    <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                    </a>
+                                    <button
+                                        onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
                                 </div>
                             </div>
-                            {% endfor %}
+                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
                         </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">Armaan Malik songs currently unavailable.</p>
+                        {% endfor %}
                     </div>
-                    {% endblock %}
 
-                </div>
-            </div>
-        </div>
-
-        <!-- Player Bar (Fixed Bottom) -->
-        <div
-            class="h-[90px] bg-[#0d1422]/95 backdrop-blur-xl border-t border-[#1e293b]/70 flex items-center justify-between px-10 z-50 fixed bottom-0 left-0 right-0 shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
-
-            <!-- Currently Playing Info (Left) - Added dynamic updates to this via JS -->
-            <div class="w-[25%] flex items-center gap-4 hidden md:flex">
-                <div id="player-img-container"
-                    class="w-14 h-14 bg-gray-800 rounded-lg shadow-md overflow-hidden border border-white/5 hidden">
-                    <img id="player-img" src="" class="w-full h-full object-cover">
-                </div>
-                <div class="flex flex-col truncate">
-                    <span id="player-title" class="text-[15px] font-bold truncate tracking-wide"></span>
-                    <span id="player-artist" class="text-xs text-gray-400 mt-0.5 font-medium truncate"></span>
-                </div>
-            </div>
-
-            <!-- Controls & Progress bar (Center) -->
-            <div class="flex-1 max-w-3xl flex flex-col items-center justify-center gap-2">
-                <div class="flex items-center gap-8 text-gray-300">
-                    <i class="fas fa-step-backward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
-                    <div id="player-play-btn" onclick="togglePlay()"
-                        class="w-12 h-12 bg-white text-[#0b0f19] rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]">
-                        <i class="fas fa-play ml-1 text-lg"></i>
+                    <!-- KK Songs -->
+                    <div class="mb-5 flex items-end justify-between">
+                        <h2 class="text-2xl font-bold tracking-wide"><span class="text-amber-400">KK's</span> Songs
+                        </h2>
+                        <span
+                            class="text-xs font-bold px-2 py-1 bg-amber-500/20 text-amber-400 rounded uppercase tracking-widest border border-amber-500/30 flex items-center gap-1.5">
+                            <i class="fas fa-star text-[9px]"></i>
+                            Legend
+                        </span>
                     </div>
-                    <i class="fas fa-step-forward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
+
+                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                        {% for song in kk_songs %}
+                        <div class="flex-none w-44 group cursor-pointer relative"
+                            onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                                <img src="{{ song.image_url }}"
+                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                                <div
+                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                    <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                    </a>
+                                    <button
+                                        onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">KK songs currently unavailable.</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- 90s Nostalgia -->
+                    <div class="mb-5 flex items-end justify-between">
+                        <h2 class="text-2xl font-bold tracking-wide"><span class="text-purple-400">90's</span> Nostalgia
+                        </h2>
+                        <span
+                            class="text-xs font-bold px-2 py-1 bg-purple-500/20 text-purple-400 rounded uppercase tracking-widest border border-purple-500/30 flex items-center gap-1.5">
+                            <i class="fas fa-compact-disc text-[9px]"></i>
+                            Classic
+                        </span>
+                    </div>
+
+                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                        {% for song in nostalgia_songs %}
+                        <div class="flex-none w-44 group cursor-pointer relative"
+                            onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                                <img src="{{ song.image_url }}"
+                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                                <div
+                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                    <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                    </a>
+                                    <button
+                                        onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">90's Nostalgia songs currently unavailable.</p>
+                        {% endfor %}
+                    </div>
                 </div>
 
-                <div class="w-full flex items-center gap-4 text-[11px] font-medium tracking-wider text-gray-500">
-                    <span id="player-current-time" class="w-8 text-right">0:00</span>
-                    <div class="h-1.5 flex-1 bg-gray-800 rounded-full relative cursor-pointer group"
-                        onclick="seek(event)">
-                        <div id="player-progress-bar"
-                            class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[#2cdbbd] to-[#3be2c8] rounded-full shadow-[0_0_10px_rgba(59,226,200,0.5)]">
-                            <!-- Knob container needs absolute positioning inside the progress bar to move with it -->
+                <!-- Top Albums (Circular Cards) -->
+                <div class="mb-5 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Top <span class="text-blue-400">Albums</span>
+                    </h2>
+                    <span
+                        class="text-xs font-bold px-2 py-1 bg-blue-500/20 text-blue-400 rounded uppercase tracking-widest border border-blue-500/30 flex items-center gap-1.5">
+                        <i class="fas fa-compact-disc text-[9px]"></i>
+                        Trending
+                    </span>
+                </div>
+
+                <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                    {% for album in top_albums %}
+                    <div class="flex-none w-44 group cursor-pointer relative"
+                        onclick="window.location.href='{% url 'album_detail' album.id %}'">
+                        <!-- Circular frame -->
+                        <div
+                            class="relative mb-4 w-full aspect-square overflow-hidden rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] group-hover:shadow-[0_8px_30px_rgba(59,226,200,0.3)] transition-shadow duration-300">
+                            <img src="{{ album.image_url }}"
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500">
                             <div
-                                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 rounded-full">
+                                <div
+                                    class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                </div>
                             </div>
                         </div>
+                        <h3 class="font-bold text-[15px] text-center truncate px-1">{{ album.title }}</h3>
                     </div>
-                    <span id="player-duration" class="w-8">0:00</span>
+                    {% empty %}
+                    <p class="text-gray-500 italic px-2">Top albums currently unavailable.</p>
+                    {% endfor %}
                 </div>
-            </div>
 
-            <!-- Volume (Right) -->
-            <div class="w-[25%] flex items-center justify-end gap-3 text-gray-400 hidden lg:flex">
-                <i class="fas fa-volume-up text-sm hover:text-white transition cursor-pointer"></i>
-                <div class="w-24 h-1.5 bg-gray-800 rounded-full relative cursor-pointer group">
+                <!-- Popular Artists -->
+                <div class="mb-6 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Popular Artists</h2>
+                </div>
+
+                <div class="relative w-full overflow-hidden pb-10 px-2 pt-2">
+                    <!-- Fade overlays -->
                     <div
-                        class="absolute top-0 left-0 h-full w-[80%] bg-[#3be2c8] rounded-full group-hover:bg-[#2cdbbd]">
+                        class="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[#111827] to-transparent pointer-events-none">
                     </div>
-                    <!-- knob for volume on hover -->
                     <div
-                        class="absolute left-[80%] top-1/2 -translate-y-1/2 -translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                        class="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[#111827] to-transparent pointer-events-none">
+                    </div>
+
+                    <div class="flex gap-8 w-max animate-autoSlide">
+                        <!-- Set 1 -->
+                        {% for artist in artists %}
+                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}';"
+                            class="flex-none w-28 flex flex-col items-center group cursor-pointer">
+                            <div
+                                class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-2 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
+                                <img src="{% if artist.image %}{{ artist.image.url }}{% endif %}"
+                                    class="w-24 h-24 object-cover rounded-full border-4 border-[#0b0f19]">
+                            </div>
+                            <h3
+                                class="text-gray-200 mt-2 text-xs font-serif italic tracking-widest text-center truncate w-full px-1 group-hover:text-[#3be2c8] transition-colors">
+                                {{ artist.name }}</h3>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">No popular artists available.</p>
+                        {% endfor %}
+
+                        <!-- Set 2 (Duplicated for infinite scroll) -->
+                        {% for artist in artists %}
+                        <div onclick="window.location.href='{% url 'artist_detail' artist.id %}';"
+                            class="flex-none w-28 flex flex-col items-center group cursor-pointer">
+                            <div
+                                class="relative rounded-full p-1 bg-gradient-to-b from-transparent to-transparent group-hover:from-[#3be2c8] group-hover:to-blue-500 transition-all duration-500 mb-2 shadow-lg group-hover:shadow-[0_10px_30px_rgba(59,226,200,0.3)]">
+                                <img src="{% if artist.image %}{{ artist.image.url }}{% endif %}"
+                                    class="w-24 h-24 object-cover rounded-full border-4 border-[#0b0f19]">
+                            </div>
+                            <h3
+                                class="text-gray-300 mt-2 text-xs font-serif italic tracking-widest text-center truncate w-full px-1 group-hover:text-[#3be2c8] transition-colors">
+                                {{ artist.name }}</h3>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
+                {% endblock %}
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Bar (Fixed Bottom) -->
+    <div
+        class="h-[90px] bg-[#0d1422]/95 backdrop-blur-xl border-t border-[#1e293b]/70 flex items-center justify-between px-10 z-50 fixed bottom-0 left-0 right-0 shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
+
+        <!-- Currently Playing Info (Left) - Added dynamic updates to this via JS -->
+        <div class="w-[25%] flex items-center gap-4 hidden md:flex">
+            <div id="player-img-container"
+                class="w-14 h-14 bg-gray-800 rounded-lg shadow-md overflow-hidden border border-white/5 hidden">
+                <img id="player-img" src="" class="w-full h-full object-cover">
+            </div>
+            <div class="flex flex-col truncate">
+                <span id="player-title" class="text-[15px] font-bold truncate tracking-wide"></span>
+                <span id="player-artist" class="text-xs text-gray-400 mt-0.5 font-medium truncate"></span>
             </div>
         </div>
 
-        <!-- Hidden audio element -->
-        <audio id="audio-player"></audio>
+        <!-- Controls & Progress bar (Center) -->
+        <div class="flex-1 max-w-3xl flex flex-col items-center justify-center gap-2">
+            <div class="flex items-center gap-8 text-gray-300">
+                <i class="fas fa-step-backward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
+                <div id="player-play-btn" onclick="togglePlay()"
+                    class="w-12 h-12 bg-white text-[#0b0f19] rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]">
+                    <i class="fas fa-play ml-1 text-lg"></i>
+                </div>
+                <i class="fas fa-step-forward cursor-pointer hover:text-[#3be2c8] transition hover:scale-110"></i>
+            </div>
 
-        <script>
-            const audioPlayer = document.getElementById('audio-player');
-            const playBtn = document.getElementById('player-play-btn');
-            const playIcon = playBtn.querySelector('i');
-            const progressBar = document.getElementById('player-progress-bar');
-            const currTimeDisplay = document.getElementById('player-current-time');
-            const durTimeDisplay = document.getElementById('player-duration');
-            let isPlaying = false;
+            <div class="w-full flex items-center gap-4 text-[11px] font-medium tracking-wider text-gray-500">
+                <span id="player-current-time" class="w-8 text-right">0:00</span>
+                <div class="h-1.5 flex-1 bg-gray-800 rounded-full relative cursor-pointer group" onclick="seek(event)">
+                    <div id="player-progress-bar"
+                        class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[#2cdbbd] to-[#3be2c8] rounded-full shadow-[0_0_10px_rgba(59,226,200,0.5)]">
+                        <!-- Knob container needs absolute positioning inside the progress bar to move with it -->
+                        <div
+                            class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                    </div>
+                </div>
+                <span id="player-duration" class="w-8">0:00</span>
+            </div>
+        </div>
 
-            function playSong(songId, url, title, artist, imageUrl, source) {
-                // source: 'local' or 'jiosaavn' — determines which recording endpoint to use
-                source = source || 'local'; // default to local for backward compatibility
+        <!-- Volume (Right) -->
+        <div class="w-[25%] flex items-center justify-end gap-3 text-gray-400 hidden lg:flex">
+            <i class="fas fa-volume-up text-sm hover:text-white transition cursor-pointer"></i>
+            <div class="w-24 h-1.5 bg-gray-800 rounded-full relative cursor-pointer group">
+                <div class="absolute top-0 left-0 h-full w-[80%] bg-[#3be2c8] rounded-full group-hover:bg-[#2cdbbd]">
+                </div>
+                <!-- knob for volume on hover -->
+                <div
+                    class="absolute left-[80%] top-1/2 -translate-y-1/2 -translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+            </div>
+        </div>
+    </div>
 
-                // Update Player UI
-                document.getElementById('player-title').innerText = title;
-                document.getElementById('player-artist').innerText = artist;
+    <!-- Hidden audio element -->
+    <audio id="audio-player"></audio>
 
-                if (imageUrl) {
-                    document.getElementById('player-img-container').classList.remove('hidden');
-                    document.getElementById('player-img').src = imageUrl;
-                }
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const playBtn = document.getElementById('player-play-btn');
+        const playIcon = playBtn.querySelector('i');
+        const progressBar = document.getElementById('player-progress-bar');
+        const currTimeDisplay = document.getElementById('player-current-time');
+        const durTimeDisplay = document.getElementById('player-duration');
+        let isPlaying = false;
 
-                audioPlayer.src = url;
-                audioPlayer.play();
-                isPlaying = true;
-                updatePlayButton();
+        function playSong(songId, url, title, artist, imageUrl, source) {
+            // source: 'local' or 'jiosaavn' — determines which recording endpoint to use
+            source = source || 'local'; // default to local for backward compatibility
 
-                // --- Dynamic Sidebar Update ---
-                const sidebarList = document.getElementById('sidebar-recent-list');
-                if (sidebarList) {
-                    const existingItem = sidebarList.querySelector(`[data-song-id="${songId}"]`);
-                    if (existingItem) {
-                        sidebarList.prepend(existingItem);
+            // Update Player UI
+            document.getElementById('player-title').innerText = title;
+            document.getElementById('player-artist').innerText = artist;
+
+            if (imageUrl) {
+                document.getElementById('player-img-container').classList.remove('hidden');
+                document.getElementById('player-img').src = imageUrl;
+            }
+
+            audioPlayer.src = url;
+            audioPlayer.play();
+            isPlaying = true;
+            updatePlayButton();
+
+            // --- Dynamic Sidebar Update ---
+            const sidebarList = document.getElementById('sidebar-recent-list');
+            if (sidebarList) {
+                const existingItem = sidebarList.querySelector(`[data-song-id="${songId}"]`);
+                if (existingItem) {
+                    sidebarList.prepend(existingItem);
+                } else {
+                    const newItem = document.createElement('div');
+                    newItem.setAttribute('data-song-id', songId);
+                    newItem.className = "flex items-center group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all duration-300";
+                    newItem.onclick = () => playSong(songId, url, title, artist, imageUrl, source);
+
+                    let imgHtml = '';
+                    if (imageUrl) {
+                        imgHtml = `<img src="${imageUrl}" class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">`;
                     } else {
-                        const newItem = document.createElement('div');
-                        newItem.setAttribute('data-song-id', songId);
-                        newItem.className = "flex items-center group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all duration-300";
-                        newItem.onclick = () => playSong(songId, url, title, artist, imageUrl, source);
+                        imgHtml = `<div class="w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center border border-white/5 shadow-md group-hover:scale-105 transition"><i class="fas fa-music text-gray-500 group-hover:text-[#3be2c8] transition-colors"></i></div>`;
+                    }
 
-                        let imgHtml = '';
-                        if (imageUrl) {
-                            imgHtml = `<img src="${imageUrl}" class="w-10 h-10 rounded-md object-cover shadow-md group-hover:scale-105 transition border border-white/5">`;
-                        } else {
-                            imgHtml = `<div class="w-10 h-10 rounded-md bg-gray-800 flex items-center justify-center border border-white/5 shadow-md group-hover:scale-105 transition"><i class="fas fa-music text-gray-500 group-hover:text-[#3be2c8] transition-colors"></i></div>`;
-                        }
-
-                        newItem.innerHTML = `
+                    newItem.innerHTML = `
                         ${imgHtml}
                         <div class="ml-4 flex-1 overflow-hidden">
                             <div class="text-sm font-semibold truncate group-hover:text-[#3be2c8] transition-colors">${title}</div>
@@ -892,185 +1099,379 @@
                             <i class="fas fa-play text-xs ml-0.5"></i>
                         </div>
                     `;
-                        sidebarList.prepend(newItem);
-                        if (sidebarList.children.length > 10) sidebarList.removeChild(sidebarList.lastElementChild);
-                    }
+                    sidebarList.prepend(newItem);
+                    if (sidebarList.children.length > 10) sidebarList.removeChild(sidebarList.lastElementChild);
                 }
+            }
 
-                // --- Record play in user's listening history ---
-                function getCookie(name) {
-                    let cookieValue = null;
-                    if (document.cookie && document.cookie !== '') {
-                        const cookies = document.cookie.split(';');
-                        for (let i = 0; i < cookies.length; i++) {
-                            const cookie = cookies[i].trim();
-                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                                break;
-                            }
+            // --- Record play in user's listening history ---
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
                         }
                     }
-                    return cookieValue;
                 }
-                const csrftoken = getCookie('csrftoken');
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
 
-                const isAuthenticated = {% if user.is_authenticated %} true{% else %} false{% endif %};
+            const isAuthenticated = {% if user.is_authenticated %} true{% else %} false{% endif %};
 
-            if (isAuthenticated && source === 'jiosaavn' && songId) {
-                // JioSaavn song — use dedicated endpoint
-                fetch(`/record_play_jiosaavn/${songId}/`, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': csrftoken,
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    console.log('Record JioSaavn play response:', response.status);
-                }).catch(err => console.error('Error recording JioSaavn play:', err));
-            } else if (isAuthenticated && songId && !isNaN(songId)) {
-                // Local song (numeric DB ID)
-                fetch(`/record_play/${songId}/`, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': csrftoken,
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    console.log('Record play response:', response.status);
-                }).catch(err => console.error('Error recording play:', err));
+        if (isAuthenticated && source === 'jiosaavn' && songId) {
+            // JioSaavn song — use dedicated endpoint
+            fetch(`/record_play_jiosaavn/${songId}/`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                console.log('Record JioSaavn play response:', response.status);
+            }).catch(err => console.error('Error recording JioSaavn play:', err));
+        } else if (isAuthenticated && songId && !isNaN(songId)) {
+            // Local song (numeric DB ID)
+            fetch(`/record_play/${songId}/`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                console.log('Record play response:', response.status);
+            }).catch(err => console.error('Error recording play:', err));
+        }
+        }
+
+        function togglePlay() {
+            if (!audioPlayer.src) return;
+
+            if (isPlaying) {
+                audioPlayer.pause();
+            } else {
+                audioPlayer.play();
+            }
+            isPlaying = !isPlaying;
+            updatePlayButton();
+        }
+
+        function updatePlayButton() {
+            if (isPlaying) {
+                playIcon.classList.remove('fa-play', 'ml-1');
+                playIcon.classList.add('fa-pause');
+            } else {
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play', 'ml-1');
             }
         }
 
-            function togglePlay() {
-                if (!audioPlayer.src) return;
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
 
-                if (isPlaying) {
-                    audioPlayer.pause();
-                } else {
-                    audioPlayer.play();
-                }
-                isPlaying = !isPlaying;
-                updatePlayButton();
+        function seek(event) {
+            if (!audioPlayer.src) return;
+            const width = event.currentTarget.clientWidth;
+            const clickX = event.offsetX;
+            const duration = audioPlayer.duration;
+            audioPlayer.currentTime = (clickX / width) * duration;
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            const { currentTime, duration } = audioPlayer;
+            if (duration) {
+                const progressPercent = (currentTime / duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                durTimeDisplay.innerText = formatTime(duration);
             }
+            currTimeDisplay.innerText = formatTime(currentTime);
+        });
 
-            function updatePlayButton() {
-                if (isPlaying) {
-                    playIcon.classList.remove('fa-play', 'ml-1');
-                    playIcon.classList.add('fa-pause');
-                } else {
-                    playIcon.classList.remove('fa-pause');
-                    playIcon.classList.add('fa-play', 'ml-1');
-                }
-            }
+        audioPlayer.addEventListener('ended', () => {
+            isPlaying = false;
+            updatePlayButton();
+            progressBar.style.width = '0%';
+        });
+    </script>
+    <!-- Playlist Selection Menu -->
+    <div id="playlist-side-menu" class="playlist-menu shadow-2xl">
+        <div
+            class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">
+            Add to Playlist</div>
+        {% for playlist in playlists %}
+        <div class="playlist-menu-item" onclick="addToPlaylist('{{ playlist.id }}')">{{ playlist.name }}</div>
+        {% empty %}
+        <div class="px-4 py-3 text-xs text-gray-500 italic">No playlists found</div>
+        {% endfor %}
+    </div>
 
-            function formatTime(seconds) {
-                if (isNaN(seconds)) return "0:00";
-                const min = Math.floor(seconds / 60);
-                const sec = Math.floor(seconds % 60);
-                return `${min}:${sec < 10 ? '0' : ''}${sec}`;
-            }
+    <script>
+        let currentJioSongId = null;
+        const playlistMenu = document.getElementById('playlist-side-menu');
 
-            function seek(event) {
-                if (!audioPlayer.src) return;
-                const width = event.currentTarget.clientWidth;
-                const clickX = event.offsetX;
-                const duration = audioPlayer.duration;
-                audioPlayer.currentTime = (clickX / width) * duration;
-            }
+        function showPlaylistMenu(event, songId, title) {
+            currentJioSongId = songId;
+            const rect = event.currentTarget.getBoundingClientRect();
 
-            audioPlayer.addEventListener('timeupdate', () => {
-                const { currentTime, duration } = audioPlayer;
-                if (duration) {
-                    const progressPercent = (currentTime / duration) * 100;
-                    progressBar.style.width = `${progressPercent}%`;
-                    durTimeDisplay.innerText = formatTime(duration);
-                }
-                currTimeDisplay.innerText = formatTime(currentTime);
-            });
+            playlistMenu.style.display = 'block';
+            playlistMenu.style.top = `${rect.bottom + window.scrollY + 10}px`;
+            playlistMenu.style.left = `${rect.left + window.scrollX - 100}px`;
 
-            audioPlayer.addEventListener('ended', () => {
-                isPlaying = false;
-                updatePlayButton();
-                progressBar.style.width = '0%';
-            });
-        </script>
-        <!-- Playlist Selection Menu -->
-        <div id="playlist-side-menu" class="playlist-menu shadow-2xl">
-            <div
-                class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">
-                Add to Playlist</div>
-            {% for playlist in playlists %}
-            <div class="playlist-menu-item" onclick="addToPlaylist('{{ playlist.id }}')">{{ playlist.name }}</div>
-            {% empty %}
-            <div class="px-4 py-3 text-xs text-gray-500 italic">No playlists found</div>
-            {% endfor %}
-        </div>
+            // Auto hide on click elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hidePlaylistMenu, { once: true });
+            }, 10);
+        }
 
-        <script>
-            let currentJioSongId = null;
-            const playlistMenu = document.getElementById('playlist-side-menu');
+        function hidePlaylistMenu() {
+            playlistMenu.style.display = 'none';
+        }
 
-            function showPlaylistMenu(event, songId, title) {
-                currentJioSongId = songId;
-                const rect = event.currentTarget.getBoundingClientRect();
+        function addToPlaylist(playlistId) {
+            if (!currentJioSongId) return;
 
-                playlistMenu.style.display = 'block';
-                playlistMenu.style.top = `${rect.bottom + window.scrollY + 10}px`;
-                playlistMenu.style.left = `${rect.left + window.scrollX - 100}px`;
-
-                // Auto hide on click elsewhere
-                setTimeout(() => {
-                    document.addEventListener('click', hidePlaylistMenu, { once: true });
-                }, 10);
-            }
-
-            function hidePlaylistMenu() {
-                playlistMenu.style.display = 'none';
-            }
-
-            function addToPlaylist(playlistId) {
-                if (!currentJioSongId) return;
-
-                function getCookie(name) {
-                    let cookieValue = null;
-                    if (document.cookie && document.cookie !== '') {
-                        const cookies = document.cookie.split(';');
-                        for (let i = 0; i < cookies.length; i++) {
-                            const cookie = cookies[i].trim();
-                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                                break;
-                            }
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
                         }
                     }
-                    return cookieValue;
                 }
-                const csrftoken = getCookie('csrftoken');
-
-                const formData = new FormData();
-                formData.append('song_id', currentJioSongId);
-                formData.append('playlist_id', playlistId);
-
-                fetch("{% url 'add_jiosaavn_to_playlist' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: formData
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            alert(data.message);
-                        } else {
-                            alert(data.message || "Error adding song to playlist");
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
+                return cookieValue;
             }
-        </script>
+            const csrftoken = getCookie('csrftoken');
+
+            const formData = new FormData();
+            formData.append('song_id', currentJioSongId);
+            formData.append('playlist_id', playlistId);
+
+            fetch("{% url 'add_jiosaavn_to_playlist' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                    } else {
+                        alert(data.message || "Error adding song to playlist");
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+
+    {% if not user.is_authenticated %}
+    <!-- Guest Engagement Popup Modal -->
+    <div id="guest-engagement-modal"
+        class="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-700 ease-in-out">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-lg" onclick="closeGuestModal()"></div>
+
+        <!-- Modal Content -->
+        <div
+            class="relative bg-gradient-to-b from-[#162033] via-[#111c2e] to-[#0b1120] backdrop-blur-3xl rounded-[24px] p-0 max-w-[340px] w-[88%] mx-4 border border-white/[0.08] shadow-[0_25px_80px_rgba(0,0,0,0.6),0_0_60px_rgba(59,226,200,0.08)] transform translate-y-12 transition-transform duration-700 ease-out flex flex-col items-center text-center overflow-hidden">
+
+            <!-- Decorative background orbs -->
+            <div
+                class="absolute -top-16 -right-16 w-44 h-44 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[80px] opacity-[0.07] pointer-events-none">
+            </div>
+            <div
+                class="absolute -bottom-12 -left-12 w-36 h-36 bg-blue-500 rounded-full mix-blend-screen filter blur-[70px] opacity-[0.06] pointer-events-none">
+            </div>
+
+            <!-- Close button -->
+            <button onclick="closeGuestModal()"
+                class="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-gray-500 hover:text-white transition-all duration-300 z-10 group">
+                <i class="fas fa-times text-xs group-hover:rotate-90 transition-transform duration-300"></i>
+            </button>
+
+            <!-- Top section with icon -->
+            <div class="pt-7 pb-1 flex flex-col items-center relative">
+                <!-- Animated ring behind icon -->
+                <div class="absolute top-4 w-26 h-26 rounded-full border border-[#3be2c8]/[0.15] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] pointer-events-none"
+                    style="width:104px;height:104px"></div>
+                <div class="absolute top-5 w-24 h-24 rounded-full border border-[#3be2c8]/[0.08] animate-[pulse_4s_ease-in-out_infinite] pointer-events-none"
+                    style="width:92px;height:92px"></div>
+
+                <!-- Crown Icon (unchanged) -->
+                <div
+                    class="w-[72px] h-[72px] bg-gradient-to-tr from-[#3be2c8] to-blue-500 rounded-full flex items-center justify-center shadow-[0_0_25px_rgba(59,226,200,0.4)] mb-4 animate-[pulse_3s_ease-in-out_infinite] relative z-[1]">
+                    <i class="fas fa-crown text-3xl text-white drop-shadow-lg"></i>
+                </div>
+            </div>
+
+            <!-- Content section -->
+            <div class="px-6 pb-6 w-full">
+                <h2 class="text-[22px] font-extrabold text-white mb-1 tracking-tight leading-tight">Unlock the
+                    Full<br>Experience</h2>
+                <p class="text-gray-500 text-[12px] mb-4 leading-relaxed font-medium">Join thousands of music lovers —
+                    it's completely free.</p>
+
+                <!-- Divider -->
+                <div
+                    class="w-10 h-[2px] bg-gradient-to-r from-transparent via-[#3be2c8]/40 to-transparent mx-auto mb-4">
+                </div>
+
+                <!-- Feature list -->
+                <div class="flex flex-col gap-2.5 mb-5 text-left">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="w-7 h-7 rounded-md bg-[#3be2c8]/[0.08] flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-heart text-[#3be2c8] text-[10px]"></i>
+                        </div>
+                        <span class="text-[12px] text-gray-300 font-medium">Save unlimited playlists & favorites</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="w-7 h-7 rounded-md bg-[#3be2c8]/[0.08] flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-brain text-[#3be2c8] text-[10px]"></i>
+                        </div>
+                        <span class="text-[12px] text-gray-300 font-medium">AI-powered personal recommendations</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="w-7 h-7 rounded-md bg-[#3be2c8]/[0.08] flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-history text-[#3be2c8] text-[10px]"></i>
+                        </div>
+                        <span class="text-[12px] text-gray-300 font-medium">Full listening history & analytics</span>
+                    </div>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="w-full flex flex-col gap-2">
+                    <button onclick="window.location.href='{% url 'register' %}'"
+                        class="w-full bg-gradient-to-r from-[#3be2c8] to-[#28c5ac] text-[#0b0f19] font-bold tracking-wider text-[12px] px-5 py-3 rounded-xl shadow-[0_4px_24px_rgba(59,226,200,0.35)] hover:shadow-[0_6px_32px_rgba(59,226,200,0.5)] hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden group">
+                        <span class="relative z-[1]">Get Started — It's Free</span>
+                        <div
+                            class="absolute inset-0 bg-gradient-to-r from-[#28c5ac] to-[#3be2c8] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        </div>
+                    </button>
+                    <button onclick="window.location.href='{% url 'user_login' %}'"
+                        class="w-full bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:text-white font-semibold tracking-wide text-[11px] px-5 py-2.5 rounded-xl hover:bg-white/[0.07] hover:border-white/[0.15] transition-all duration-300">
+                        Already have an account? <span class="text-[#3be2c8]">Log in</span>
+                    </button>
+                    <button onclick="closeGuestModal()"
+                        class="text-gray-600 hover:text-gray-400 text-[10px] font-medium tracking-wider mt-0.5 transition-colors duration-300">
+                        Maybe later
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const guestModal = document.getElementById('guest-engagement-modal');
+        const guestModalContent = guestModal.querySelector('.relative.bg-gradient-to-br');
+        let popupCount = parseInt(sessionStorage.getItem('guestPopupCount') || '0');
+        const MAX_POPUPS = Infinity; // Infinite popups
+        const INTERVAL_MS = 10000; // 10 seconds window
+        let scrollTriggerFired = false;
+        let timerInterval = null;
+
+        function showGuestModal() {
+            if (popupCount >= MAX_POPUPS) return;
+
+            guestModal.classList.remove('opacity-0', 'pointer-events-none');
+            guestModal.classList.add('opacity-100', 'pointer-events-auto');
+            guestModalContent.classList.remove('translate-y-12');
+            guestModalContent.classList.add('translate-y-0');
+
+            popupCount++;
+            sessionStorage.setItem('guestPopupCount', popupCount);
+        }
+
+        function closeGuestModal() {
+            guestModal.classList.add('opacity-0', 'pointer-events-none');
+            guestModal.classList.remove('opacity-100', 'pointer-events-auto');
+            guestModalContent.classList.add('translate-y-12');
+            guestModalContent.classList.remove('translate-y-0');
+
+            if (popupCount < MAX_POPUPS && !timerInterval) {
+                timerInterval = setInterval(showGuestModal, INTERVAL_MS);
+            }
+        }
+
+        function handleScrollTrigger() {
+            if (!scrollTriggerFired) {
+                scrollTriggerFired = true;
+                showGuestModal();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (popupCount >= MAX_POPUPS) return;
+
+            // Strategy 1: Listen on the overflow-y-auto container
+            const scrollContainer = document.querySelector('.overflow-y-auto');
+            if (scrollContainer) {
+                scrollContainer.addEventListener('scroll', function () {
+                    if (!scrollTriggerFired && scrollContainer.scrollTop > 50) {
+                        handleScrollTrigger();
+                    }
+                }, { passive: true });
+            }
+
+            // Strategy 2: Listen on window scroll as fallback
+            window.addEventListener('scroll', function () {
+                if (!scrollTriggerFired && (window.scrollY > 50 || document.documentElement.scrollTop > 50)) {
+                    handleScrollTrigger();
+                }
+            }, { passive: true });
+
+            // Strategy 3: Listen on wheel event (catches scroll intent even if scrollTop doesn't change immediately)
+            document.addEventListener('wheel', function onWheel(e) {
+                if (!scrollTriggerFired && e.deltaY > 0) {
+                    handleScrollTrigger();
+                    document.removeEventListener('wheel', onWheel);
+                }
+            }, { passive: true });
+
+            // Strategy 4: Listen on touch move for mobile
+            let touchStartY = 0;
+            document.addEventListener('touchstart', function (e) {
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            document.addEventListener('touchmove', function onTouch(e) {
+                if (!scrollTriggerFired && touchStartY - e.touches[0].clientY > 30) {
+                    handleScrollTrigger();
+                    document.removeEventListener('touchmove', onTouch);
+                }
+            }, { passive: true });
+
+            // Strategy 5: Fallback timer — show popup after 15 seconds if scroll never detected
+            setTimeout(() => {
+                if (!scrollTriggerFired) {
+                    handleScrollTrigger();
+                }
+            }, 15000);
+
+            // Resume recurring interval if they've already seen it before
+            if (popupCount > 0 && popupCount < MAX_POPUPS && !timerInterval) {
+                timerInterval = setInterval(showGuestModal, INTERVAL_MS);
+            }
+        });
+    </script>
+    {% endif %}
+
 </body>
 
 </html>

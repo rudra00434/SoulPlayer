@@ -33,9 +33,16 @@ def get_recommendations_for_user(user, n=30):
     """
     from music.models import Recommendation, Song
 
+    from datetime import timedelta
+    from django.utils import timezone
     # --- Step 1: Try cached recommendations ---
     try:
         rec_cache = Recommendation.objects.get(user=user)
+        
+        # Invalidate cache if older than 6 hours
+        if rec_cache.updated_at and timezone.now() - rec_cache.updated_at > timedelta(hours=6):
+            raise Recommendation.DoesNotExist
+            
         cached_data = rec_cache.recommended_songs  # JSONField: [{'song_id': int, 'score': float}, ...]
 
         if cached_data:

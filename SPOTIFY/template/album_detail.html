@@ -1,0 +1,104 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<div class="px-10 pb-32">
+
+    <!-- Album Header -->
+    <div class="flex items-end gap-8 mb-10 mt-4 group">
+        <!-- Album Cover Art (Circular as requested contextually in some places, but square is standard for album detail header. We'll stick to a beautiful large square with rounded corners here for the detailed view) -->
+        <div
+            class="w-56 h-56 rounded-2xl shadow-2xl relative overflow-hidden bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center group-hover:shadow-[0_20px_50px_rgba(59,226,200,0.2)] transition-all duration-500">
+            {% if album.image_url %}
+            <img src="{{ album.image_url }}" class="w-full h-full object-cover">
+            {% else %}
+            <i class="fas fa-compact-disc text-6xl text-gray-600"></i>
+            {% endif %}
+        </div>
+
+        <div class="flex flex-col mb-2">
+            <span class="text-xs font-bold uppercase tracking-widest text-[#3be2c8] mb-2"><i class="fas fa-compact-disc mr-1"></i> Album</span>
+            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg text-white mb-4">
+                {{ album.title }}
+            </h1>
+            <div class="flex items-center gap-2 text-sm text-gray-300 font-medium">
+                <!-- Artist image could go here, but we'll stick to text -->
+                <span class="font-bold text-white">{{ album.artist }}</span>
+                <span class="text-gray-500">•</span>
+                <span>{{ album.year }}</span>
+                <span class="text-gray-500">•</span>
+                <span>{{ album.song_count }} songs</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-6 mb-10">
+        <!-- Play First Song Button -->
+        {% if songs %}
+        <button onclick="playSong('{{ songs.0.id }}', '{{ songs.0.stream_url }}', '{{ songs.0.title|escapejs }}', '{{ songs.0.artist|escapejs }}', '{{ songs.0.image_url }}', 'jiosaavn')"
+            class="w-14 h-14 bg-[#3be2c8] text-[#0b0f19] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.4)] hover:scale-105 hover:shadow-[0_0_25px_rgba(59,226,200,0.6)] transition-all">
+            <i class="fas fa-play ml-1 text-xl"></i>
+        </button>
+        {% endif %}
+        <button class="text-gray-400 hover:text-white transition"><i class="far fa-heart text-3xl"></i></button>
+        <button class="text-gray-400 hover:text-white transition"><i class="fas fa-ellipsis-h text-2xl"></i></button>
+    </div>
+
+    <!-- Song List Table -->
+    <div class="w-full">
+        <!-- Table Header -->
+        <div
+            class="grid grid-cols-[50px_2fr_1fr_100px] gap-4 px-4 py-2 border-b border-white/10 text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
+            <div class="text-center">#</div>
+            <div>Title</div>
+            <div>Artist</div>
+            <div class="text-right"><i class="far fa-clock text-base"></i></div>
+        </div>
+
+        <!-- Song Rows -->
+        <div class="flex flex-col gap-1">
+            {% for song in songs %}
+            <div onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')"
+                class="grid grid-cols-[50px_2fr_1fr_100px] gap-4 px-4 py-3 rounded-xl hover:bg-white/5 group transition-colors cursor-pointer items-center border border-transparent hover:border-white/5">
+
+                <!-- Index & Play Icon -->
+                <div class="flex items-center justify-center">
+                    <span class="text-gray-500 font-medium group-hover:hidden">{{ forloop.counter }}</span>
+                    <button class="hidden group-hover:block">
+                        <i class="fas fa-play text-xs text-[#3be2c8]"></i>
+                    </button>
+                </div>
+
+                <!-- Title & Mini Image -->
+                <div class="flex items-center gap-4 overflow-hidden">
+                    <div class="truncate text-base font-bold text-white group-hover:text-[#3be2c8] transition-colors">
+                        {{ song.title }}
+                    </div>
+                </div>
+
+                <!-- Artist -->
+                <div class="text-sm font-medium text-gray-400 truncate group-hover:text-white transition-colors">
+                    {{ song.artist }}
+                </div>
+
+                <!-- Duration -->
+                <div class="flex items-center justify-end gap-2 text-sm font-medium text-gray-500">
+                    <button onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')" class="opacity-0 group-hover:opacity-100 mr-2 text-gray-400 hover:text-[#3be2c8] transition-all">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <span>{{ song.duration }}</span>
+                </div>
+
+            </div>
+            {% empty %}
+            <div class="py-16 text-center flex flex-col items-center">
+                <i class="fas fa-compact-disc text-4xl text-gray-600 mb-4"></i>
+                <h3 class="text-xl font-bold text-gray-300">No tracks found.</h3>
+                <p class="text-sm text-gray-500 mt-2">This album appears to be empty or restricted.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

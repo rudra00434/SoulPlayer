@@ -42,4 +42,7 @@ urlpatterns =[
     path('api/like/song/<int:pk>/', views.toggle_like_song, name='toggle_like_song'),
     path('api/like/jiosaavn/<str:song_id>/', views.toggle_like_jiosaavn, name='toggle_like_jiosaavn'),
     path('api/check_liked/', views.check_liked, name='check_liked'),
+    path('radio/', views.radio_stations, name='radio_stations'),
+    path('play_radio/<str:station_uuid>/', views.play_radio, name='play_radio'),
+    path('album/<str:album_id>/', views.album_detail, name='album_detail'),
 ]

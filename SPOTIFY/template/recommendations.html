@@ -72,13 +72,25 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         .animate-float {
@@ -208,21 +220,16 @@
                 class="flex items-center justify-between px-10 pt-10 pb-6 sticky top-0 bg-[#111827]/90 backdrop-blur-xl z-30">
                 <nav
                     class="flex gap-6 lg:gap-8 text-gray-500 font-semibold text-sm tracking-widest whitespace-nowrap overflow-x-auto no-scrollbar flex-1 mr-4">
-                    <a href="{% url 'index' %}"
-                        class="hover:text-white pb-1 transition">Discover</a>
-                    <a href="{% url 'search' %}"
-                        class="hover:text-white pb-1 transition">Library</a>
+                    <a href="{% url 'index' %}" class="hover:text-white pb-1 transition">Discover</a>
+                    <a href="{% url 'search' %}" class="hover:text-white pb-1 transition">Library</a>
                     <a href="{% url 'voice_search' %}"
                         class="hover:text-white pb-1 transition flex items-center gap-1.5"><i
                             class="fas fa-microphone-alt text-[10px]"></i> Voice</a>
-                    <a href="{% url 'podcasts' %}"
-                        class="hover:text-white pb-1 transition">Podcasts</a>
+                    <a href="{% url 'podcasts' %}" class="hover:text-white pb-1 transition">Podcasts</a>
                     <a href="{% url 'recommendations' %}"
                         class="text-white border-b-2 border-[#3be2c8] pb-1 transition">Made For You</a>
-                    <a href="{% url 'about' %}"
-                        class="hover:text-white pb-1 transition">About</a>
-                    <a href="{% url 'contact' %}"
-                        class="hover:text-white pb-1 transition">Contact</a>
+                    <a href="{% url 'about' %}" class="hover:text-white pb-1 transition">About</a>
+                    <a href="{% url 'contact' %}" class="hover:text-white pb-1 transition">Contact</a>
                 </nav>
 
                 <div class="flex items-center gap-6">
@@ -264,23 +271,30 @@
                 <div class="relative w-full rounded-3xl overflow-hidden mb-14 shadow-2xl mt-2">
                     <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#0f172a]"></div>
                     <!-- Animated blobs -->
-                    <div class="absolute -top-20 -right-10 w-96 h-96 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[140px] opacity-20 animate-float"></div>
-                    <div class="absolute -bottom-20 -left-10 w-80 h-80 bg-[#818cf8] rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-float" style="animation-delay: -3s"></div>
-                    <div class="absolute top-1/2 right-1/4 w-64 h-64 bg-[#f472b6] rounded-full mix-blend-screen filter blur-[100px] opacity-15 animate-float" style="animation-delay: -1.5s"></div>
+                    <div
+                        class="absolute -top-20 -right-10 w-96 h-96 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[140px] opacity-20 animate-float">
+                    </div>
+                    <div class="absolute -bottom-20 -left-10 w-80 h-80 bg-[#818cf8] rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-float"
+                        style="animation-delay: -3s"></div>
+                    <div class="absolute top-1/2 right-1/4 w-64 h-64 bg-[#f472b6] rounded-full mix-blend-screen filter blur-[100px] opacity-15 animate-float"
+                        style="animation-delay: -1.5s"></div>
 
                     <div class="relative z-10 px-14 py-16 flex items-center justify-between">
                         <div class="max-w-2xl">
                             <div class="flex items-center gap-3 mb-4">
-                                <span class="text-xs font-bold px-3 py-1.5 bg-[#3be2c8]/20 text-[#3be2c8] rounded-full uppercase tracking-widest border border-[#3be2c8]/30 flex items-center gap-1.5">
+                                <span
+                                    class="text-xs font-bold px-3 py-1.5 bg-[#3be2c8]/20 text-[#3be2c8] rounded-full uppercase tracking-widest border border-[#3be2c8]/30 flex items-center gap-1.5">
                                     <i class="fas fa-brain text-[10px]"></i>
                                     ML Powered
                                 </span>
                                 {% if source == 'cache' %}
-                                <span class="text-xs font-bold px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full uppercase tracking-widest border border-purple-500/30">
+                                <span
+                                    class="text-xs font-bold px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full uppercase tracking-widest border border-purple-500/30">
                                     {{ algorithm }}
                                 </span>
                                 {% elif source == 'fallback' %}
-                                <span class="text-xs font-bold px-3 py-1.5 bg-amber-500/20 text-amber-300 rounded-full uppercase tracking-widest border border-amber-500/30">
+                                <span
+                                    class="text-xs font-bold px-3 py-1.5 bg-amber-500/20 text-amber-300 rounded-full uppercase tracking-widest border border-amber-500/30">
                                     Popular Picks
                                 </span>
                                 {% endif %}
@@ -292,11 +306,11 @@
                             <p class="text-gray-400 text-sm leading-relaxed max-w-lg font-light tracking-wide mb-2">
                                 Your personal mix of songs tailored by our recommendation engine.
                                 {% if source == 'cache' and updated_at %}
-                                    Updated {{ updated_at|timesince }} ago.
+                                Updated {{ updated_at|timesince }} ago.
                                 {% elif source == 'realtime' %}
-                                    Freshly generated just for you.
+                                Freshly generated just for you.
                                 {% else %}
-                                    Discover popular songs while we learn your taste.
+                                Discover popular songs while we learn your taste.
                                 {% endif %}
                             </p>
                             <p class="text-gray-500 text-xs font-medium tracking-widest">
@@ -306,8 +320,10 @@
 
                         <!-- Decorative icon -->
                         <div class="hidden lg:flex items-center justify-center">
-                            <div class="w-40 h-40 rounded-full bg-gradient-to-tr from-[#3be2c8]/20 to-[#818cf8]/20 flex items-center justify-center backdrop-blur-xl border border-white/5 shadow-[0_0_60px_rgba(59,226,200,0.2)]">
-                                <div class="w-28 h-28 rounded-full bg-gradient-to-br from-[#3be2c8] to-[#818cf8] flex items-center justify-center shadow-[0_0_40px_rgba(59,226,200,0.4)] animate-float">
+                            <div
+                                class="w-40 h-40 rounded-full bg-gradient-to-tr from-[#3be2c8]/20 to-[#818cf8]/20 flex items-center justify-center backdrop-blur-xl border border-white/5 shadow-[0_0_60px_rgba(59,226,200,0.2)]">
+                                <div
+                                    class="w-28 h-28 rounded-full bg-gradient-to-br from-[#3be2c8] to-[#818cf8] flex items-center justify-center shadow-[0_0_40px_rgba(59,226,200,0.4)] animate-float">
                                     <i class="fas fa-wand-magic-sparkles text-4xl text-white drop-shadow-lg"></i>
                                 </div>
                             </div>
@@ -320,8 +336,10 @@
 
                 <!-- All Recommended Songs -->
                 <div class="mb-6 flex items-end justify-between">
-                    <h2 class="text-2xl font-bold tracking-wide">Your <span class="text-[#3be2c8]">Recommendations</span></h2>
-                    <span class="text-xs font-bold px-2 py-1 bg-white/5 text-gray-400 rounded uppercase tracking-widest border border-white/10">
+                    <h2 class="text-2xl font-bold tracking-wide">Your <span
+                            class="text-[#3be2c8]">Recommendations</span></h2>
+                    <span
+                        class="text-xs font-bold px-2 py-1 bg-white/5 text-gray-400 rounded uppercase tracking-widest border border-white/10">
                         {{ total_count }} tracks
                     </span>
                 </div>
@@ -333,20 +351,26 @@
                         <div class="relative mb-3 overflow-hidden rounded-2xl shadow-lg aspect-square bg-gray-800/50">
                             {% if song.image %}
                             <img src="{{ song.image.url }}" alt="{{ song.title }}"
-                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500" loading="lazy">
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500"
+                                loading="lazy">
                             {% elif song.remote_image_url %}
                             <img src="{{ song.remote_image_url }}" alt="{{ song.title }}"
-                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500" loading="lazy">
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500"
+                                loading="lazy">
                             {% else %}
-                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1e293b] to-[#0f172a]">
-                                <i class="fas fa-music text-3xl text-gray-600 group-hover:text-[#3be2c8] transition-colors"></i>
+                            <div
+                                class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1e293b] to-[#0f172a]">
+                                <i
+                                    class="fas fa-music text-3xl text-gray-600 group-hover:text-[#3be2c8] transition-colors"></i>
                             </div>
                             {% endif %}
 
                             <!-- Hover overlay with play button -->
-                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                            <div
+                                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
                                 {% if song.jiosaavn_id %}
-                                <a href="{% url 'play_jiosaavn_song' song.jiosaavn_id %}" onclick="event.stopPropagation();"
+                                <a href="{% url 'play_jiosaavn_song' song.jiosaavn_id %}"
+                                    onclick="event.stopPropagation();"
                                     class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
                                     <i class="fas fa-play text-[#0b0f19] ml-1"></i>
                                 </a>
@@ -367,21 +391,25 @@
 
                             <!-- Source badge -->
                             {% if song.jiosaavn_id %}
-                            <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <span class="text-[9px] font-bold px-2 py-1 bg-[#3be2c8]/90 text-[#0b0f19] rounded-full uppercase tracking-wider">JioSaavn</span>
+                            <div
+                                class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span
+                                    class="text-[9px] font-bold px-2 py-1 bg-[#3be2c8]/90 text-[#0b0f19] rounded-full uppercase tracking-wider">JioSaavn</span>
                             </div>
                             {% endif %}
 
                             <!-- Rank number -->
-                            <div class="absolute top-2 right-2 w-7 h-7 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                            <div
+                                class="absolute top-2 right-2 w-7 h-7 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
                                 <span class="text-[10px] font-bold text-white">{{ forloop.counter }}</span>
                             </div>
                         </div>
-
-                        <h3 class="font-bold text-[14px] truncate px-1 group-hover:text-[#3be2c8] transition-colors">{{ song.title }}</h3>
+                        <h3 class="font-bold text-[14px] truncate px-1 group-hover:text-[#3be2c8] transition-colors">
+                            {{ song.title }}</h3>
                         <p class="text-xs text-gray-500 truncate px-1 mt-0.5 font-medium">{{ song.artist }}</p>
                         {% if song.song_type %}
-                        <p class="text-[10px] text-gray-600 truncate px-1 mt-0.5 uppercase tracking-wider">{{ song.song_type }}</p>
+                        <p class="text-[10px] text-gray-600 truncate px-1 mt-0.5 uppercase tracking-wider">
+                            {{ song.song_type }}</p>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -390,12 +418,13 @@
                 {% else %}
                 <!-- Empty State -->
                 <div class="flex flex-col items-center justify-center py-24 text-center">
-                    <div class="w-32 h-32 rounded-full bg-gradient-to-br from-[#3be2c8]/20 to-[#818cf8]/20 flex items-center justify-center mb-8 animate-float">
+                    <div
+                        class="w-32 h-32 rounded-full bg-gradient-to-br from-[#3be2c8]/20 to-[#818cf8]/20 flex items-center justify-center mb-8 animate-float">
                         <i class="fas fa-headphones text-5xl text-gray-600"></i>
                     </div>
                     <h3 class="text-2xl font-bold text-gray-300 mb-3">No Recommendations Yet</h3>
                     <p class="text-gray-500 max-w-md text-sm leading-relaxed mb-8">
-                        Start listening to songs and we'll learn your taste. The more you play, 
+                        Start listening to songs and we'll learn your taste. The more you play,
                         the better your recommendations become!
                     </p>
                     <a href="{% url 'index' %}"
@@ -409,26 +438,35 @@
                 <div class="mb-14">
                     <h2 class="text-lg font-bold tracking-wide text-gray-400 mb-6">How It Works</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#3be2c8]/20 transition-all duration-300 group">
-                            <div class="w-12 h-12 rounded-xl bg-[#3be2c8]/10 flex items-center justify-center mb-4 group-hover:bg-[#3be2c8]/20 transition-colors">
+                        <div
+                            class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#3be2c8]/20 transition-all duration-300 group">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-[#3be2c8]/10 flex items-center justify-center mb-4 group-hover:bg-[#3be2c8]/20 transition-colors">
                                 <i class="fas fa-headphones text-[#3be2c8] text-lg"></i>
                             </div>
                             <h3 class="font-bold text-sm mb-2">Listen & Explore</h3>
-                            <p class="text-xs text-gray-500 leading-relaxed">Play songs you love. Your listening history helps us understand your taste.</p>
+                            <p class="text-xs text-gray-500 leading-relaxed">Play songs you love. Your listening history
+                                helps us understand your taste.</p>
                         </div>
-                        <div class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#818cf8]/20 transition-all duration-300 group">
-                            <div class="w-12 h-12 rounded-xl bg-[#818cf8]/10 flex items-center justify-center mb-4 group-hover:bg-[#818cf8]/20 transition-colors">
+                        <div
+                            class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#818cf8]/20 transition-all duration-300 group">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-[#818cf8]/10 flex items-center justify-center mb-4 group-hover:bg-[#818cf8]/20 transition-colors">
                                 <i class="fas fa-brain text-[#818cf8] text-lg"></i>
                             </div>
                             <h3 class="font-bold text-sm mb-2">ML Analysis</h3>
-                            <p class="text-xs text-gray-500 leading-relaxed">Our hybrid engine combines content similarity with collaborative filtering.</p>
+                            <p class="text-xs text-gray-500 leading-relaxed">Our hybrid engine combines content
+                                similarity with collaborative filtering.</p>
                         </div>
-                        <div class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#f472b6]/20 transition-all duration-300 group">
-                            <div class="w-12 h-12 rounded-xl bg-[#f472b6]/10 flex items-center justify-center mb-4 group-hover:bg-[#f472b6]/20 transition-colors">
+                        <div
+                            class="bg-white/[0.03] rounded-2xl p-6 border border-white/5 hover:border-[#f472b6]/20 transition-all duration-300 group">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-[#f472b6]/10 flex items-center justify-center mb-4 group-hover:bg-[#f472b6]/20 transition-colors">
                                 <i class="fas fa-wand-magic-sparkles text-[#f472b6] text-lg"></i>
                             </div>
                             <h3 class="font-bold text-sm mb-2">Personalized Mix</h3>
-                            <p class="text-xs text-gray-500 leading-relaxed">Get a unique playlist curated just for you, refreshed with every session.</p>
+                            <p class="text-xs text-gray-500 leading-relaxed">Get a unique playlist curated just for you,
+                                refreshed with every session.</p>
                         </div>
                     </div>
                 </div>
@@ -464,8 +502,7 @@
 
             <div class="w-full flex items-center gap-4 text-[11px] font-medium tracking-wider text-gray-500">
                 <span id="player-current-time" class="w-8 text-right">0:00</span>
-                <div class="h-1.5 flex-1 bg-gray-800 rounded-full relative cursor-pointer group"
-                    onclick="seek(event)">
+                <div class="h-1.5 flex-1 bg-gray-800 rounded-full relative cursor-pointer group" onclick="seek(event)">
                     <div id="player-progress-bar"
                         class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[#2cdbbd] to-[#3be2c8] rounded-full shadow-[0_0_10px_rgba(59,226,200,0.5)]">
                         <div
@@ -535,19 +572,19 @@
             const csrftoken = getCookie('csrftoken');
             const isAuthenticated = {% if user.is_authenticated %} true{% else %} false{% endif %};
 
-            if (isAuthenticated && source === 'jiosaavn' && songId) {
-                fetch(`/record_play_jiosaavn/${songId}/`, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
-                }).catch(err => console.error('Error recording JioSaavn play:', err));
-            } else if (isAuthenticated && songId && !isNaN(songId)) {
-                fetch(`/record_play/${songId}/`, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
-                }).catch(err => console.error('Error recording play:', err));
-            }
+        if (isAuthenticated && source === 'jiosaavn' && songId) {
+            fetch(`/record_play_jiosaavn/${songId}/`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
+            }).catch(err => console.error('Error recording JioSaavn play:', err));
+        } else if (isAuthenticated && songId && !isNaN(songId)) {
+            fetch(`/record_play/${songId}/`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
+            }).catch(err => console.error('Error recording play:', err));
+        }
         }
 
         function togglePlay() {
@@ -601,7 +638,8 @@
 
     <!-- Playlist Selection Menu -->
     <div id="playlist-side-menu" class="playlist-menu shadow-2xl">
-        <div class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">
+        <div
+            class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">
             Add to Playlist</div>
         {% for playlist in playlists %}
         <div class="playlist-menu-item" onclick="addToPlaylist('{{ playlist.id }}')">{{ playlist.name }}</div>
@@ -655,15 +693,15 @@
                 headers: { 'X-CSRFToken': csrftoken },
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                } else {
-                    alert(data.message || "Error adding song to playlist");
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                    } else {
+                        alert(data.message || "Error adding song to playlist");
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         }
     </script>
 </body>

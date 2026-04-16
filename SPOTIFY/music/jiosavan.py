@@ -15,14 +15,20 @@ CHART_PLAYLIST_IDS = [
     '159144718',  # Top 50 Hindi
     '158543369',  # Trending Today
     '92238273',   # Bollywood Hits
+    '159124040',  # Top 50 Punjabi
+    '158223612',  # Top 50 Telugu
+    '73507021',   # Top JioTunes Hindi
+    '108422329',  # Let's Play Arijit Singh
+    '82914609',   # Top 50 Tamil
+    '112774910',  # Latest Punjabi Hits
 ]
 
-# Fallback queries used only if playlist endpoint fails
 _FALLBACK_QUERIES = [
-    'new bollywood hit songs 2026',
-    'new hindi hits 2026',
-    'top 50 songs 2026',
-    'new punjabi songs 2026',
+    'new bollywood 2026 songs',
+    'new hindi 2026 songs',
+    'new telugu hits 2026',
+    'new punjabi hits 2026',
+
 ]
 
 
@@ -106,7 +112,7 @@ def _normalize_songs_list(raw_list):
     return results
 
 
-def search_songs(query, page=0, limit=10):
+def search_songs(query, page=0, limit=20):
     """
     Search JioSaavn for songs.
     Returns a list of normalized song dicts.
@@ -171,7 +177,7 @@ def get_song_details(song_id):
     return None
 
 
-def get_song_suggestions(song_id, limit=10):
+def get_song_suggestions(song_id, limit=20):
     """
     Get similar/suggested songs based on a song ID.
     Returns a list of normalized song dicts.
@@ -186,8 +192,10 @@ def get_song_suggestions(song_id, limit=10):
         if data.get('success') and data.get('data'):
             return _normalize_songs_list(data['data'])
     except Exception as e:
-        print(f"[JioSaavn] Suggestions error: {e}")
-    return []
+        print(f"[JioSaavn] Suggestions error, using fallback: {e}")
+        
+    # FALLBACK: If suggestions endpoint is broken upstream or empty, return trending queue so prev/next buttons still work
+    return get_trending(limit)
 
 
 def _fetch_trending_from_playlist(playlist_id, limit):
@@ -248,7 +256,7 @@ def _fetch_trending_from_search(limit):
     return results
 
 
-def get_trending(limit=10):  
+def get_trending(limit=20):  
     cache_key = f'jiosaavn_trending_{limit}'
     cached = cache.get(cache_key)
     if cached:
@@ -338,3 +346,168 @@ def get_trending_today(limit=20):
     # Fallback
     print("[JioSaavn] Falling back to get_trending()")
     return get_trending(limit)
+
+def get_nostalgia_songs(limit=20):
+    """Fetch 90s nostalgic songs from JioSaavn with caching to prevent excessive API calls."""
+    cache_key = f'jiosaavn_nostalgia_{limit}'
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    seen_ids = set()
+    results = []
+
+    queries = [
+        'Kishore Kumar songs',
+        '90s hits bollywood',
+        '90s romance hindi',
+        '90s best songs',
+    ]
+
+    for query in queries:
+        if len(results) >= limit:
+            break
+        try:
+            response = requests.get(
+                f"{API_BASE}/api/search/songs",
+                params={'query': query, 'page': 0, 'limit': limit},
+                timeout=REQUEST_TIMEOUT
+            )
+            data = response.json()
+            if data.get('success') and data.get('data', {}).get('results'):
+                for s in data['data']['results']:
+                    song = _normalize_song(s)
+                    if song and song['id'] not in seen_ids:
+                        seen_ids.add(song['id'])
+                        results.append(song)
+                        if len(results) >= limit:
+                            break
+        except Exception as e:
+            print(f"[JioSaavn] Nostalgia search error for '{query}': {e}")
+
+    if results:
+        cache.set(cache_key, results, timeout=60 * 60 * 24)  # Cache for 24 hours
+
+    return results[:limit]
+
+
+def get_artist_songs(artist_name, limit=20):
+    """Fetch songs by a specific artist from JioSaavn via search."""
+    cache_key = f'jiosaavn_artist_{artist_name.lower().replace(" ", "_")}_{limit}'
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    seen_ids = set()
+    results = []
+
+    # Search with artist name to find their songs
+    queries = [
+        f'{artist_name} songs',
+        f'{artist_name} hits',
+        f'{artist_name} best songs',
+    ]
+
+    for query in queries:
+        if len(results) >= limit:
+            break
+        try:
+            response = requests.get(
+                f"{API_BASE}/api/search/songs",
+                params={'query': query, 'page': 0, 'limit': limit},
+                timeout=REQUEST_TIMEOUT
+            )
+            data = response.json()
+            if data.get('success') and data.get('data', {}).get('results'):
+                for s in data['data']['results']:
+                    song = _normalize_song(s)
+                    if not song or song['id'] in seen_ids:
+                        continue
+                    # Only include songs where the artist is actually credited
+                    if artist_name.lower() in song.get('artist', '').lower():
+                        seen_ids.add(song['id'])
+                        results.append(song)
+                        if len(results) >= limit:
+                            break
+        except Exception as e:
+            print(f"[JioSaavn] Artist songs search error for '{query}': {e}")
+
+    if results:
+        cache.set(cache_key, results, timeout=60 * 60)  # Cache for 1 hour
+
+    return results[:limit]
+
+
+def search_albums(query, limit=10):
+    """
+    Search JioSaavn for albums.
+    Returns a list of album dicts with {id, title, year, image_url, type}.
+    """
+    cache_key = f'jiosaavn_album_search_{query.lower().replace(" ", "_")}_{limit}'
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    try:
+        response = requests.get(
+            f"{API_BASE}/api/search/albums",
+            params={'query': query, 'page': 0, 'limit': limit},
+            timeout=REQUEST_TIMEOUT
+        )
+        data = response.json()
+        if data.get('success') and data.get('data', {}).get('results'):
+            results = []
+            for a in data['data']['results']:
+                results.append({
+                    'id': a.get('id', ''),
+                    'title': a.get('name', ''),
+                    'year': a.get('year', ''),
+                    'image_url': _get_best_image(a.get('image', [])),
+                    'type': a.get('type', 'album'),
+                })
+            if results:
+                cache.set(cache_key, results[:limit], timeout=60 * 60)
+                return results[:limit]
+    except Exception as e:
+        print(f"[JioSaavn] Album search error: {e}")
+    return []
+
+
+def get_album_details(album_id):
+    """
+    Get full details of an album, including its songs.
+    Returns a dict with album details and a 'songs' list of normalized songs.
+    """
+    cache_key = f'jiosaavn_album_details_{album_id}'
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
+    try:
+        response = requests.get(
+            f"{API_BASE}/api/albums",
+            params={'id': album_id},
+            timeout=REQUEST_TIMEOUT
+        )
+        data = response.json()
+        if data.get('success') and data.get('data'):
+            album_data = data['data']
+            
+            # Extract artists correctly from album API response
+            primary_artists = album_data.get('artists', {}).get('primary', [])
+            artist_name = ', '.join(a.get('name', '') for a in primary_artists) if primary_artists else 'Various Artists'
+            
+            album_details = {
+                'id': album_data.get('id', ''),
+                'title': album_data.get('name', ''),
+                'artist': artist_name,
+                'year': album_data.get('year', ''),
+                'image_url': _get_best_image(album_data.get('image', [])),
+                'song_count': album_data.get('songCount', 0),
+                'songs': _normalize_songs_list(album_data.get('songs', []))
+            }
+            cache.set(cache_key, album_details, timeout=60 * 60 * 2) # Cache for 2 hours
+            return album_details
+    except Exception as e:
+        print(f"[JioSaavn] Album details error: {e}")
+    return None
