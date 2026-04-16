@@ -62,7 +62,7 @@ class Command(BaseCommand):
         specific_users = options.get('users')
 
         self.stdout.write(self.style.MIGRATE_HEADING(
-            '\n🎵 SoulPlayer — ML Recommendation Engine\n'
+            '\nSoulPlayer - ML Recommendation Engine\n'
         ))
         self.stdout.write(f'  Algorithm version: {ALGORITHM_VERSION}')
         self.stdout.write(f'  Recommendations per user: {n_recs}')
@@ -79,11 +79,11 @@ class Command(BaseCommand):
         try:
             recommender.fit()
         except Exception as e:
-            self.stderr.write(self.style.ERROR(f'  ✗ Error fitting models: {e}'))
+            self.stderr.write(self.style.ERROR(f'  x Error fitting models: {e}'))
             logger.exception("Failed to fit recommender models.")
             return
 
-        self.stdout.write(self.style.SUCCESS('  ✓ Models fitted successfully.'))
+        self.stdout.write(self.style.SUCCESS('  OK - Models fitted successfully.'))
 
         # ---------------------------------------------------
         # Step 2: Generate recommendations
@@ -116,13 +116,13 @@ class Command(BaseCommand):
             except Exception as e:
                 error_count += 1
                 self.stderr.write(
-                    self.style.WARNING(f'  ⚠ Error for user {user_id}: {e}')
+                    self.style.WARNING(f'  ! Error for user {user_id}: {e}')
                 )
                 logger.error(f"Recommendation failed for user {user_id}: {e}")
                 results[user_id] = []
 
         self.stdout.write(self.style.SUCCESS(
-            f'  ✓ Generated recommendations for {success_count} user(s) '
+            f'  OK - Generated recommendations for {success_count} user(s) '
             f'({error_count} error(s)).'
         ))
 
@@ -153,12 +153,12 @@ class Command(BaseCommand):
 
             except Exception as e:
                 self.stderr.write(
-                    self.style.WARNING(f'  ⚠ Failed to save for user {user_id}: {e}')
+                    self.style.WARNING(f'  ! Failed to save for user {user_id}: {e}')
                 )
                 logger.error(f"Save failed for user {user_id}: {e}")
 
         self.stdout.write(self.style.SUCCESS(
-            f'  ✓ Saved {saved_count} recommendation caches to database.'
+            f'  OK - Saved {saved_count} recommendation caches to database.'
         ))
 
         # ---------------------------------------------------
@@ -167,9 +167,9 @@ class Command(BaseCommand):
         elapsed = time.time() - start_time
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS(
-            f'✅ Pipeline complete in {elapsed:.2f}s\n'
-            f'   • {success_count} users processed\n'
-            f'   • {saved_count} caches saved\n'
-            f'   • {error_count} errors\n'
-            f'   • Algorithm: {ALGORITHM_VERSION}'
+            f'DONE - Pipeline complete in {elapsed:.2f}s\n'
+            f'   - {success_count} users processed\n'
+            f'   - {saved_count} caches saved\n'
+            f'   - {error_count} errors\n'
+            f'   - Algorithm: {ALGORITHM_VERSION}'
         ))

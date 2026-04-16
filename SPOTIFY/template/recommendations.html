@@ -380,7 +380,7 @@
 
                         <h3 class="font-bold text-[14px] truncate px-1 group-hover:text-[#3be2c8] transition-colors">{{ song.title }}</h3>
                         <p class="text-xs text-gray-500 truncate px-1 mt-0.5 font-medium">{{ song.artist }}</p>
-                        {% if song.song_type and song.song_type != 'jiosaavn' %}
+                        {% if song.song_type %}
                         <p class="text-[10px] text-gray-600 truncate px-1 mt-0.5 uppercase tracking-wider">{{ song.song_type }}</p>
                         {% endif %}
                     </div>

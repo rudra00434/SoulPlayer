@@ -100,12 +100,13 @@ class ContentBasedRecommender:
     def recommend_for_user(self, user_id, n=30):
         """
         Generate content-based recommendations for a user based on their
-        listening history and favorite artists.
+        listening history, liked songs, and favorite artists.
         
         Strategy:
         1. For each song the user has played, find similar songs.
-        2. Boost scores for songs matching the user's favorite artists.
-        3. Aggregate and normalize scores.
+        2. For each song the user has liked, find similar songs (1.5× weight).
+        3. Boost scores for songs matching the user's favorite artists.
+        4. Aggregate and normalize scores.
         
         Args:
             user_id: Django User ID
@@ -120,20 +121,29 @@ class ContentBasedRecommender:
 
         user_data = get_user_profile_data(user_id)
         played_ids = set(user_data['played_song_ids'])
+        liked_ids = set(user_data.get('liked_song_ids', []))
         fav_artists = set(user_data['favorite_artist_names'])
+        all_heard = played_ids | liked_ids
 
-        if not played_ids:
+        if not all_heard:
             logger.info(f"ContentBased: User {user_id} has no listening history.")
             return {}
 
-        # Aggregate similarity scores across all played songs
+        # Aggregate similarity scores across played songs (weight 1.0)
         aggregated_scores = {}
 
         for song_id in played_ids:
             similar = self.get_similar_songs(song_id, n=20)
             for sim_id, sim_score in similar.items():
-                if sim_id not in played_ids:  # Don't recommend already-played songs
+                if sim_id not in all_heard:
                     aggregated_scores[sim_id] = aggregated_scores.get(sim_id, 0.0) + sim_score
+
+        # Liked songs get 1.5× similarity weight (explicit > implicit)
+        for song_id in liked_ids:
+            similar = self.get_similar_songs(song_id, n=20)
+            for sim_id, sim_score in similar.items():
+                if sim_id not in all_heard:
+                    aggregated_scores[sim_id] = aggregated_scores.get(sim_id, 0.0) + (sim_score * 1.5)
 
         # Boost songs by favorite artists
         if fav_artists:

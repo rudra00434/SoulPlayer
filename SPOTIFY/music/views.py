@@ -562,7 +562,9 @@ def record_play_jiosaavn(request, song_id):
                         title=details['title'],
                         artist=details['artist'],
                         duration=details.get('duration', '0:00'),
-                        song_type='jiosaavn',
+                        song_type=details.get('language', 'hindi').capitalize(),
+                        language=details.get('language', ''),
+                        album=details.get('album', ''),
                         audio_link=details['stream_url'],
                         remote_image_url=details['image_url'],
                         jiosaavn_id=song_id
@@ -583,11 +585,26 @@ def record_play_jiosaavn(request, song_id):
 def play_jiosaavn_song(request, song_id):
     """Full-screen player for a JioSaavn song (fetched via API)."""
     song = jiosavan.get_song_details(song_id)
-    if not song:
-        return render(request, 'play_song.html', {'error': 'Song not found on JioSaavn.'})
-
+    
     # Ensure db_song is available for unregistered users too
     db_song = Song.objects.filter(jiosaavn_id=song_id).first()
+
+    # Fallback to local DB cache if API fails
+    if not song:
+        if db_song:
+            song = {
+                'id': db_song.jiosaavn_id,
+                'title': db_song.title,
+                'artist': db_song.artist,
+                'image_url': db_song.remote_image_url,
+                'stream_url': db_song.audio_link,
+                'duration': db_song.duration,
+                'duration_seconds': 0,
+                'album': db_song.album,
+                'language': db_song.language,
+            }
+        else:
+            return render(request, 'play_song.html', {'error': 'Song not found on JioSaavn and no local cache exists.'})
 
     # Record play history if authenticated
     if request.user.is_authenticated:
@@ -598,7 +615,9 @@ def play_jiosaavn_song(request, song_id):
                     title=song['title'],
                     artist=song['artist'],
                     duration=song.get('duration', '0:00'),
-                    song_type='jiosaavn',
+                    song_type=song.get('language', 'hindi').capitalize(),
+                    language=song.get('language', ''),
+                    album=song.get('album', ''),
                     audio_link=song['stream_url'],
                     remote_image_url=song['image_url'],
                     jiosaavn_id=song_id
@@ -619,7 +638,7 @@ def play_jiosaavn_song(request, song_id):
 
     # Implement linear Left/Right movement matching local player
     if db_song:
-        jio_songs = list(Song.objects.filter(song_type='jiosaavn').order_by('id'))
+        jio_songs = list(Song.objects.filter(jiosaavn_id__isnull=False).order_by('id'))
         if db_song in jio_songs:
             current_index = jio_songs.index(db_song)
             
@@ -683,7 +702,9 @@ def add_jiosaavn_to_playlist(request):
                     title=details['title'],
                     artist=details['artist'],
                     duration=details.get('duration', '3:00'),
-                    song_type='jiosaavn',
+                    song_type=details.get('language', 'hindi').capitalize(),
+                    language=details.get('language', ''),
+                    album=details.get('album', ''),
                     audio_link=details['stream_url'],
                     remote_image_url=details['image_url'],
                     jiosaavn_id=song_id
@@ -715,7 +736,7 @@ def recommendations(request):
     local_songs = []
     jiosaavn_songs = []
     for song in rec_data['songs']:
-        if song.jiosaavn_id and song.song_type == 'jiosaavn':
+        if song.jiosaavn_id:
             jiosaavn_songs.append(song)
         else:
             local_songs.append(song)
@@ -773,8 +794,8 @@ def liked_songs(request):
             jiosavan_results = jiosavan.search_songs(chosen_artist, limit=12)
             
             # Filter out songs the user already liked
-            liked_jiosaavn_ids = {s.jiosaavn_id for s in songs if s.song_type == 'jiosaavn'}
-            liked_local_titles = {s.title.lower() for s in songs if s.song_type != 'jiosaavn'}
+            liked_jiosaavn_ids = {s.jiosaavn_id for s in songs if s.jiosaavn_id}
+            liked_local_titles = {s.title.lower() for s in songs if not s.jiosaavn_id}
             
             for s in jiosavan_results:
                 if s['id'] not in liked_jiosaavn_ids and s['title'].lower() not in liked_local_titles:
@@ -828,7 +849,9 @@ def toggle_like_jiosaavn(request, song_id):
                         title=details['title'],
                         artist=details['artist'],
                         duration=details.get('duration', '0:00'),
-                        song_type='jiosaavn',
+                        song_type=details.get('language', 'hindi').capitalize(),
+                        language=details.get('language', ''),
+                        album=details.get('album', ''),
                         audio_link=details['stream_url'],
                         remote_image_url=details['image_url'],
                         jiosaavn_id=song_id

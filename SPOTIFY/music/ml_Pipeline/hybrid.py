@@ -127,43 +127,71 @@ class HybridRecommender:
     def _cold_start_recommendations(self, n, exclude_ids=None):
         """
         Fallback for users with no listening history.
-        Returns the most globally popular songs (most played across all users).
+        Returns genre-diverse popular songs — samples across different
+        song_type/language groups to avoid a monotone list.
         """
         from music.models import Song
         from django.db.models import Count
+        import random
 
         exclude_ids = exclude_ids or set()
 
-        # Songs ordered by how many users have played them
-        popular = (
+        # Get songs grouped by genre (song_type), ordered by popularity within each genre
+        genres = (
             Song.objects
-            .annotate(play_count=Count('played_songs'))
             .exclude(id__in=exclude_ids)
-            .order_by('-play_count')[:n]
-            .values_list('id', flat=True)
+            .values_list('song_type', flat=True)
+            .distinct()
         )
 
-        results = [
-            {'song_id': sid, 'score': round(1.0 - (i * 0.01), 4)}
-            for i, sid in enumerate(popular)
-        ]
+        genre_buckets = {}
+        for genre in genres:
+            songs = list(
+                Song.objects
+                .filter(song_type=genre)
+                .exclude(id__in=exclude_ids)
+                .annotate(play_count=Count('played_songs'))
+                .order_by('-play_count')[:n]
+                .values_list('id', flat=True)
+            )
+            if songs:
+                genre_buckets[genre] = songs
 
-        # If not enough popular songs, fill with recent songs
+        # Round-robin sample from each genre for diversity
+        results = []
+        if genre_buckets:
+            bucket_keys = list(genre_buckets.keys())
+            random.shuffle(bucket_keys)  # Randomize genre order for variety
+            idx = 0
+            while len(results) < n and any(genre_buckets.values()):
+                genre = bucket_keys[idx % len(bucket_keys)]
+                if genre_buckets[genre]:
+                    sid = genre_buckets[genre].pop(0)
+                    results.append({
+                        'song_id': sid,
+                        'score': round(1.0 - (len(results) * 0.01), 4)
+                    })
+                idx += 1
+                # Break if all buckets are empty
+                if all(len(v) == 0 for v in genre_buckets.values()):
+                    break
+
+        # Backfill with any remaining songs if needed
         if len(results) < n:
             existing_ids = {r['song_id'] for r in results} | exclude_ids
-            recent = (
+            remaining = list(
                 Song.objects
                 .exclude(id__in=existing_ids)
                 .order_by('-id')[:n - len(results)]
                 .values_list('id', flat=True)
             )
-            for i, sid in enumerate(recent):
+            for sid in remaining:
                 results.append({
                     'song_id': sid,
-                    'score': round(0.5 - (i * 0.01), 4)
+                    'score': round(0.5 - (len(results) * 0.01), 4)
                 })
 
-        logger.info(f"Hybrid: Cold start returned {len(results)} popular/recent songs.")
+        logger.info(f"Hybrid: Cold start returned {len(results)} diverse songs from {len(genre_buckets)} genres.")
         return results
 
     def recommend_all_users(self, n=30):

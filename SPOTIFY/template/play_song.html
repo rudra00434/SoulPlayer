@@ -71,6 +71,19 @@
         </button>
     </div>
 
+    {% if error %}
+    <div class="w-full max-w-sm z-10 mt-10">
+        <div class="bg-red-500/10 border border-red-500/50 text-red-500 rounded-2xl p-6 text-center shadow-lg backdrop-blur-md">
+            <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+            <h3 class="text-xl font-bold mb-2">Could Not Load Track</h3>
+            <p class="text-sm opacity-80">{{ error }}</p>
+            <a href="{% url 'index' %}" class="inline-block mt-6 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white font-bold text-xs uppercase tracking-widest transition">
+                Return Home
+            </a>
+        </div>
+    </div>
+    {% else %}
+
     <!-- Main Player Card -->
     <div
         class="w-full max-w-sm z-10 flex flex-col gap-4 md:gap-5 bg-[#111827]/30 backdrop-blur-xl p-5 md:p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5 mx-auto">
@@ -187,6 +200,8 @@
     <audio id="audio-player"
         src="{% if is_jiosaavn %}{{ song.stream_url }}{% elif song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}"
         autoplay></audio>
+
+    {% endif %} <!-- End if error -->
 
     <script>
         const audio = document.getElementById('audio-player');

@@ -50,7 +50,7 @@
                     {% endif %}
                     
                     <div class="absolute inset-0 bg-black/50 opacity-0 group-hover/song:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
-                        <a href="{% if song.song_type == 'jiosaavn' %}{% url 'play_jiosaavn_song' song.jiosaavn_id %}{% else %}{% url 'play_song' song.id %}{% endif %}" onclick="event.stopPropagation();"
+                        <a href="{% if song.jiosaavn_id %}{% url 'play_jiosaavn_song' song.jiosaavn_id %}{% else %}{% url 'play_song' song.id %}{% endif %}" onclick="event.stopPropagation();"
                             class="w-10 h-10 bg-[#3be2c8] rounded-full flex items-center justify-center transform scale-50 group-hover/song:scale-100 transition-transform duration-300 delay-75 shadow-[0_0_15px_rgba(59,226,200,0.6)]">
                             <i class="fas fa-play text-[#0b0f19] text-xs ml-0.5"></i>
                         </a>
@@ -60,7 +60,7 @@
                 <div class="flex-grow min-w-0 pr-2">
                     <h3 class="text-base font-bold text-white truncate group-hover/song:text-[#3be2c8] transition-colors drop-shadow-sm">{{ song.title }}</h3>
                     <p class="text-xs font-medium text-gray-400 truncate mt-1 tracking-wide">{{ song.artist }}</p>
-                    {% if song.song_type == 'jiosaavn' %}
+                    {% if song.jiosaavn_id %}
                     <span class="inline-block mt-1.5 px-1.5 py-0.5 bg-[#3be2c8]/10 text-[#3be2c8] text-[9px] uppercase font-bold rounded border border-[#3be2c8]/20">JioSaavn</span>
                     {% else %}
                     <span class="inline-block mt-1.5 px-1.5 py-0.5 bg-gray-500/10 text-gray-400 text-[9px] uppercase font-bold rounded border border-gray-500/20">Local Library</span>

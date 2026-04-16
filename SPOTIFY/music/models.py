@@ -12,6 +12,8 @@ class Song(models.Model):
     lyrics=models.TextField(blank=True,null=True)
     duration=models.CharField(max_length=20)
     song_type=models.CharField(max_length=20)
+    language=models.CharField(max_length=50,blank=True,null=True)
+    album=models.CharField(max_length=200,blank=True,null=True)
     remote_image_url=models.URLField(blank=True,null=True)
     jiosaavn_id=models.CharField(max_length=50,blank=True,null=True,unique=True)
     paginate_by=2

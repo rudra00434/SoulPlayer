@@ -53,24 +53,32 @@ def get_all_songs_df():
 
 def get_user_song_matrix():
     """
-    Build a User-Song interaction matrix from UserProfile.played_songs M2M.
+    Build a User-Song interaction matrix from UserProfile.played_songs M2M
+    AND LikedSong records. Liked songs get a higher weight (2.0) than played
+    songs (1.0) because explicit likes are a stronger preference signal.
     
     Returns:
         tuple: (interaction_df, user_ids, song_ids)
-            - interaction_df: pd.DataFrame with user_id as index, song_id as columns, 1/0 values
+            - interaction_df: pd.DataFrame with user_id as index, song_id as columns
             - user_ids: list of user IDs
             - song_ids: list of song IDs
     """
-    from music.models import UserProfile
+    from music.models import UserProfile, LikedSong
 
     profiles = UserProfile.objects.prefetch_related('played_songs').all()
 
     records = []
+    # Played songs → weight 1.0
     for profile in profiles:
         user_id = profile.user_id
         played = profile.played_songs.values_list('id', flat=True)
         for song_id in played:
-            records.append({'user_id': user_id, 'song_id': song_id, 'interaction': 1})
+            records.append({'user_id': user_id, 'song_id': song_id, 'interaction': 1.0})
+
+    # Liked songs → weight 2.0 (explicit signal is stronger)
+    liked_entries = LikedSong.objects.values_list('user_id', 'song_id')
+    for user_id, song_id in liked_entries:
+        records.append({'user_id': user_id, 'song_id': song_id, 'interaction': 2.0})
 
     if not records:
         logger.warning("No user-song interactions found.")
@@ -78,13 +86,13 @@ def get_user_song_matrix():
 
     df = pd.DataFrame(records)
 
-    # Pivot to create user-song matrix
+    # Pivot — use max to keep the highest weight (liked > played)
     matrix = df.pivot_table(
         index='user_id',
         columns='song_id',
         values='interaction',
         fill_value=0,
-        aggfunc='max'  # Binary: played or not
+        aggfunc='max'
     )
 
     user_ids = list(matrix.index)
@@ -96,7 +104,7 @@ def get_user_song_matrix():
 
 def get_user_profile_data(user_id):
     """
-    Get a single user's played songs and favorite artists for recommendation.
+    Get a single user's played songs, liked songs, and favorite artists.
     
     Args:
         user_id: Django User ID
@@ -104,10 +112,11 @@ def get_user_profile_data(user_id):
     Returns:
         dict with keys:
             - played_song_ids: list of int
+            - liked_song_ids: list of int (explicit likes — stronger signal)
             - favorite_artist_names: list of str (lowercased)
             - personality: str or None
     """
-    from music.models import UserProfile
+    from music.models import UserProfile, LikedSong
 
     try:
         profile = UserProfile.objects.prefetch_related(
@@ -117,17 +126,22 @@ def get_user_profile_data(user_id):
         logger.warning(f"No UserProfile found for user_id={user_id}")
         return {
             'played_song_ids': [],
+            'liked_song_ids': [],
             'favorite_artist_names': [],
             'personality': None,
         }
 
     played_ids = list(profile.played_songs.values_list('id', flat=True))
+    liked_ids = list(
+        LikedSong.objects.filter(user_id=user_id).values_list('song_id', flat=True)
+    )
     fav_artists = list(
         profile.favorite_artists.values_list('name', flat=True)
     )
 
     return {
         'played_song_ids': played_ids,
+        'liked_song_ids': liked_ids,
         'favorite_artist_names': [a.lower() for a in fav_artists],
         'personality': profile.personality,
     }
@@ -150,7 +164,7 @@ def get_songs_as_feature_dicts(song_ids=None):
     if song_ids is not None:
         qs = qs.filter(id__in=song_ids)
 
-    songs = qs.values('id', 'title', 'artist', 'song_type', 'jiosaavn_id')
+    songs = qs.values('id', 'title', 'artist', 'song_type', 'language', 'album', 'jiosaavn_id')
 
     result = []
     for s in songs:
@@ -159,8 +173,8 @@ def get_songs_as_feature_dicts(song_ids=None):
             'title': s['title'] or '',
             'artist': s['artist'] or '',
             'song_type': s['song_type'] or 'unknown',
-            'language': '',  # Only available for JioSaavn songs at runtime
-            'album': '',
+            'language': s['language'] or '',
+            'album': s['album'] or '',
         })
 
     return result

@@ -9,18 +9,6 @@ import logging
 logger = logging.getLogger('ml_pipeline')
 
 
-def cosine_similarity_vectors(vec_a, vec_b):
-    """
-    Compute cosine similarity between two 1-D numpy arrays.
-    Returns 0.0 if either vector is zero.
-    """
-    norm_a = np.linalg.norm(vec_a)
-    norm_b = np.linalg.norm(vec_b)
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-    return float(np.dot(vec_a, vec_b) / (norm_a * norm_b))
-
-
 def normalize_scores(scores_dict):
     """
     Min-max normalize a dict of {item_id: score} to [0, 1] range.
