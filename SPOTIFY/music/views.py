@@ -236,8 +236,8 @@ def search(request):
         {'id': 'hip-hop', 'name': 'Hip-Hop', 'icon': 'fa-microphone-alt', 'color': 'from-emerald-500 to-teal-600'},
     ]
 
-    # Fetch all artists for the "Popular Artists" section
-    artists = Artist.objects.all()[:10]
+    # Fetch artists for the "Popular Artists" section (newest first)
+    artists = Artist.objects.all()
     
     playlists = Playlist.objects.filter(user=request.user) if request.user.is_authenticated else []
     sidebar_playlists = Playlist.objects.all()[:5]
