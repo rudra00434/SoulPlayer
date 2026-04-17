@@ -33,19 +33,19 @@ Beyond standard playback functionality, the platform differentiates itself with 
 
 ---
 
-<img width="1919" height="864" alt="Screenshot 2026-04-09 221800" src="https://github.com/user-attachments/assets/e30e61b4-fd57-47f1-9171-83178080a89d" />
+<img width="1912" height="864" alt="Screenshot 2026-04-09 221800" src="https://github.com/user-attachments/assets/e30e61b4-fd57-47f1-9171-83178080a89d" />
 
 ---
-<img width="1919" height="864" alt="Screenshot 2026-04-09 213603" src="https://github.com/user-attachments/assets/4d2520d9-6f2d-4159-8afd-cc608afe43df" />
+<img width="1912" height="864" alt="Screenshot 2026-04-09 213603" src="https://github.com/user-attachments/assets/4d2520d9-6f2d-4159-8afd-cc608afe43df" />
 
 ---
-<img width="1917" height="990" alt="Screenshot 2026-04-09 231349" src="https://github.com/user-attachments/assets/67df36a7-6726-4e2e-a5fd-01808eefc061" />
+<img width="1912" height="990" alt="Screenshot 2026-04-09 231349" src="https://github.com/user-attachments/assets/67df36a7-6726-4e2e-a5fd-01808eefc061" />
 
 ---
-<img width="1919" height="867" alt="image" src="https://github.com/user-attachments/assets/383f4b96-460e-4176-870a-3447ed47cf9d" />
+<img width="1912" height="867" alt="image" src="https://github.com/user-attachments/assets/383f4b96-460e-4176-870a-3447ed47cf9d" />
 
 ---
-<img width="1916" height="874" alt="image" src="https://github.com/user-attachments/assets/a9452241-50a0-447a-bfd9-ae7da7ca963f" />
+<img width="1912" height="874" alt="image" src="https://github.com/user-attachments/assets/a9452241-50a0-447a-bfd9-ae7da7ca963f" />
 
 
  ---
