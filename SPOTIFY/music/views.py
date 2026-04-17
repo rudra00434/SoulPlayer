@@ -72,7 +72,17 @@ def index(request):
     nostalgia_songs = jiosavan.get_nostalgia_songs(limit=20)
     top_albums = search_albums('bollywood hits', limit=10)
 
+    # Curated: Best of Hindi Songs (Local Database)
+    hindi_ids = [97, 96, 95, 92, 11, 98,94]
+    best_of_hindi_songs_unsorted = Song.objects.filter(id__in=hindi_ids)
+    # Sort to maintain the user's requested order
+    best_of_hindi_songs = sorted(
+        best_of_hindi_songs_unsorted, 
+        key=lambda s: hindi_ids.index(s.id)
+    )
+
     genres = [
+
         {'id': 'romance', 'name': 'Romance', 'icon': 'fa-heart', 'color': 'from-pink-500 to-fuchsia-600'},
         {'id': 'indie', 'name': 'Indie', 'icon': 'fa-headphones', 'color': 'from-blue-600 to-indigo-800'},
         {'id': 'pop', 'name': 'Pop', 'icon': 'fa-bolt', 'color': 'from-purple-600 to-indigo-700'},
@@ -91,6 +101,7 @@ def index(request):
         "kk_songs": kk_songs,
         "nostalgia_songs": nostalgia_songs,
         "top_albums": top_albums,
+        "best_of_hindi_songs": best_of_hindi_songs,
         "genres": genres,
         "sidebar_playlists": sidebar_playlists,
         "sidebar_recent_songs": sidebar_recent_songs,

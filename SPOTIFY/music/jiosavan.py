@@ -7,8 +7,78 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
-API_BASE = getattr(settings, 'JIOSAAVN_API_BASE', 'https://saavn.sumit.co')
-REQUEST_TIMEOUT = 8  # seconds
+API_MIRRORS = [
+    'https://jiosaavn-api-sage.vercel.app',
+    'https://jiosaavn-api-one-rho.vercel.app',
+    'https://jiosaavn-api-privatecvc2.vercel.app',
+    'https://saavn.sumit.co', 
+]
+
+API_BASE = getattr(settings, 'JIOSAAVN_API_BASE', API_MIRRORS[0])
+REQUEST_TIMEOUT = 10  # seconds
+
+def _get_api_response(endpoint, params=None):
+    """
+    Helper to fetch data from JioSaavn API mirrors with automatic fallback.
+    STANDARD: Handles both v1/v2 and mirrors with/without /api prefix.
+    """
+    params = params or {}
+    
+    # Standardize mirrors list
+    raw_mirrors = [API_BASE] + API_MIRRORS
+    mirrors = []
+    for m in raw_mirrors:
+        m = m.rstrip('/')
+        if m.endswith('/api'):
+            m = m[:-4]
+        if m not in mirrors:
+            mirrors.append(m)
+    
+    for mirror in mirrors:
+        # Determine resource details for v2 style fallback
+        path_segments = endpoint.strip('/').split('/')
+        resource_type = path_segments[0]
+        resource_id = path_segments[1] if len(path_segments) > 1 else None
+        
+        # Build all possible URL variations for this mirror
+        # Some mirrors use /api/ prefix, some don't. Some use v1 paths, some use v2 params.
+        variations = []
+        
+        # Prefixes to try
+        prefixes = ['/api', '']
+        
+        for prefix in prefixes:
+            if resource_id and resource_type in ['songs', 'albums', 'playlists', 'artists']:
+                # v1 style: prefix/resource/id
+                variations.append((f"{mirror}{prefix}/{resource_type}/{resource_id}", params))
+                # v2 style: prefix/resource?id=id
+                v2_params = params.copy()
+                v2_params['id'] = resource_id
+                variations.append((f"{mirror}{prefix}/{resource_type}", v2_params))
+            else:
+                # Standard search/list: prefix/endpoint
+                variations.append((f"{mirror}{prefix}/{endpoint.lstrip('/')}", params))
+
+        for url, request_params in variations:
+            try:
+                response = requests.get(url, params=request_params, timeout=REQUEST_TIMEOUT)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('success') or ('results' in data.get('data', {})) or ('songs' in data.get('data', {})):
+                        return data
+                elif response.status_code == 429:
+                    print(f"[JioSaavn] Mirror {mirror} rate limited (429).")
+                    break # Skip to next mirror
+                    
+            except Exception:
+                continue # Try next variation or mirror
+            
+    return None
+
+
+
+
 
 # Official JioSaavn chart playlist IDs (stable, curated by JioSaavn)
 CHART_PLAYLIST_IDS = [
@@ -117,18 +187,11 @@ def search_songs(query, page=0, limit=20):
     Search JioSaavn for songs.
     Returns a list of normalized song dicts.
     """
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/search/songs",
-            params={'query': query, 'page': page, 'limit': limit},
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data', {}).get('results'):
-            return _normalize_songs_list(data['data']['results'])
-    except Exception as e:
-        print(f"[JioSaavn] Search error: {e}")
+    data = _get_api_response("search/songs", params={'query': query, 'page': page, 'limit': limit})
+    if data and data.get('data', {}).get('results'):
+        return _normalize_songs_list(data['data']['results'])
     return []
+
 
 
 def search_all(query):
@@ -136,23 +199,16 @@ def search_all(query):
     Global search on JioSaavn (songs, albums, artists, playlists).
     Returns a dict with keys: songs, albums, artists.
     """
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/search",
-            params={'query': query},
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data'):
-            result_data = data['data']
-            return {
-                'songs': result_data.get('songs', {}).get('results', []),
-                'albums': result_data.get('albums', {}).get('results', []),
-                'artists': result_data.get('artists', {}).get('results', []),
-            }
-    except Exception as e:
-        print(f"[JioSaavn] Global search error: {e}")
+    data = _get_api_response("search", params={'query': query})
+    if data and data.get('data'):
+        result_data = data['data']
+        return {
+            'songs': result_data.get('songs', {}).get('results', []),
+            'albums': result_data.get('albums', {}).get('results', []),
+            'artists': result_data.get('artists', {}).get('results', []),
+        }
     return {'songs': [], 'albums': [], 'artists': []}
+
 
 
 def get_song_details(song_id):
@@ -160,21 +216,15 @@ def get_song_details(song_id):
     Get full details of a song by its JioSaavn ID.
     Returns a normalized song dict or None.
     """
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/songs/{song_id}",
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data'):
-            songs = data['data']
-            if isinstance(songs, list) and len(songs) > 0:
-                return _normalize_song(songs[0])
-            elif isinstance(songs, dict):
-                return _normalize_song(songs)
-    except Exception as e:
-        print(f"[JioSaavn] Song details error: {e}")
+    data = _get_api_response(f"songs/{song_id}")
+    if data and data.get('data'):
+        songs = data['data']
+        if isinstance(songs, list) and len(songs) > 0:
+            return _normalize_song(songs[0])
+        elif isinstance(songs, dict):
+            return _normalize_song(songs)
     return None
+
 
 
 def get_song_suggestions(song_id, limit=20):
@@ -182,18 +232,10 @@ def get_song_suggestions(song_id, limit=20):
     Get similar/suggested songs based on a song ID.
     Returns a list of normalized song dicts.
     """
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/songs/{song_id}/suggestions",
-            params={'limit': limit},
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data'):
-            return _normalize_songs_list(data['data'])
-    except Exception as e:
-        print(f"[JioSaavn] Suggestions error, using fallback: {e}")
-        
+    data = _get_api_response(f"songs/{song_id}/suggestions", params={'limit': limit})
+    if data and data.get('data'):
+        return _normalize_songs_list(data['data'])
+
     # FALLBACK: If suggestions endpoint is broken upstream or empty, return trending queue so prev/next buttons still work
     return get_trending(limit)
 
@@ -203,20 +245,13 @@ def _fetch_trending_from_playlist(playlist_id, limit):
     Try to fetch songs from a JioSaavn chart playlist by ID.
     Returns a list of normalized song dicts, or empty list on failure.
     """
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/playlists/{playlist_id}",
-            params={'limit': limit},
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data'):
-            songs = data['data'].get('songs', [])
-            if songs:
-                return _normalize_songs_list(songs[:limit])
-    except Exception as e:
-        print(f"[JioSaavn] Playlist fetch error for {playlist_id}: {e}")
+    data = _get_api_response(f"playlists/{playlist_id}", params={'limit': limit})
+    if data and data.get('data'):
+        songs = data['data'].get('songs', [])
+        if songs:
+            return _normalize_songs_list(songs[:limit])
     return []
+
 
 
 def _fetch_trending_from_search(limit):
@@ -230,28 +265,21 @@ def _fetch_trending_from_search(limit):
     for query in _FALLBACK_QUERIES:
         if len(results) >= limit:
             break
-        try:
-            response = requests.get(
-                f"{API_BASE}/api/search/songs",
-                params={'query': query, 'page': 0, 'limit': limit},
-                timeout=REQUEST_TIMEOUT
-            )
-            data = response.json()
-            if data.get('success') and data.get('data', {}).get('results'):
-                for s in data['data']['results']:
-                    song = _normalize_song(s)
-                    if not song:
-                        continue
-                    if song['id'] in seen_ids:
-                        continue
-                    if 'trending' in song['title'].lower():
-                        continue
-                    seen_ids.add(song['id'])
-                    results.append(song)
-                    if len(results) >= limit:
-                        break
-        except Exception as e:
-            print(f"[JioSaavn] Fallback search error for '{query}': {e}")
+        data = _get_api_response("search/songs", params={'query': query, 'page': 0, 'limit': limit})
+        if data and data.get('data', {}).get('results'):
+            for s in data['data']['results']:
+                song = _normalize_song(s)
+                if not song:
+                    continue
+                if song['id'] in seen_ids:
+                    continue
+                if 'trending' in song['title'].lower():
+                    continue
+                seen_ids.add(song['id'])
+                results.append(song)
+                if len(results) >= limit:
+                    break
+
 
     return results
 
@@ -296,25 +324,18 @@ def _get_trending_today_playlist_id():
     if cached_id:
         return cached_id
 
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/search/playlists",
-            params={'query': 'Trending Today', 'limit': 5},
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data', {}).get('results'):
-            for playlist in data['data']['results']:
-                name = playlist.get('name', '').lower()
-                # Match the official JioSaavn trending playlist
-                if 'trending today' in name:
-                    playlist_id = playlist.get('id', '')
-                    if playlist_id:
-                        cache.set(cache_key, playlist_id, timeout=60 * 60 * 24)  # 24 hrs
-                        return playlist_id
-    except Exception as e:
-        print(f"[JioSaavn] Trending Today playlist lookup error: {e}")
+    data = _get_api_response("search/playlists", params={'query': 'Trending Today', 'limit': 5})
+    if data and data.get('data', {}).get('results'):
+        for playlist in data['data']['results']:
+            name = playlist.get('name', '').lower()
+            # Match the official JioSaavn trending playlist
+            if 'trending today' in name:
+                playlist_id = playlist.get('id', '')
+                if playlist_id:
+                    cache.set(cache_key, playlist_id, timeout=60 * 60 * 24)  # 24 hrs
+                    return playlist_id
     return None
+
 
 
 def get_trending_today(limit=20):
@@ -327,21 +348,14 @@ def get_trending_today(limit=20):
     playlist_id = _get_trending_today_playlist_id()
 
     if playlist_id:
-        try:
-            response = requests.get(
-                f"{API_BASE}/api/playlists/{playlist_id}",
-                params={'limit': limit},
-                timeout=REQUEST_TIMEOUT
-            )
-            data = response.json()
-            if data.get('success') and data.get('data'):
-                songs = data['data'].get('songs', [])
-                results = _normalize_songs_list(songs[:limit])
-                if results:
-                    cache.set(cache_key, results, timeout=60 * 30)  # 30 min cache
-                    return results
-        except Exception as e:
-            print(f"[JioSaavn] Trending Today fetch error: {e}")
+        data = _get_api_response(f"playlists/{playlist_id}", params={'limit': limit})
+        if data and data.get('data'):
+            songs = data['data'].get('songs', [])
+            results = _normalize_songs_list(songs[:limit])
+            if results:
+                cache.set(cache_key, results, timeout=60 * 30)  # 30 min cache
+                return results
+
 
     # Fallback
     print("[JioSaavn] Falling back to get_trending()")
@@ -367,23 +381,16 @@ def get_nostalgia_songs(limit=20):
     for query in queries:
         if len(results) >= limit:
             break
-        try:
-            response = requests.get(
-                f"{API_BASE}/api/search/songs",
-                params={'query': query, 'page': 0, 'limit': limit},
-                timeout=REQUEST_TIMEOUT
-            )
-            data = response.json()
-            if data.get('success') and data.get('data', {}).get('results'):
-                for s in data['data']['results']:
-                    song = _normalize_song(s)
-                    if song and song['id'] not in seen_ids:
-                        seen_ids.add(song['id'])
-                        results.append(song)
-                        if len(results) >= limit:
-                            break
-        except Exception as e:
-            print(f"[JioSaavn] Nostalgia search error for '{query}': {e}")
+        data = _get_api_response("search/songs", params={'query': query, 'page': 0, 'limit': limit})
+        if data and data.get('data', {}).get('results'):
+            for s in data['data']['results']:
+                song = _normalize_song(s)
+                if song and song['id'] not in seen_ids:
+                    seen_ids.add(song['id'])
+                    results.append(song)
+                    if len(results) >= limit:
+                        break
+
 
     if results:
         cache.set(cache_key, results, timeout=60 * 60 * 24)  # Cache for 24 hours
@@ -411,26 +418,19 @@ def get_artist_songs(artist_name, limit=20):
     for query in queries:
         if len(results) >= limit:
             break
-        try:
-            response = requests.get(
-                f"{API_BASE}/api/search/songs",
-                params={'query': query, 'page': 0, 'limit': limit},
-                timeout=REQUEST_TIMEOUT
-            )
-            data = response.json()
-            if data.get('success') and data.get('data', {}).get('results'):
-                for s in data['data']['results']:
-                    song = _normalize_song(s)
-                    if not song or song['id'] in seen_ids:
-                        continue
-                    # Only include songs where the artist is actually credited
-                    if artist_name.lower() in song.get('artist', '').lower():
-                        seen_ids.add(song['id'])
-                        results.append(song)
-                        if len(results) >= limit:
-                            break
-        except Exception as e:
-            print(f"[JioSaavn] Artist songs search error for '{query}': {e}")
+        data = _get_api_response("search/songs", params={'query': query, 'page': 0, 'limit': limit})
+        if data and data.get('data', {}).get('results'):
+            for s in data['data']['results']:
+                song = _normalize_song(s)
+                if not song or song['id'] in seen_ids:
+                    continue
+                # Only include songs where the artist is actually credited
+                if artist_name.lower() in song.get('artist', '').lower():
+                    seen_ids.add(song['id'])
+                    results.append(song)
+                    if len(results) >= limit:
+                        break
+
 
     if results:
         cache.set(cache_key, results, timeout=60 * 60)  # Cache for 1 hour
@@ -448,28 +448,21 @@ def search_albums(query, limit=10):
     if cached:
         return cached
 
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/search/albums",
-            params={'query': query, 'page': 0, 'limit': limit},
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data', {}).get('results'):
-            results = []
-            for a in data['data']['results']:
-                results.append({
-                    'id': a.get('id', ''),
-                    'title': a.get('name', ''),
-                    'year': a.get('year', ''),
-                    'image_url': _get_best_image(a.get('image', [])),
-                    'type': a.get('type', 'album'),
-                })
-            if results:
-                cache.set(cache_key, results[:limit], timeout=60 * 60)
-                return results[:limit]
-    except Exception as e:
-        print(f"[JioSaavn] Album search error: {e}")
+    data = _get_api_response("search/albums", params={'query': query, 'page': 0, 'limit': limit})
+    if data and data.get('data', {}).get('results'):
+        results = []
+        for a in data['data']['results']:
+            results.append({
+                'id': a.get('id', ''),
+                'title': a.get('name', ''),
+                'year': a.get('year', ''),
+                'image_url': _get_best_image(a.get('image', [])),
+                'type': a.get('type', 'album'),
+            })
+        if results:
+            cache.set(cache_key, results[:limit], timeout=60 * 60)
+            return results[:limit]
+
     return []
 
 
@@ -483,31 +476,24 @@ def get_album_details(album_id):
     if cached:
         return cached
 
-    try:
-        response = requests.get(
-            f"{API_BASE}/api/albums",
-            params={'id': album_id},
-            timeout=REQUEST_TIMEOUT
-        )
-        data = response.json()
-        if data.get('success') and data.get('data'):
-            album_data = data['data']
-            
-            # Extract artists correctly from album API response
-            primary_artists = album_data.get('artists', {}).get('primary', [])
-            artist_name = ', '.join(a.get('name', '') for a in primary_artists) if primary_artists else 'Various Artists'
-            
-            album_details = {
-                'id': album_data.get('id', ''),
-                'title': album_data.get('name', ''),
-                'artist': artist_name,
-                'year': album_data.get('year', ''),
-                'image_url': _get_best_image(album_data.get('image', [])),
-                'song_count': album_data.get('songCount', 0),
-                'songs': _normalize_songs_list(album_data.get('songs', []))
-            }
-            cache.set(cache_key, album_details, timeout=60 * 60 * 2) # Cache for 2 hours
-            return album_details
-    except Exception as e:
-        print(f"[JioSaavn] Album details error: {e}")
+    data = _get_api_response("albums", params={'id': album_id})
+    if data and data.get('data'):
+        album_data = data['data']
+        
+        # Extract artists correctly from album API response
+        primary_artists = album_data.get('artists', {}).get('primary', [])
+        artist_name = ', '.join(a.get('name', '') for a in primary_artists) if primary_artists else 'Various Artists'
+        
+        album_details = {
+            'id': album_data.get('id', ''),
+            'title': album_data.get('name', ''),
+            'artist': artist_name,
+            'year': album_data.get('year', ''),
+            'image_url': _get_best_image(album_data.get('image', [])),
+            'song_count': album_data.get('songCount', 0),
+            'songs': _normalize_songs_list(album_data.get('songs', []))
+        }
+        cache.set(cache_key, album_details, timeout=60 * 60 * 2) # Cache for 2 hours
+        return album_details
+
     return None
