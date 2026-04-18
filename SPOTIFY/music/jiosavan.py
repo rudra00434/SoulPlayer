@@ -16,6 +16,7 @@ API_MIRRORS = [
 
 API_BASE = getattr(settings, 'JIOSAAVN_API_BASE', API_MIRRORS[0])
 REQUEST_TIMEOUT = 10  # seconds
+CACHE_VERSION = "v2" # Increment this to force-clear remote caches
 
 def _get_api_response(endpoint, params=None):
     """
@@ -281,7 +282,7 @@ def _fetch_trending_from_search(limit):
 
 
 def get_trending(limit=20):  
-    cache_key = f'jiosaavn_trending_{limit}'
+    cache_key = f'jiosaavn_trending_{CACHE_VERSION}_{limit}'
     cached = cache.get(cache_key)
     if cached:
         return cached
@@ -314,8 +315,7 @@ def get_trending(limit=20):
     return results[:limit]
 
 def _get_trending_today_playlist_id():
-
-    cache_key = 'jiosaavn_trending_today_playlist_id'
+    cache_key = f'jiosaavn_trending_today_playlist_id_{CACHE_VERSION}'
     cached_id = cache.get(cache_key)
     if cached_id:
         return cached_id
@@ -335,8 +335,7 @@ def _get_trending_today_playlist_id():
 
 
 def get_trending_today(limit=20):
-    
-    cache_key = f'jiosaavn_trending_today_{limit}'
+    cache_key = f'jiosaavn_trending_today_{CACHE_VERSION}_{limit}'
     cached = cache.get(cache_key)
     if cached:
         return cached
@@ -359,7 +358,7 @@ def get_trending_today(limit=20):
 
 def get_nostalgia_songs(limit=20):
     """Fetch 90s nostalgic songs from JioSaavn with caching to prevent excessive API calls."""
-    cache_key = f'jiosaavn_nostalgia_{limit}'
+    cache_key = f'jiosaavn_nostalgia_{CACHE_VERSION}_{limit}'
     cached = cache.get(cache_key)
     if cached:
         return cached
