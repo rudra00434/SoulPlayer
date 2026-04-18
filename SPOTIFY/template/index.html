@@ -659,82 +659,6 @@
                         {% endfor %}
                     </div>
 
-                    <!-- Trending on JioSaavn -->
-                    <div class="mb-5 flex items-end justify-between">
-                        <h2 class="text-2xl font-bold tracking-wide">Trending on <span
-                                class="text-[#3be2c8]">JioSaavn</span></h2>
-                        <span
-                            class="text-xs font-bold px-2 py-1 bg-[#3be2c8]/20 text-[#3be2c8] rounded uppercase tracking-widest border border-[#3be2c8]/30">Live
-                            Stream</span>
-                    </div>
-
-                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
-                        {% for song in trending_songs %}
-                        <div class="flex-none w-44 group cursor-pointer relative"
-                            onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
-                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
-                                <img src="{{ song.image_url }}"
-                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
-                                <div
-                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
-                                    <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
-                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
-                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
-                                    </a>
-                                    <!-- Add to Playlist Button -->
-                                    <button
-                                        onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
-                                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
-                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
-                        </div>
-                        {% empty %}
-                        <p class="text-gray-500 italic">JioSaavn API currently unavailable.</p>
-                        {% endfor %}
-                    </div>
-                    <!-- Trending Today -->
-                    <div class="mb-5 flex items-end justify-between">
-                        <h2 class="text-2xl font-bold tracking-wide">Trending
-                            <span class="text-[#3be2c8]">Today</span>
-                        </h2>
-                        <span
-                            class="text-xs font-bold px-2 py-1 bg-[#3be2c8]/20 text-[#3be2c8] rounded uppercase tracking-widest border border-[#3be2c8]/30 flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#3be2c8] animate-pulse inline-block"></span>
-                            Updated Daily
-                        </span>
-                    </div>
-
-                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
-                        {% for song in trending_today_songs %}
-                        <div class="flex-none w-44 group cursor-pointer relative"
-                            onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
-                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
-                                <img src="{{ song.image_url }}"
-                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
-                                <div
-                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
-                                    <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
-                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
-                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
-                                    </a>
-                                    <button
-                                        onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
-                                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
-                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
-                        </div>
-                        {% empty %}
-                        <p class="text-gray-500 italic">Trending Today currently unavailable.</p>
-                        {% endfor %}
-                    </div>
                     <!-- Best of Hindi Songs (Local Database) -->
                     <div class="mb-5 flex items-end justify-between mt-8">
                         <h2 class="text-2xl font-bold tracking-wide">Best of
@@ -749,6 +673,41 @@
 
                     <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
                         {% for song in best_of_hindi_songs %}
+                        <div class="flex-none w-44 group cursor-pointer relative"
+                            onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')">
+                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                                <img src="{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}"
+                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                                <div
+                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                    <a href="{% url 'play_song' song.id %}" onclick="event.stopPropagation();"
+                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">Curated songs currently unavailable.</p>
+                        {% endfor %}
+                    </div>
+
+                    <!--Best of panjabi songs-->
+                    <div class="mb-5 flex items-end justify-between mt-8">
+                        <h2 class="text-2xl font-bold tracking-wide">Best of
+                            <span class="text-[#3be2c8]">Punjabi Songs</span>
+                        </h2>
+                        <span
+                            class="text-xs font-bold px-2 py-1 bg-amber-500/20 text-amber-500 rounded uppercase tracking-widest border border-amber-500/30 flex items-center gap-1.5">
+                            <i class="fas fa-crown text-[9px]"></i>
+                            Curated Hits
+                        </span>
+                    </div>
+
+                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                        {% for song in best_of_punjabi_songs %}
                         <div class="flex-none w-44 group cursor-pointer relative"
                             onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')">
                             <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
@@ -900,7 +859,7 @@
                         </span>
                     </div>
 
-                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                    <div class="flex gap-6 overflow-x-auto no-scrollbar  pb-6">
                         {% for song in nostalgia_songs %}
                         <div class="flex-none w-44 group cursor-pointer relative"
                             onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
@@ -928,6 +887,83 @@
                         {% endfor %}
                     </div>
                 </div>
+                <!-- Trending on JioSaavn -->
+                <div class="mb-5 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Trending on <span
+                            class="text-[#3be2c8]">JioSaavn</span></h2>
+                    <span
+                        class="text-xs font-bold px-2 py-1 bg-[#3be2c8]/20 text-[#3be2c8] rounded uppercase tracking-widest border border-[#3be2c8]/30">Live
+                        Stream</span>
+                </div>
+
+                <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                    {% for song in trending_songs %}
+                    <div class="flex-none w-44 group cursor-pointer relative"
+                        onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                        <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                            <img src="{{ song.image_url }}"
+                                class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                            <div
+                                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                    class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                </a>
+                                <!-- Add to Playlist Button -->
+                                <button
+                                    onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                    class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                        <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 italic">JioSaavn API currently unavailable.</p>
+                    {% endfor %}
+                </div>
+                <!-- Trending Today -->
+                <div class="mb-5 flex items-end justify-between">
+                    <h2 class="text-2xl font-bold tracking-wide">Trending
+                        <span class="text-[#3be2c8]">Today</span>
+                    </h2>
+                    <span
+                        class="text-xs font-bold px-2 py-1 bg-[#3be2c8]/20 text-[#3be2c8] rounded uppercase tracking-widest border border-[#3be2c8]/30 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#3be2c8] animate-pulse inline-block"></span>
+                        Updated Daily
+                    </span>
+                </div>
+
+                <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                    {% for song in trending_today_songs %}
+                    <div class="flex-none w-44 group cursor-pointer relative"
+                        onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                        <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                            <img src="{{ song.image_url }}"
+                                class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                            <div
+                                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                    class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                    <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                </a>
+                                <button
+                                    onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                    class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                        <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 italic">Trending Today currently unavailable.</p>
+                    {% endfor %}
+                </div>
+
 
                 <!-- Top Albums (Circular Cards) -->
                 <div class="mb-5 flex items-end justify-between">

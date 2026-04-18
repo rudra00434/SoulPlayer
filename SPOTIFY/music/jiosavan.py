@@ -82,23 +82,19 @@ def _get_api_response(endpoint, params=None):
 
 # Official JioSaavn chart playlist IDs (stable, curated by JioSaavn)
 CHART_PLAYLIST_IDS = [
-    '159144718',  # Top 50 Hindi
-    '158543369',  # Trending Today
+    '1134543272', # Hindi: India Superhits Top 50 (Verified Hindi)
+    '1265126272', # Chartbusters 2025 - Hindi (Verified Hindi)
     '92238273',   # Bollywood Hits
-    '159124040',  # Top 50 Punjabi
-    '158223612',  # Top 50 Telugu
     '73507021',   # Top JioTunes Hindi
     '108422329',  # Let's Play Arijit Singh
-    '82914609',   # Top 50 Tamil
-    '112774910',  # Latest Punjabi Hits
+    '159124040',  # Top 50 Punjabi
 ]
 
 _FALLBACK_QUERIES = [
-    'new bollywood 2026 songs',
-    'new hindi 2026 songs',
-    'new telugu hits 2026',
-    'new punjabi hits 2026',
-
+    'Latest Bollywood Hits',
+    'New Hindi Songs',
+    'Trending Hindi',
+    'New Releases Pop - Hindi',
 ]
 
 
@@ -324,7 +320,7 @@ def _get_trending_today_playlist_id():
     if cached_id:
         return cached_id
 
-    data = _get_api_response("search/playlists", params={'query': 'Trending Today', 'limit': 5})
+    data = _get_api_response("search/playlists", params={'query': 'India Superhits Top 50', 'limit': 5})
     if data and data.get('data', {}).get('results'):
         for playlist in data['data']['results']:
             name = playlist.get('name', '').lower()

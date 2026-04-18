@@ -81,6 +81,16 @@ def index(request):
         key=lambda s: hindi_ids.index(s.id)
     )
 
+    # Curated: Best of Punjabi Songs (Local Database)
+    punjabi_ids = [100, 101, 102, 103, 104, 105,106]
+    best_of_punjabi_songs_unsorted = Song.objects.filter(id__in=punjabi_ids)
+    # Sort to maintain the user's requested order
+    best_of_punjabi_songs = sorted(
+        best_of_punjabi_songs_unsorted, 
+        key=lambda s: punjabi_ids.index(s.id)
+    )
+
+
     genres = [
 
         {'id': 'romance', 'name': 'Romance', 'icon': 'fa-heart', 'color': 'from-pink-500 to-fuchsia-600'},
@@ -102,6 +112,7 @@ def index(request):
         "nostalgia_songs": nostalgia_songs,
         "top_albums": top_albums,
         "best_of_hindi_songs": best_of_hindi_songs,
+        "best_of_punjabi_songs": best_of_punjabi_songs,
         "genres": genres,
         "sidebar_playlists": sidebar_playlists,
         "sidebar_recent_songs": sidebar_recent_songs,
