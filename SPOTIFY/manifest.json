@@ -1,0 +1,21 @@
+{
+  "name": "SoulPlayer Premium",
+  "short_name": "SoulPlayer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#3be2c8",
+  "icons": [
+    {
+      "src": "/static/soulplayer_icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/soulplayer_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

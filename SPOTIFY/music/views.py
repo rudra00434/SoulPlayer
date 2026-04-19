@@ -1,7 +1,9 @@
 import random
 from collections import Counter
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse 
+from django.http import HttpResponse
+from django.http import FileResponse
+import os
 import requests
 from .models import Song,Artist,Playlist,LikedSong
 from django.core.paginator import Paginator 
@@ -193,7 +195,7 @@ def search(request):
         if nlp:
             doc = nlp(query_lower)
             
-            is_play_command = any(token.lemma_ in ["play", "stream", "listen", "start", "hear"] for token in doc)
+            is_play_command = any(token.lemma_ in ["play","place","Please", "stream", "listen", "start", "hear"] for token in doc)
             
             # Words to strip out so the search is cleaner
             stop_words = {"to", "some", "a", "an", "the", "song", "songs", "music", "track", "tracks", "play", "playing", "listen", "listening", "hear"}
@@ -684,26 +686,44 @@ def play_jiosaavn_song(request, song_id):
             profile.played_songs.add(db_song)
 
     # Get similar song suggestions for "up next"
-    suggestions = jiosavan.get_song_suggestions(song_id, limit=8)
+    suggestions = jiosavan.get_song_suggestions(song_id, limit=12)
+    
+    # NEW logic: Build a robust navigation queue
+    # Combine suggestions with trending songs to ensure prev/next buttons always work
+    trending = jiosavan.get_trending(limit=10)
+    
+    # Deduplicate and filter out the current song
+    all_candidates = []
+    seen_ids = {str(song_id)}
+    
+    # 1. Add suggestions first (higher relevance)
+    for s in suggestions:
+        sid = str(s.get('id'))
+        if sid not in seen_ids:
+            all_candidates.append(s)
+            seen_ids.add(sid)
+            
+    # 2. Add trending tracks to fill the gap (ensures buttons are never dead)
+    for s in trending:
+        sid = str(s.get('id'))
+        if sid not in seen_ids:
+            all_candidates.append(s)
+            seen_ids.add(sid)
 
-    # Build previous/next dynamically from suggestions instead of purely local DB 
-    # to guarantee the left/right buttons always function for streaming
-    previous_song = None
+    # Pick next and previous from our consolidated queue
     next_song = None
-
-    if suggestions:
-        candidates = [s for s in suggestions if str(s.get('id')) != str(song_id)]
-        if len(candidates) >= 2:
-            next_song = candidates[0]
-            previous_song = candidates[-1] # use the last suggestion as previous
-        elif len(candidates) == 1:
-            next_song = candidates[0]
-            previous_song = None
+    previous_song = None
+    
+    if all_candidates:
+        # Next song is just the first candidate
+        next_song = all_candidates[0]
+        # Previous song is the last one (circular queue behavior)
+        previous_song = all_candidates[-1] if len(all_candidates) > 1 else None
 
     context = {
         "song": song,
         "is_jiosaavn": True,
-        "suggestions": suggestions,
+        "suggestions": suggestions, # We pass the original suggestions for the UI list
         "previous_song": previous_song,
         "next_song": next_song,
     }
@@ -964,3 +984,13 @@ def album_detail(request, album_id):
         'songs': album.get('songs', []),
     }
     return render(request, 'album_detail.html', context)
+
+def pwa_manifest(request):
+    """Serve the manifest.json from root."""
+    path = os.path.join(settings.BASE_DIR, 'manifest.json')
+    return FileResponse(open(path, 'rb'), content_type='application/json')
+
+def pwa_sw(request):
+    """Serve the sw.js from root."""
+    path = os.path.join(settings.BASE_DIR, 'sw.js')
+    return FileResponse(open(path, 'rb'), content_type='application/javascript')

@@ -309,6 +309,8 @@
 
             recognition.onerror = (event) => {
                 console.error("Speech Recognition Error", event.error);
+                statusHeading.innerHTML = "Error Found";
+                statusSubtext.innerHTML = `Reason: ${event.error}. Please check your mic.`;
                 resetUI();
 
                 if (event.error === 'no-speech') {
@@ -320,9 +322,12 @@
                 } else if (event.error === 'not-allowed') {
                     statusHeading.innerHTML = "Access Denied";
                     statusSubtext.innerHTML = "Please allow microphone permissions in your browser settings.";
+                } else if (event.error === 'not-authorized') {
+                     statusHeading.innerHTML = "Not Authorized";
+                     statusSubtext.innerHTML = "Your browser needs a secure (HTTPS) link for voice.";
                 } else {
                     statusHeading.innerHTML = "Something went wrong";
-                    statusSubtext.innerHTML = "Please try again.";
+                    statusSubtext.innerHTML = `Error: ${event.error}. Please try again.`;
                 }
             };
 

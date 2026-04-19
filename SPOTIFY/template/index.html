@@ -6,9 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoulPlayer - Premium Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3be2c8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            /* PWA Dynamic Theme Variables with Fallbacks */
+            --dynamic-accent: #3be2c8;
+            --dynamic-accent-dark: #2cdbbd;
+            --dynamic-accent-glow: rgba(59, 226, 200, 0.4);
+            --dynamic-accent-transparent: rgba(59, 226, 200, 0.1);
+        }
 
         body {
             font-family: 'Outfit', sans-serif;
@@ -95,7 +105,7 @@
     </style>
 </head>
 
-<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[var(--dynamic-accent,#3be2c8)] selection:text-[#0b0f19]">
 
     <div class="flex flex-1 overflow-hidden pb-20">
         {% block sidebar %}
@@ -1085,7 +1095,8 @@
                 <span id="player-current-time" class="w-8 text-right">0:00</span>
                 <div class="h-1.5 flex-1 bg-gray-800 rounded-full relative cursor-pointer group" onclick="seek(event)">
                     <div id="player-progress-bar"
-                        class="absolute top-0 left-0 h-full w-0 bg-gradient-to-r from-[#2cdbbd] to-[#3be2c8] rounded-full shadow-[0_0_10px_rgba(59,226,200,0.5)]">
+                        class="absolute top-0 left-0 h-full w-0 rounded-full transition-all duration-300"
+                        style="background: linear-gradient(to right, var(--dynamic-accent-dark, #2cdbbd), var(--dynamic-accent, #3be2c8)); box-shadow: 0 0 10px var(--dynamic-accent-glow, rgba(59, 226, 200, 0.4));">
                         <!-- Knob container needs absolute positioning inside the progress bar to move with it -->
                         <div
                             class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1112,6 +1123,9 @@
 
     <!-- Hidden audio element -->
     <audio id="audio-player"></audio>
+    
+    <!-- Hidden canvas for Dynamic Theme Color extraction (PWA Feature) -->
+    <canvas id="color-analysis-canvas" style="display: none;" width="50" height="50"></canvas>
 
     <script>
         const audioPlayer = document.getElementById('audio-player');
@@ -1133,6 +1147,9 @@
             if (imageUrl) {
                 document.getElementById('player-img-container').classList.remove('hidden');
                 document.getElementById('player-img').src = imageUrl;
+                
+                // Trigger PWA Dynamic Theme Color Extraction
+                updateThemeColor(imageUrl);
             }
 
             audioPlayer.src = url;
@@ -1218,6 +1235,100 @@
                 console.log('Record play response:', response.status);
             }).catch(err => console.error('Error recording play:', err));
         }
+        }
+
+        /**
+         * Dynamic Theme Color Extraction (PWA Enhancement)
+         * Safely extracts the dominant color from album art and updates the UI theme.
+         */
+        function updateThemeColor(imgUrl) {
+            if (!imgUrl) return;
+            
+            try {
+                const canvas = document.getElementById('color-analysis-canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                const img = new Image();
+                
+                // Set crossOrigin to allow analysis if CDN support is present
+                img.crossOrigin = "Anonymous";
+                
+                img.onload = function() {
+                    try {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                        let r = 0, g = 0, b = 0, count = 0;
+                        
+                        // Sample pixels (skip to increase speed)
+                        for (let i = 0; i < imageData.length; i += 16) {
+                            r += imageData[i];
+                            g += imageData[i+1];
+                            b += imageData[i+2];
+                            count++;
+                        }
+                        
+                        r = Math.floor(r / count);
+                        g = Math.floor(g / count);
+                        b = Math.floor(b / count);
+                        
+                        // Convert to HSL for UI-friendly adjustments
+                        const hsl = rgbToHsl(r, g, b);
+                        
+                        // Ensure the color is vibrant enough but not too light/dark for the theme
+                        const s = Math.max(50, hsl[1]); // At least 50% saturation
+                        const l = Math.max(40, Math.min(65, hsl[2])); // Lightness between 40-65%
+                        
+                        const finalColor = `hsl(${hsl[0]}, ${s}%, ${l}%)`;
+                        const darkColor = `hsl(${hsl[0]}, ${s}%, ${l - 15}%)`;
+                        const glowValue = `rgba(${r}, ${g}, ${b}, 0.5)`;
+                        const transValue = `rgba(${r}, ${g}, ${b}, 0.1)`;
+
+                        // Apply to CSS Variables safely
+                        document.documentElement.style.setProperty('--dynamic-accent', finalColor);
+                        document.documentElement.style.setProperty('--dynamic-accent-dark', darkColor);
+                        document.documentElement.style.setProperty('--dynamic-accent-glow', glowValue);
+                        document.documentElement.style.setProperty('--dynamic-accent-transparent', transValue);
+                        
+                        // Update PWA Theme Color Meta Tag
+                        const themeMeta = document.querySelector('meta[name="theme-color"]');
+                        if (themeMeta) themeMeta.setAttribute('content', darkColor);
+                        
+                    } catch (e) {
+                        console.warn("[PWA] Color analysis failed:", e);
+                    }
+                };
+                
+                img.onerror = () => {
+                    // Fallback to default SoulPlayer Cyan if CORS blocks access
+                    document.documentElement.style.setProperty('--dynamic-accent', '#3be2c8');
+                    document.documentElement.style.setProperty('--dynamic-accent-dark', '#2cdbbd');
+                    document.documentElement.style.setProperty('--dynamic-accent-glow', 'rgba(59, 226, 200, 0.4)');
+                };
+                img.src = imgUrl;
+            } catch (err) {
+                console.error("[PWA] Theme update error:", err);
+            }
+        }
+
+        // Helper: RGB to HSL conversion
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [Math.floor(h * 360), Math.floor(s * 100), Math.floor(l * 100)];
         }
 
         function togglePlay() {
@@ -1541,7 +1652,16 @@
         });
     </script>
     {% endif %}
-
+    <script>
+        // PWA Registration Script
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SoulPlayer PWA Active'))
+                    .catch(err => console.error('PWA Registration Failed', err));
+            });
+        }
+    </script>
 </body>
 
 </html>

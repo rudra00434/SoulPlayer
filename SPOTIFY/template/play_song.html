@@ -8,219 +8,538 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --dynamic-accent: #3be2c8;
+            --dynamic-accent-dark: #2cdbbd;
+            --dynamic-accent-glow: rgba(59, 226, 200, 0.4);
+            --dynamic-accent-transparent: rgba(59, 226, 200, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: #0b0f19;
+            background-color: #080c14;
         }
 
-        .slider-thumb::-webkit-slider-thumb {
+        /* ── Scrollbar ── */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* ── Vinyl Spin ── */
+        @keyframes vinylSpin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .vinyl-spin {
+            animation: vinylSpin 12s linear infinite;
+        }
+
+        .vinyl-spin.paused {
+            animation-play-state: paused;
+        }
+
+        /* ── Pulse ring around art ── */
+        @keyframes pulseRing {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.04);
+                opacity: 0.15;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+        }
+
+        .pulse-ring {
+            animation: pulseRing 3s ease-in-out infinite;
+        }
+
+        /* ── Shimmer on skeleton ── */
+        @keyframes shimmer {
+            0% {
+                background-position: -400px 0;
+            }
+
+            100% {
+                background-position: 400px 0;
+            }
+        }
+
+        /* ── Progress slider ── */
+        .progress-range {
             -webkit-appearance: none;
             appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #ffffff;
+            height: 4px;
+            border-radius: 99px;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(59, 226, 200, 0.5);
-            /* Cyan glow */
+            outline: none;
+            transition: height 0.2s ease;
         }
 
-        .slider-thumb:hover::-webkit-slider-thumb {
-            transform: scale(1.2);
-            background: #3be2c8;
+        .progress-range:hover {
+            height: 6px;
+        }
+
+        .progress-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 0px;
+            height: 0px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--dynamic-accent-glow);
+            transition: width 0.2s, height 0.2s, opacity 0.2s;
+            opacity: 0;
+        }
+
+        .progress-range:hover::-webkit-slider-thumb,
+        .progress-range:active::-webkit-slider-thumb {
+            width: 14px;
+            height: 14px;
+            opacity: 1;
+        }
+
+        /* ── Volume slider ── */
+        .volume-range {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 3px;
+            border-radius: 99px;
+            cursor: pointer;
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            width: 80px;
+        }
+
+        .volume-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        /* ── Glass card ── */
+        .glass-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        /* ── Control button hover ── */
+        .ctrl-btn {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s, color 0.2s, transform 0.15s;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .ctrl-btn.active {
+            color: var(--dynamic-accent, #3be2c8);
+        }
+
+        /* ── Play button ── */
+        .play-button {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #080c14;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.3s;
+            background: linear-gradient(135deg, var(--dynamic-accent, #3be2c8), var(--dynamic-accent-dark, #2cdbbd));
+            box-shadow: 0 0 30px var(--dynamic-accent-glow, rgba(59, 226, 200, 0.5)),
+                0 8px 24px rgba(0, 0, 0, 0.4);
+            border: none;
+            outline: none;
+        }
+
+        .play-button:hover {
+            transform: scale(1.07);
+        }
+
+        .play-button:active {
+            transform: scale(0.94);
+        }
+
+        /* ── Suggestion row ── */
+        .suggest-row {
+            border: 1px solid transparent;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+        }
+
+        .suggest-row:hover {
+            background: rgba(255, 255, 255, 0.07) !important;
+            border-color: rgba(59, 226, 200, 0.2);
+            transform: translateX(4px);
+        }
+
+        /* ── Fade-in ── */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .fade-up-delay {
+            animation: fadeUp 0.5s ease 0.15s both;
+        }
+
+        /* ── Dots indicator ── */
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--dynamic-accent, #3be2c8);
+            width: 18px;
+            border-radius: 3px;
         }
     </style>
 </head>
 
 <body
-    class="min-h-screen text-white flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-[#3be2c8] selection:text-[#0b0f19]">
+    class="min-h-screen text-white flex flex-col items-center p-4 pb-10 relative overflow-x-hidden selection:bg-[#3be2c8] selection:text-[#080c14]">
 
-    <!-- Background Blur Effect matched to deep blue theme -->
-    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-[#111827] to-[#0b0f19]"></div>
+    <!-- ═══ Layered Background ═══ -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <!-- base gradient -->
+        <div class="absolute inset-0 bg-gradient-to-b from-[#0e1420] via-[#080c14] to-[#080c14]"></div>
+
+        <!-- album art blurred backdrop -->
         {% if is_jiosaavn %}
-        <div class="absolute inset-0 bg-cover bg-center blur-[120px] opacity-20 scale-150"
-            style="background-image: url('{{ song.image_url }}');"></div>
-        <div class="absolute inset-0 bg-[#0b0f19]/80"></div>
+        <div class="absolute inset-0 bg-cover bg-center scale-110"
+            style="background-image:url('{{ song.image_url }}'); filter:blur(80px) saturate(1.5); opacity:0.18;"></div>
         {% elif song.image %}
-        <div class="absolute inset-0 bg-cover bg-center blur-[120px] opacity-20 scale-150"
-            style="background-image: url('{{ song.image.url }}');"></div>
-        <div class="absolute inset-0 bg-[#0b0f19]/80"></div>
+        <div class="absolute inset-0 bg-cover bg-center scale-110"
+            style="background-image:url('{{ song.image.url }}'); filter:blur(80px) saturate(1.5); opacity:0.18;"></div>
         {% else %}
-        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-900/30 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#3be2c8]/20 rounded-full blur-[120px]">
+        <div class="absolute top-[-15%] left-[-15%] w-[60%] h-[60%] rounded-full"
+            style="background:radial-gradient(circle, rgba(59,226,200,0.12) 0%, transparent 70%); filter:blur(40px);">
         </div>
         {% endif %}
-    </div>
 
-    <!-- Header -->
-    <div class="w-full max-w-sm flex justify-between items-center z-10 mb-4 md:mb-6">
-        <a href="{% url 'index' %}"
-            class="w-10 h-10 flex items-center justify-center text-white text-xl hover:bg-white/10 rounded-full transition transform hover:-translate-y-1">
-            <i class="fas fa-chevron-down"></i>
-        </a>
-        <div class="text-center">
-            <h2 class="text-[10px] uppercase tracking-[0.2em] text-[#3be2c8] font-bold mb-1">{% if is_jiosaavn %}Streaming from JioSaavn{% else %}Playing From Library{% endif %}</h2>
-            <p class="text-sm font-semibold tracking-wide text-gray-300">SoulPlayer</p>
+        <!-- dark overlay -->
+        <div class="absolute inset-0 bg-[#080c14]/70"></div>
+
+        <!-- top vignette -->
+        <div class="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#080c14]/80 to-transparent"></div>
+        <!-- bottom vignette -->
+        <div id="dynamic-bg-glow"
+            class="absolute bottom-[-10%] right-[-10%] w-[55%] h-[55%] rounded-full transition-colors duration-1000"
+            style="background: radial-gradient(circle, var(--dynamic-accent-glow, rgba(59,226,200,0.15)) 0%, transparent 70%); filter:blur(60px);">
         </div>
-        <button
-            class="w-10 h-10 flex items-center justify-center text-white text-xl hover:bg-white/10 rounded-full transition transform hover:rotate-90">
-            <i class="fas fa-ellipsis-v"></i>
-        </button>
     </div>
 
+    <!-- ═══ Header ═══ -->
+    <header class="w-full max-w-[400px] flex justify-between items-center z-10 pt-4 pb-2 fade-up">
+        <a href="{% url 'index' %}" class="ctrl-btn">
+            <i class="fas fa-chevron-down text-lg"></i>
+        </a>
+
+        <div class="text-center">
+            <p class="text-[10px] uppercase tracking-[0.25em] font-bold mb-0.5"
+                style="color: var(--dynamic-accent,#3be2c8);">
+                {% if is_jiosaavn %}Streaming · JioSaavn{% else %}Playing · Library{% endif %}
+            </p>
+            <h2 class="text-sm font-bold tracking-widest text-white/80">SoulPlayer</h2>
+        </div>
+
+        <button class="ctrl-btn">
+            <i class="fas fa-ellipsis-v text-lg"></i>
+        </button>
+    </header>
+
+    <!-- ═══ Error State ═══ -->
     {% if error %}
-    <div class="w-full max-w-sm z-10 mt-10">
-        <div class="bg-red-500/10 border border-red-500/50 text-red-500 rounded-2xl p-6 text-center shadow-lg backdrop-blur-md">
-            <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
-            <h3 class="text-xl font-bold mb-2">Could Not Load Track</h3>
-            <p class="text-sm opacity-80">{{ error }}</p>
-            <a href="{% url 'index' %}" class="inline-block mt-6 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white font-bold text-xs uppercase tracking-widest transition">
-                Return Home
+    <div class="w-full max-w-[400px] z-10 mt-16 fade-up">
+        <div class="glass-card rounded-3xl p-8 text-center shadow-2xl">
+            <div class="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-400"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-white">Track Unavailable</h3>
+            <p class="text-sm text-white/50 leading-relaxed">{{ error }}</p>
+            <a href="{% url 'index' %}"
+                class="inline-flex items-center gap-2 mt-7 px-6 py-2.5 rounded-full text-xs uppercase tracking-widest font-bold transition hover:scale-105"
+                style="background: rgba(59,226,200,0.12); color: var(--dynamic-accent,#3be2c8); border: 1px solid rgba(59,226,200,0.25);">
+                <i class="fas fa-house-chimney text-xs"></i> Return Home
             </a>
         </div>
     </div>
+
     {% else %}
 
-    <!-- Main Player Card -->
-    <div
-        class="w-full max-w-sm z-10 flex flex-col gap-4 md:gap-5 bg-[#111827]/30 backdrop-blur-xl p-5 md:p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5 mx-auto">
+    <!-- ═══ Main Player ═══ -->
+    <main class="w-full max-w-[400px] z-10 flex flex-col gap-5 mt-2 fade-up">
 
-        <div class="w-full aspect-square relative group mx-auto">
-            {% if is_jiosaavn %}
-            <img src="{{ song.image_url }}" alt="{{ song.title }}"
-                class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
-            {% elif song.image %}
-            <img src="{{ song.image.url }}" alt="{{ song.title }}"
-                class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
-            {% elif song.remote_image_url %}
-            <img src="{{ song.remote_image_url }}" alt="{{ song.title }}"
-                class="w-full h-full object-cover rounded-[1.5rem] shadow-[0_15px_35px_rgba(0,0,0,0.6)] transform group-hover:scale-[1.03] transition duration-500 border border-white/10">
-            {% else %}
-            <div
-                class="w-full h-full bg-gradient-to-br from-gray-800 to-[#0b0f19] rounded-[1.5rem] flex items-center justify-center shadow-2xl border border-white/5">
-                <i class="fas fa-music text-6xl text-gray-600"></i>
+        <!-- ─ Album Art ─ -->
+        <div class="relative mx-auto w-full aspect-square">
+            <!-- outer glow ring -->
+            <div class="pulse-ring absolute inset-[-10px] rounded-[2rem]"
+                style="background: linear-gradient(135deg, var(--dynamic-accent-transparent,rgba(59,226,200,0.08)), transparent); border: 1px solid rgba(59,226,200,0.15);">
             </div>
-            {% endif %}
-            <!-- Glow behind art -->
-            <div
-                class="absolute inset-0 bg-gradient-to-tr from-[#3be2c8]/20 to-blue-500/20 opacity-0 group-hover:opacity-100 rounded-[1.5rem] transition duration-500 blur-xl -z-10">
+
+            <!-- art frame -->
+            <div class="relative w-full h-full rounded-[1.75rem] overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+                {% if is_jiosaavn %}
+                <img id="main-player-art" src="{{ song.image_url }}" alt="{{ song.title }}" crossorigin="anonymous"
+                    class="w-full h-full object-cover transition duration-700 scale-[1.02] hover:scale-[1.06]"
+                    onload="updateThemeColor(this)">
+                {% elif song.image %}
+                <img id="main-player-art" src="{{ song.image.url }}" alt="{{ song.title }}" crossorigin="anonymous"
+                    class="w-full h-full object-cover transition duration-700 scale-[1.02] hover:scale-[1.06]"
+                    onload="updateThemeColor(this)">
+                {% elif song.remote_image_url %}
+                <img id="main-player-art" src="{{ song.remote_image_url }}" alt="{{ song.title }}"
+                    crossorigin="anonymous"
+                    class="w-full h-full object-cover transition duration-700 scale-[1.02] hover:scale-[1.06]"
+                    onload="updateThemeColor(this)">
+                {% else %}
+                <div
+                    class="w-full h-full bg-gradient-to-br from-gray-800/80 to-[#080c14] flex items-center justify-center">
+                    <div class="flex flex-col items-center gap-3 opacity-40">
+                        <i class="fas fa-compact-disc text-7xl vinyl-spin"></i>
+                        <span class="text-xs tracking-widest uppercase">No Artwork</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- inner gloss overlay -->
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none">
+                </div>
+                <!-- bottom fade for info bleed -->
+                <div
+                    class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent pointer-events-none">
+                </div>
             </div>
         </div>
 
-        <!-- Song Info -->
-        <div class="flex justify-between items-start mt-0">
-            <div class="flex-1 min-w-0 pr-4 flex flex-col">
-                <h1 class="text-2xl font-extrabold truncate mb-1 tracking-tight drop-shadow-md">{{ song.title }}</h1>
-                <p class="text-gray-400 text-sm font-medium truncate">{{ song.artist }}</p>
+        <!-- ─ Song Info + Like ─ -->
+        <div class="glass-card rounded-2xl px-5 py-4 flex justify-between items-center fade-up-delay">
+            <div class="flex-1 min-w-0 pr-3">
+                <h1 class="text-xl font-extrabold truncate leading-tight tracking-tight text-white">{{ song.title }}
+                </h1>
+                <p class="text-sm text-white/45 font-medium truncate mt-0.5">{{ song.artist }}</p>
             </div>
             <button id="like-btn" onclick="toggleLike()"
-                class="mt-2 text-2xl text-gray-500 hover:scale-110 transition drop-shadow-[0_0_10px_rgba(59,226,200,0.4)]">
-                <i id="like-icon" class="far fa-heart"></i>
+                class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);">
+                <i id="like-icon" class="far fa-heart text-lg text-white/40"></i>
             </button>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="w-full mb-2">
-            <input type="range" id="progress" value="0" min="0" max="100"
-                class="w-full h-1.5 bg-gray-700/50 rounded-lg appearance-none cursor-pointer slider-thumb accent-[#3be2c8] hover:h-2 transition-all">
-            <div class="flex justify-between text-xs text-gray-400 mt-2 font-mono tracking-wider font-semibold">
-                <span id="current-time">0:00</span>
-                <span id="duration">0:00</span>
+        <!-- ─ Player Card ─ -->
+        <div class="glass-card rounded-3xl px-5 py-5 flex flex-col gap-5 shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+
+            <!-- Progress -->
+            <div class="flex flex-col gap-2">
+                <input type="range" id="progress" value="0" min="0" max="100" class="progress-range w-full"
+                    style="background: linear-gradient(to right, var(--dynamic-accent,#3be2c8) 0%, rgba(255,255,255,0.1) 0%);">
+                <div
+                    class="flex justify-between text-[11px] text-white/35 font-mono font-semibold tracking-wider px-0.5">
+                    <span id="current-time">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
             </div>
-        </div>
 
-        <!-- Controls -->
-        <div class="flex items-center justify-between px-1 mb-2">
-            <button class="text-gray-500 hover:text-[#3be2c8] text-xl transition transform hover:scale-110">
-                <i class="fas fa-random"></i>
-            </button>
-
-            <div class="flex items-center gap-7">
-                <a href="{% if previous_song %}{% if is_jiosaavn %}{% url 'play_jiosaavn_song' previous_song.id %}{% else %}{% url 'play_song' previous_song.id %}{% endif %}{% else %}#{% endif %}"
-                    class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:-translate-x-1 {% if not previous_song %}opacity-40 cursor-not-allowed hover:text-white hover:-translate-x-0{% endif %}">
-                    <i class="fas fa-step-backward"></i>
-                </a>
-
-                <button id="play-btn"
-                    class="w-16 h-16 md:w-[4.5rem] md:h-[4.5rem] bg-gradient-to-tr from-[#3be2c8] to-[#2cdbbd] rounded-full flex items-center justify-center text-[#0b0f19] text-2xl md:text-3xl shadow-[0_0_25px_rgba(59,226,200,0.5)] hover:shadow-[0_0_35px_rgba(59,226,200,0.7)] transition-all transform hover:scale-105 active:scale-95">
-                    <i id="play-icon" class="fas fa-pause ml-0.5"></i>
+            <!-- Controls -->
+            <div class="flex items-center justify-between px-2">
+                <!-- Shuffle -->
+                <button id="shuffle-btn" class="ctrl-btn" onclick="this.classList.toggle('active')">
+                    <i class="fas fa-random text-base"></i>
                 </button>
 
-                <a href="{% if next_song %}{% if is_jiosaavn %}{% url 'play_jiosaavn_song' next_song.id %}{% else %}{% url 'play_song' next_song.id %}{% endif %}{% else %}#{% endif %}"
-                    class="text-white text-3xl hover:text-[#3be2c8] transition transform hover:translate-x-1 {% if not next_song %}opacity-40 cursor-not-allowed hover:text-white hover:translate-x-0{% endif %}">
-                    <i class="fas fa-step-forward"></i>
+                <!-- Prev -->
+                <a href="{% if previous_song %}{% if is_jiosaavn %}{% url 'play_jiosaavn_song' previous_song.id %}{% else %}{% url 'play_song' previous_song.id %}{% endif %}{% else %}#{% endif %}"
+                    class="ctrl-btn {% if not previous_song %}opacity-25 pointer-events-none{% endif %}"
+                    style="width:44px;height:44px;">
+                    <i class="fas fa-step-backward text-xl"></i>
                 </a>
+
+                <!-- Play / Pause -->
+                <button id="play-btn" class="play-button">
+                    <i id="play-icon" class="fas fa-pause" style="margin-left:2px;"></i>
+                </button>
+
+                <!-- Next -->
+                <a href="{% if next_song %}{% if is_jiosaavn %}{% url 'play_jiosaavn_song' next_song.id %}{% else %}{% url 'play_song' next_song.id %}{% endif %}{% else %}#{% endif %}"
+                    class="ctrl-btn {% if not next_song %}opacity-25 pointer-events-none{% endif %}"
+                    style="width:44px;height:44px;">
+                    <i class="fas fa-step-forward text-xl"></i>
+                </a>
+
+                <!-- Repeat -->
+                <button id="repeat-btn" class="ctrl-btn" onclick="this.classList.toggle('active')">
+                    <i class="fas fa-repeat text-base"></i>
+                </button>
             </div>
 
-            <button class="text-gray-500 hover:text-[#3be2c8] text-xl transition transform hover:scale-110">
-                <i class="fas fa-repeat"></i>
-            </button>
-        </div>
+            <!-- Divider -->
+            <div class="h-px bg-white/5 mx-1"></div>
 
-        <!-- Bottom Actions -->
-        <div class="flex justify-between items-center px-4 pt-3 border-t border-white/10 text-gray-400">
-            <button class="hover:text-white transition transform hover:scale-110"><i
-                    class="fas fa-laptop-house text-lg"></i></button>
-            <div class="flex gap-1">
-                <div class="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
-                <div class="w-1.5 h-1.5 rounded-full bg-white opacity-100"></div>
-                <div class="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
-            </div>
-            <button class="hover:text-white transition transform hover:scale-110"><i
-                    class="fas fa-list text-lg"></i></button>
-        </div>
+            <!-- Volume + Actions -->
+            <div class="flex items-center justify-between px-1">
+                <button class="ctrl-btn" style="width:36px;height:36px;">
+                    <i class="fas fa-laptop-house text-sm"></i>
+                </button>
 
-    </div>
-
-    {% if suggestions %}
-    <!-- Suggestions / Up Next -->
-    <div class="w-full max-w-sm z-10 mt-6 animate-fadeIn">
-        <h3 class="text-sm font-bold uppercase tracking-widest text-[#3be2c8] mb-4 flex items-center gap-2">
-            <i class="fas fa-forward"></i> Up Next
-        </h3>
-        <div class="flex flex-col gap-3 max-h-60 overflow-y-auto no-scrollbar pr-2">
-            {% for suggest in suggestions %}
-            <a href="{% url 'play_jiosaavn_song' suggest.id %}" 
-               class="flex items-center gap-3 bg-white/5 hover:bg-white/10 p-3 rounded-xl transition group border border-transparent hover:border-[#3be2c8]/30">
-                <img src="{{ suggest.image_url }}" class="w-12 h-12 rounded-lg object-cover shadow-md">
-                <div class="flex-1 min-w-0">
-                    <h4 class="text-sm font-bold truncate group-hover:text-[#3be2c8] transition">{{ suggest.title }}</h4>
-                    <p class="text-xs text-gray-500 truncate">{{ suggest.artist }}</p>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-volume-down text-xs text-white/30"></i>
+                    <input type="range" class="volume-range" min="0" max="100" value="80" id="volume-range"
+                        style="background: linear-gradient(to right, var(--dynamic-accent,#3be2c8) 80%, rgba(255,255,255,0.15) 80%);">
+                    <i class="fas fa-volume-up text-xs text-white/30"></i>
                 </div>
-                <i class="fas fa-play text-xs text-[#3be2c8] opacity-0 group-hover:opacity-100 transition"></i>
+
+                <button class="ctrl-btn" style="width:36px;height:36px;">
+                    <i class="fas fa-list text-sm"></i>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ─ Dots Indicator ─ -->
+        <div class="flex items-center justify-center gap-2 py-1">
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+        </div>
+
+    </main>
+
+    <!-- ═══ Suggestions ═══ -->
+    {% if suggestions %}
+    <section class="w-full max-w-[400px] z-10 mt-6 fade-up-delay">
+        <div class="flex items-center justify-between mb-4 px-1">
+            <h3 class="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2"
+                style="color: var(--dynamic-accent,#3be2c8);">
+                <i class="fas fa-music"></i> Up Next
+            </h3>
+            <span class="text-[10px] text-white/25 font-semibold uppercase tracking-widest">{{ suggestions|length }}
+                tracks</span>
+        </div>
+
+        <div class="flex flex-col gap-2 max-h-72 overflow-y-auto no-scrollbar">
+            {% for suggest in suggestions %}
+            <a href="{% url 'play_jiosaavn_song' suggest.id %}"
+                class="suggest-row flex items-center gap-3 rounded-2xl p-3 group"
+                style="background: rgba(255,255,255,0.03);">
+
+                <!-- thumb -->
+                <div class="relative flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden shadow-md">
+                    <img src="{{ suggest.image_url }}"
+                        class="w-full h-full object-cover transition duration-300 group-hover:scale-110" loading="lazy">
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                        style="background:rgba(0,0,0,0.45);">
+                        <i class="fas fa-play text-white text-xs ml-0.5"></i>
+                    </div>
+                </div>
+
+                <!-- info -->
+                <div class="flex-1 min-w-0">
+                    <h4
+                        class="text-sm font-semibold truncate text-white/85 group-hover:text-white transition leading-tight">
+                        {{ suggest.title }}</h4>
+                    <p class="text-xs text-white/35 truncate mt-0.5 font-medium">{{ suggest.artist }}</p>
+                </div>
+
+                <!-- trailing icon -->
+                <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    style="background: rgba(59,226,200,0.1); color: var(--dynamic-accent,#3be2c8);">
+                    <i class="fas fa-play text-[9px] ml-px"></i>
+                </div>
             </a>
             {% endfor %}
         </div>
-    </div>
+    </section>
     {% endif %}
 
+    <!-- ═══ Audio + Hidden canvas ═══ -->
     <audio id="audio-player"
         src="{% if is_jiosaavn %}{{ song.stream_url }}{% elif song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}"
         autoplay></audio>
 
-    {% endif %} <!-- End if error -->
+    <canvas id="color-analysis-canvas" style="display:none;" width="50" height="50"></canvas>
 
+    {% endif %} <!-- end error check -->
+
+    <!-- ═══ Scripts (logic unchanged) ═══ -->
     <script>
+        /* ── Audio player core ── */
         const audio = document.getElementById('audio-player');
         const playBtn = document.getElementById('play-btn');
         const playIcon = playBtn.querySelector('i');
         const progress = document.getElementById('progress');
         const currentTimeEl = document.getElementById('current-time');
         const durationEl = document.getElementById('duration');
+        const artImg = document.getElementById('main-player-art');
 
         // Play/Pause Toggle
         playBtn.addEventListener('click', () => {
             if (audio.paused) {
                 audio.play();
-                playIcon.classList.remove('fa-play', 'ml-1.5');
-                playIcon.classList.add('fa-pause', 'ml-0.5');
+                playIcon.classList.remove('fa-play');
+                playIcon.classList.add('fa-pause');
+                playIcon.style.marginLeft = '2px';
+                if (artImg) artImg.closest('.pulse-ring')?.parentElement?.querySelector('img')?.classList.remove('scale-[1.02]');
             } else {
                 audio.pause();
-                playIcon.classList.remove('fa-pause', 'ml-0.5');
-                playIcon.classList.add('fa-play', 'ml-1.5');
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play');
+                playIcon.style.marginLeft = '4px';
             }
         });
 
@@ -229,22 +548,28 @@
             if (audio.duration) {
                 const percent = (audio.currentTime / audio.duration) * 100;
                 progress.value = percent;
-
-                // Update coloring of slider track (before vs after thumb) with cyan
-                progress.style.background = `linear-gradient(to right, #3be2c8 ${percent}%, rgba(255,255,255,0.1) ${percent}%)`;
-
+                progress.style.background = `linear-gradient(to right, var(--dynamic-accent, #3be2c8) ${percent}%, rgba(255,255,255,0.1) ${percent}%)`;
                 currentTimeEl.textContent = formatTime(audio.currentTime);
                 durationEl.textContent = formatTime(audio.duration);
             }
         });
 
-        // Seek functionality
+        // Seek
         progress.addEventListener('input', () => {
             const seekTime = (progress.value / 100) * audio.duration;
             audio.currentTime = seekTime;
         });
 
-        // Format time helper
+        // Volume slider
+        const volumeRange = document.getElementById('volume-range');
+        if (volumeRange) {
+            volumeRange.addEventListener('input', () => {
+                const v = volumeRange.value;
+                audio.volume = v / 100;
+                volumeRange.style.background = `linear-gradient(to right, var(--dynamic-accent,#3be2c8) ${v}%, rgba(255,255,255,0.15) ${v}%)`;
+            });
+        }
+
         function formatTime(seconds) {
             if (isNaN(seconds)) return "0:00";
             const min = Math.floor(seconds / 60);
@@ -252,15 +577,14 @@
             return `${min}:${sec < 10 ? '0' : ''}${sec}`;
         }
 
-        // Initial setup for duration (sometimes metadata loads a bit late)
         audio.addEventListener('loadedmetadata', () => {
             durationEl.textContent = formatTime(audio.duration);
         });
 
-        // Application state & Helpers
+        /* ── App state ── */
         const songId = '{% if is_jiosaavn %}{{ song.id }}{% else %}{{ song.id }}{% endif %}';
-        const isJioSaavn = {% if is_jiosaavn %}true{% else %}false{% endif %};
-        const isAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
+        const isJioSaavn = {% if is_jiosaavn %}true{% else %} false{% endif %};
+        const isAuthenticated = {% if user.is_authenticated %}true{% else %} false{% endif %};
 
         function getCookie(name) {
             let cookieValue = null;
@@ -281,40 +605,30 @@
         // Record play history
         if (songId) {
             if (isAuthenticated && isJioSaavn) {
-                // Record JioSaavn play
                 fetch(`/record_play_jiosaavn/${songId}/`, {
                     method: 'POST',
                     credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': csrftoken,
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    console.log('Record JioSaavn play response (Player):', response.status);
-                }).catch(err => console.error('Error recording JioSaavn play:', err));
+                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
+                }).then(r => console.log('Record JioSaavn play (Player):', r.status))
+                    .catch(err => console.error('Error recording JioSaavn play:', err));
             } else if (isAuthenticated && !isNaN(songId)) {
-                // Record local play (numeric IDs)
                 fetch(`/record_play/${songId}/`, {
                     method: 'POST',
                     credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': csrftoken,
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    console.log('Record play response (Player):', response.status);
-                }).catch(err => console.error('Error recording play:', err));
+                    headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' }
+                }).then(r => console.log('Record play (Player):', r.status))
+                    .catch(err => console.error('Error recording play:', err));
             }
         }
 
-        // Auto-navigate to next song when finished
+        // Auto-navigate to next song
         audio.addEventListener('ended', () => {
             {% if next_song %}
-                window.location.href = "{% if is_jiosaavn %}{% url 'play_jiosaavn_song' next_song.id %}{% else %}{% url 'play_song' next_song.id %}{% endif %}";
+            window.location.href = "{% if is_jiosaavn %}{% url 'play_jiosaavn_song' next_song.id %}{% else %}{% url 'play_song' next_song.id %}{% endif %}";
             {% endif %}
         });
 
-        // ═══════ LIKED SONG TOGGLE ═══════
+        /* ── Like toggle ── */
         const likeBtn = document.getElementById('like-btn');
         const likeIcon = document.getElementById('like-icon');
         let isLiked = false;
@@ -324,13 +638,15 @@
             if (liked) {
                 likeIcon.classList.remove('far');
                 likeIcon.classList.add('fas');
-                likeBtn.classList.remove('text-gray-500');
-                likeBtn.classList.add('text-green-400');
+                likeIcon.style.color = 'var(--dynamic-accent,#3be2c8)';
+                likeBtn.style.borderColor = 'rgba(59,226,200,0.3)';
+                likeBtn.style.background = 'rgba(59,226,200,0.1)';
             } else {
                 likeIcon.classList.remove('fas');
                 likeIcon.classList.add('far');
-                likeBtn.classList.remove('text-green-400');
-                likeBtn.classList.add('text-gray-500');
+                likeIcon.style.color = 'rgba(255,255,255,0.35)';
+                likeBtn.style.borderColor = 'rgba(255,255,255,0.08)';
+                likeBtn.style.background = 'rgba(255,255,255,0.05)';
             }
         }
 
@@ -343,20 +659,70 @@
                 credentials: 'same-origin',
                 headers: { 'X-CSRFToken': csrftoken }
             })
-            .then(r => r.json())
-            .then(data => updateHeartUI(data.liked))
-            .catch(err => console.error('Like toggle error:', err));
+                .then(r => r.json())
+                .then(data => updateHeartUI(data.liked))
+                .catch(err => console.error('Like toggle error:', err));
         }
 
-        // Check liked status on page load
         if (isAuthenticated && songId) {
             const param = isJioSaavn ? `jiosaavn_id=${songId}` : `song_id=${songId}`;
             fetch(`/api/check_liked/?${param}`, { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(data => updateHeartUI(data.liked))
-                .catch(() => {});
+                .catch(() => { });
         }
 
+        /* ── Dynamic Theme Color ── */
+        function updateThemeColor(img) {
+            if (!img || !img.complete) return;
+            try {
+                const canvas = document.getElementById('color-analysis-canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                let r = 0, g = 0, b = 0, count = 0;
+                for (let i = 0; i < imageData.length; i += 16) {
+                    r += imageData[i]; g += imageData[i + 1]; b += imageData[i + 2]; count++;
+                }
+                r = Math.floor(r / count);
+                g = Math.floor(g / count);
+                b = Math.floor(b / count);
+                const hsl = rgbToHsl(r, g, b);
+                const s = Math.max(50, hsl[1]);
+                const l = Math.max(40, Math.min(65, hsl[2]));
+                const finalColor = `hsl(${hsl[0]}, ${s}%, ${l}%)`;
+                const darkColor = `hsl(${hsl[0]}, ${s}%, ${l - 15}%)`;
+                const glowValue = `rgba(${r}, ${g}, ${b}, 0.2)`;
+                document.documentElement.style.setProperty('--dynamic-accent', finalColor);
+                document.documentElement.style.setProperty('--dynamic-accent-dark', darkColor);
+                document.documentElement.style.setProperty('--dynamic-accent-glow', glowValue);
+                const themeMeta = document.querySelector('meta[name="theme-color"]');
+                if (themeMeta) themeMeta.setAttribute('content', darkColor);
+                console.log(`[PWA] Player theme synced: ${finalColor}`);
+            } catch (e) {
+                console.warn("[PWA] Color analysis failed:", e);
+            }
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [Math.floor(h * 360), Math.floor(s * 100), Math.floor(l * 100)];
+        }
     </script>
 </body>
 
