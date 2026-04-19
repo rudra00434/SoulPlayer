@@ -45,10 +45,24 @@
                     {{ artist.music_band }}
                 </p>
                 <div class="flex gap-4 items-center">
+                    {% if user.is_authenticated %}
+                    <form action="{% url 'toggle_follow_artist' artist.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="{% if artist in user.userprofile.followed_artists.all %}bg-white/10 text-white border border-white/30{% else %}bg-[#3be2c8] text-[#0b0f19]{% endif %} font-bold tracking-widest text-xs px-8 py-3 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:shadow-[0_6px_25px_rgba(59,226,200,0.6)] hover:scale-105 transition-all duration-300">
+                            {% if artist in user.userprofile.followed_artists.all %}
+                            FOLLOWING
+                            {% else %}
+                            FOLLOW
+                            {% endif %}
+                        </button>
+                    </form>
+                    {% else %}
                     <button
-                        class="bg-[#3be2c8] text-[#0b0f19] font-bold tracking-widest text-xs px-8 py-3 rounded-full shadow-[0_4px_20px_rgba(59,226,200,0.4)] hover:shadow-[0_6px_25px_rgba(59,226,200,0.6)] hover:scale-105 transition-all duration-300">
+                        class="bg-[#3be2c8] text-[#0b0f19] font-bold tracking-widest text-xs px-8 py-3 rounded-full opacity-50 cursor-not-allowed">
                         FOLLOW
                     </button>
+                    {% endif %}
                     {% if user.is_authenticated %}
                     <form action="{% url 'toggle_favorite_artist' artist.id %}" method="post">
                         {% csrf_token %}

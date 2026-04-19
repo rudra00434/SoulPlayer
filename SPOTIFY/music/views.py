@@ -443,7 +443,8 @@ def profile(request):
         "u_form": u_form,
         "p_form": p_form,
         "played_songs": request.user.userprofile.played_songs.all().order_by("-id"),
-        "favorite_artists": request.user.userprofile.favorite_artists.all()
+        "favorite_artists": request.user.userprofile.favorite_artists.all(),
+        "followed_artists": request.user.userprofile.followed_artists.all()
     }
     return render(request, "profile.html", context)
 
@@ -457,6 +458,15 @@ def toggle_favorite_artist(request, pk):
         user_profile.favorite_artists.add(artist)
     return redirect("artist_detail", pk=pk)
 
+@login_required(login_url="user_login")
+def toggle_follow_artist(request, pk):
+    artist = get_object_or_404(Artist, id=pk)
+    user_profile = request.user.userprofile
+    if artist in user_profile.followed_artists.all():
+        user_profile.followed_artists.remove(artist)
+    else:
+        user_profile.followed_artists.add(artist)
+    return redirect("artist_detail", pk=pk)
 
 @csrf_exempt
 def record_play(request, pk):

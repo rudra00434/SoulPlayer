@@ -58,6 +58,7 @@ class UserProfile(models.Model):
     bio = models.CharField(max_length=200, blank=True, null=True)
     played_songs = models.ManyToManyField(Song, related_name='played_songs', blank=True)
     favorite_artists = models.ManyToManyField(Artist, related_name='favorite_artists', blank=True)
+    followed_artists = models.ManyToManyField(Artist, related_name='followed_by', blank=True)
     personality = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):

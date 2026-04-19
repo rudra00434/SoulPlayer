@@ -56,8 +56,13 @@
                         <div class="text-center md:text-left">
                             <span
                                 class="block text-2xl font-bold text-white">{{favorite_artists.count|default:"0"}}</span>
-                            <span class="text-xs uppercase tracking-widest text-gray-500 font-semibold">Followed
-                                Artists</span>
+                            <span class="text-xs uppercase tracking-widest text-gray-500 font-semibold">Favorites</span>
+                        </div>
+                        <div class="w-px h-10 bg-white/10"></div>
+                        <div class="text-center md:text-left">
+                            <span
+                                class="block text-2xl font-bold text-white">{{followed_artists.count|default:"0"}}</span>
+                            <span class="text-xs uppercase tracking-widest text-[#3be2c8] font-semibold">Following</span>
                         </div>
                     </div>
                 </div>
@@ -247,6 +252,61 @@
             {% endif %}
         </div>
 
+    </div>
+
+    <!-- Your Following Section (Vertical List with Circles) -->
+    <div class="mt-12 bg-gradient-to-br from-[#1e293b]/40 to-[#0f172a]/40 backdrop-blur-xl rounded-3xl border border-white/5 p-8 shadow-xl relative overflow-hidden group/following">
+        <!-- Decorative blur -->
+        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-[#3be2c8]/5 rounded-full blur-3xl transition-all duration-700 group-hover/following:bg-[#3be2c8]/10"></div>
+        
+        <div class="flex items-center justify-between mb-8 relative z-10">
+            <h2 class="text-2xl font-bold text-white flex items-center gap-3 tracking-wide">
+                <span class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 text-[#3be2c8] shadow-inner">
+                    <i class="fas fa-user-plus"></i>
+                </span>
+                Your Following
+            </h2>
+            <div class="px-4 py-1.5 rounded-full bg-[#3be2c8]/10 border border-[#3be2c8]/20 text-[10px] font-bold text-[#3be2c8] uppercase tracking-widest">
+                {{ followed_artists.count }} Artists
+            </div>
+        </div>
+
+        {% if followed_artists %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
+            {% for artist in followed_artists %}
+            <div class="flex items-center gap-6 p-5 rounded-2xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all duration-300 group/f-item">
+                <div class="relative flex-shrink-0">
+                    <div class="absolute inset-0 bg-[#3be2c8] rounded-full blur-md opacity-0 group-hover/f-item:opacity-30 transition-opacity duration-500 scale-110"></div>
+                    {% if artist.image %}
+                    <img src="{{ artist.image.url }}" alt="{{ artist.name }}" class="w-28 h-28 rounded-full object-cover shadow-xl border-2 border-transparent group-hover/f-item:border-[#3be2c8]/50 relative z-10 transition-all duration-500">
+                    {% else %}
+                    <div class="w-28 h-28 rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent relative z-10 transition-all duration-500">
+                        <i class="fas fa-user text-3xl text-gray-500"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-grow min-w-0">
+                    <h3 class="text-lg font-bold text-white truncate group-hover/f-item:text-[#3be2c8] transition-colors">
+                        {{ artist.name }}
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest font-medium">
+                        {{ artist.music_band }}
+                    </p>
+                </div>
+
+                <a href="{% url 'artist_detail' artist.id %}" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-[#3be2c8] hover:bg-[#3be2c8]/20 transition-all shadow-sm">
+                    <i class="fas fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12 relative z-10 bg-white/5 rounded-2xl border border-dashed border-white/10">
+            <i class="fas fa-users text-4xl text-gray-700 mb-4 block"></i>
+            <p class="text-gray-500">You are not following any artists yet.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

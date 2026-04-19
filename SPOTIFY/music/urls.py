@@ -29,6 +29,7 @@ urlpatterns =[
     path('logout/',views.user_logout,name='user_logout'),
     path('profile/',views.profile,name='profile'),
     path('toggle_favorite_artist/<int:pk>/', views.toggle_favorite_artist, name='toggle_favorite_artist'),
+    path('toggle_follow_artist/<int:pk>/', views.toggle_follow_artist, name='toggle_follow_artist'),
     path('record_play/<int:pk>/', views.record_play, name='record_play'),
     path('record_play_jiosaavn/<str:song_id>/', views.record_play_jiosaavn, name='record_play_jiosaavn'),
     path('play_jiosaavn/<str:song_id>/', views.play_jiosaavn_song, name='play_jiosaavn_song'),
