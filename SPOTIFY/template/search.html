@@ -4,10 +4,14 @@
 
 {% block content %}
 <!-- Playlist Context Menu -->
-<div id="playlist-side-menu" class="playlist-menu shadow-2xl" style="display: none; position: absolute; background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); z-index: 1000; min-width: 180px; overflow: hidden; backdrop-filter: blur(10px);">
-    <div class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">Add to Playlist</div>
+<div id="playlist-side-menu" class="playlist-menu shadow-2xl"
+    style="display: none; position: absolute; background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); z-index: 1000; min-width: 180px; overflow: hidden; backdrop-filter: blur(10px);">
+    <div
+        class="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 bg-black/20">
+        Add to Playlist</div>
     {% for playlist in playlists %}
-    <div class="px-4 py-2.5 text-sm font-semibold text-gray-300 hover:bg-[#3be2c8] hover:text-[#0b0f19] cursor-pointer transition-colors border-b border-white/5 last:border-0" onclick="addToPlaylist('{{ playlist.id }}')">
+    <div class="px-4 py-2.5 text-sm font-semibold text-gray-300 hover:bg-[#3be2c8] hover:text-[#0b0f19] cursor-pointer transition-colors border-b border-white/5 last:border-0"
+        onclick="addToPlaylist('{{ playlist.id }}')">
         <i class="fas fa-list-ul mr-2 text-[10px] opacity-50"></i> {{ playlist.name }}
     </div>
     {% empty %}
@@ -33,16 +37,13 @@
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {% for song in songs %}
-            <div
-                class="flex-none p-4 group cursor-pointer relative bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 transition-all duration-300 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+            <div class="flex-none p-4 group cursor-pointer relative bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 transition-all duration-300 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
                 onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')">
                 <!-- Delete Button -->
-                <form action="{% url 'delete_song' song.id %}" method="POST"
-                    onclick="event.stopPropagation();"
+                <form action="{% url 'delete_song' song.id %}" method="POST" onclick="event.stopPropagation();"
                     class="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition duration-300">
                     {% csrf_token %}
-                    <button type="submit"
-                        onclick="return confirm('Are you sure you want to delete this song?')"
+                    <button type="submit" onclick="return confirm('Are you sure you want to delete this song?')"
                         class="text-gray-400 hover:text-red-400 drop-shadow-md bg-black/50 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm">
                         <i class="fas fa-trash text-sm"></i>
                     </button>
@@ -72,14 +73,15 @@
     <div class="mb-10">
         <div class="flex items-center gap-3 mb-6">
             <i class="fas fa-globe text-[#3be2c8]"></i>
-            <h3 class="text-xl font-bold tracking-wide">From JioSaavn <span class="text-xs font-bold px-1.5 py-0.5 bg-[#3be2c8]/20 text-[#3be2c8] rounded ml-2 align-middle border border-[#3be2c8]/30">Streaming</span></h3>
+            <h3 class="text-xl font-bold tracking-wide">From JioSaavn <span
+                    class="text-xs font-bold px-1.5 py-0.5 bg-[#3be2c8]/20 text-[#3be2c8] rounded ml-2 align-middle border border-[#3be2c8]/30">Streaming</span>
+            </h3>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {% for song in jiosaavn_songs %}
-            <div
-                class="flex-none p-4 group cursor-pointer relative bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 transition-all duration-300 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+            <div class="flex-none p-4 group cursor-pointer relative bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 transition-all duration-300 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
                 onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
-                
+
                 <div class="relative mb-5 overflow-hidden rounded-xl shadow-md">
                     <img src="{{ song.image_url }}"
                         class="w-full aspect-square object-cover transform group-hover:scale-105 transition duration-500">
@@ -91,7 +93,8 @@
                             <i class="fas fa-play text-[#0b0f19] ml-1 text-lg"></i>
                         </a>
                         <!-- Add to Playlist Button -->
-                        <button onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                        <button
+                            onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
                             class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
                             <i class="fas fa-plus"></i>
                         </button>
@@ -123,15 +126,17 @@
             {% for category in genres %}
             <a href="{% url 'genre_detail' category.id %}"
                 class="relative aspect-square rounded-2xl overflow-hidden group cursor-pointer shadow-lg hover:shadow-[0_15px_35px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-2 border border-white/5 bg-gradient-to-br {{ category.color }}">
-                
+
                 <!-- Main Label -->
                 <h3 class="relative z-20 p-6 text-2xl font-black tracking-tight text-white leading-tight">
                     {{ category.name }}
                 </h3>
-                
+
                 <!-- Tilted Label Element (Matches Screenshot) -->
-                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-3xl transform rotate-[25deg] flex items-center justify-center transition-transform duration-500 group-hover:rotate-[20deg] group-hover:scale-110">
-                    <span class="text-white font-black text-2xl tracking-tighter opacity-80 select-none">{{ category.name }}</span>
+                <div
+                    class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-3xl transform rotate-[25deg] flex items-center justify-center transition-transform duration-500 group-hover:rotate-[20deg] group-hover:scale-110">
+                    <span class="text-white font-black text-2xl tracking-tighter opacity-80 select-none">
+                        {{ category.name }}</span>
                 </div>
 
                 <!-- Subtle Overlay -->
@@ -144,89 +149,112 @@
     <!-- Suggested Artists -->
     <div class="mb-10">
         <h2 class="text-3xl font-extrabold mb-8 tracking-wide">Popular Artists</h2>
-        <div class="flex gap-8 overflow-x-auto no-scrollbar pb-6">
+        <div class="grid grid-cols-2 gap-5">
             {% for artist in artists %}
-            <a href="{% url 'artist_detail' artist.id %}" class="flex-none group">
-                <div class="w-40 h-40 rounded-full overflow-hidden mb-4 shadow-xl border-4 border-[#1e293b] group-hover:border-[#3be2c8] transition-all duration-500 group-hover:shadow-[0_0_30px_rgba(59,226,200,0.2)]">
-                    {% if artist.image %}
-                    <img src="{{ artist.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                    {% else %}
-                    <div class="w-full h-full bg-gray-800 flex items-center justify-center">
-                        <i class="fas fa-user text-4xl text-gray-600"></i>
+            <a href="{% url 'artist_detail' artist.id %}"
+                class="flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-[#3be2c8]/30 transition-all duration-300 group shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+
+                <!-- Artist Avatar -->
+                <!-- Artist Avatar -->
+                <div
+                    class="flex-none w-24 h-24 rounded-full p-[3px] bg-gradient-to-br from-[#3be2c8] via-[#1e293b] to-[#3be2c8] group-hover:from-[#3be2c8] group-hover:to-[#2cdbbd] transition-all duration-500 group-hover:shadow-[0_0_30px_rgba(59,226,200,0.4)]">
+                    <div class="w-full h-full rounded-full overflow-hidden ring-2 ring-[#0b0f19]">
+                        {% if artist.image %}
+                        <img src="{{ artist.image.url }}"
+                            class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                        {% else %}
+                        <div
+                            class="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                            <i class="fas fa-user text-3xl text-gray-500"></i>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
-                <p class="text-center font-bold group-hover:text-[#3be2c8] transition-colors truncate px-2">{{ artist.name }}</p>
-                <p class="text-center text-xs text-gray-500 uppercase tracking-widest mt-1">Artist</p>
+
+                <!-- Artist Info -->
+                <div class="min-w-0">
+                    <p
+                        class="font-bold text-base text-white group-hover:text-[#3be2c8] transition-colors truncate tracking-wide">
+                        {{ artist.name }}
+                    </p>
+                    <p class="text-xs text-gray-500 uppercase tracking-widest mt-0.5">Artist</p>
+                    <p class="text-xs text-gray-400 mt-1.5 truncate italic">
+                        {{ artist.tagline|default:"Crafting sounds that move souls" }}
+                    </p>
+                </div>
+
+                <!-- Arrow -->
+                <div
+                    class="ml-auto flex-none text-gray-600 group-hover:text-[#3be2c8] transition-colors duration-300 translate-x-0 group-hover:translate-x-1">
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </div>
             </a>
             {% endfor %}
         </div>
+        {% endif %}
     </div>
-    {% endif %}
 
-</div>
+    <script>
+        let currentJioSongId = null;
+        const playlistMenu = document.getElementById('playlist-side-menu');
 
-<script>
-    let currentJioSongId = null;
-    const playlistMenu = document.getElementById('playlist-side-menu');
+        function showPlaylistMenu(event, songId, title) {
+            currentJioSongId = songId;
+            const rect = event.currentTarget.getBoundingClientRect();
 
-    function showPlaylistMenu(event, songId, title) {
-        currentJioSongId = songId;
-        const rect = event.currentTarget.getBoundingClientRect();
-        
-        playlistMenu.style.display = 'block';
-        playlistMenu.style.top = `${rect.bottom + window.scrollY + 10}px`;
-        playlistMenu.style.left = `${rect.left + window.scrollX - 100}px`;
-        
-        // Auto hide on click elsewhere
-        setTimeout(() => {
-            document.addEventListener('click', hidePlaylistMenu, { once: true });
-        }, 10);
-    }
+            playlistMenu.style.display = 'block';
+            playlistMenu.style.top = `${rect.bottom + window.scrollY + 10}px`;
+            playlistMenu.style.left = `${rect.left + window.scrollX - 100}px`;
 
-    function hidePlaylistMenu() {
-        playlistMenu.style.display = 'none';
-    }
+            // Auto hide on click elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hidePlaylistMenu, { once: true });
+            }, 10);
+        }
 
-    function addToPlaylist(playlistId) {
-        if (!currentJioSongId) return;
-        
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+        function hidePlaylistMenu() {
+            playlistMenu.style.display = 'none';
+        }
+
+        function addToPlaylist(playlistId) {
+            if (!currentJioSongId) return;
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
                     }
                 }
+                return cookieValue;
             }
-            return cookieValue;
+            const csrftoken = getCookie('csrftoken');
+
+            const formData = new FormData();
+            formData.set('song_id', currentJioSongId);
+            formData.set('playlist_id', playlistId);
+
+            fetch("{% url 'add_jiosaavn_to_playlist' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                    } else {
+                        alert(data.message || "Error adding song to playlist");
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         }
-        const csrftoken = getCookie('csrftoken');
-
-        const formData = new FormData();
-        formData.set('song_id', currentJioSongId);
-        formData.set('playlist_id', playlistId);
-
-        fetch("{% url 'add_jiosaavn_to_playlist' %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-            } else {
-                alert(data.message || "Error adding song to playlist");
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    }
-</script>
-{% endblock %}
+    </script>
+    {% endblock %}
