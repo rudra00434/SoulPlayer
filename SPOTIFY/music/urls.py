@@ -48,4 +48,5 @@ urlpatterns =[
     path('album/<str:album_id>/', views.album_detail, name='album_detail'),
     path('sw.js', views.pwa_sw, name='pwa_sw'),
     path('manifest.json', views.pwa_manifest, name='pwa_manifest'),
+    path('offline-library/', views.offline_songs, name='offline_songs'),
 ]

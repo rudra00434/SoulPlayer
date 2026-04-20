@@ -396,6 +396,40 @@
                 </div>
             </div>
 
+            <!-- ─ Download Button ─ -->
+            <div class="w-full fade-up-delay">
+                <a href="#" id="download-track-btn" onclick="event.preventDefault(); downloadForOffline();"
+                    class="group relative flex items-center justify-between w-full px-5 py-4 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                    style="background: linear-gradient(135deg, rgba(59,226,200,0.08) 0%, rgba(37,99,235,0.08) 100%);
+                    border: 1px solid rgba(59,226,200,0.2);
+                    box-shadow: 0 4px 24px rgba(59,226,200,0.06);">
+
+                    <!-- hover fill sweep -->
+                    <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                        style="background: linear-gradient(135deg, rgba(59,226,200,0.12) 0%, rgba(37,99,235,0.1) 100%);">
+                    </div>
+
+                    <!-- left: icon + text -->
+                    <div class="relative flex items-center gap-3.5 z-10">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                            style="background: linear-gradient(135deg, var(--dynamic-accent,#3be2c8), #2563eb);
+                            box-shadow: 0 0 18px var(--dynamic-accent-glow, rgba(59,226,200,0.35));">
+                            <i class="fas fa-download text-sm text-[#080c14] font-black"></i>
+                        </div>
+                        <div>
+                            <p id="download-status-text" class="text-sm font-bold text-white leading-tight">Download Track</p>
+                            <p id="download-sub-text" class="text-[11px] text-white/40 font-medium mt-0.5">Save to your device</p>
+                        </div>
+                    </div>
+
+                    <!-- right: arrow -->
+                    <div class="relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 group-hover:translate-y-1"
+                        style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);">
+                        <i class="fas fa-arrow-down text-xs" style="color: var(--dynamic-accent,#3be2c8);"></i>
+                    </div>
+                </a>
+            </div>
+
             <!-- Controls -->
             <div class="flex items-center justify-between px-2">
                 <!-- Shuffle -->
@@ -722,6 +756,63 @@
                 h /= 6;
             }
             return [Math.floor(h * 360), Math.floor(s * 100), Math.floor(l * 100)];
+        }
+        // Download Songs in Offline mode 
+        async function downloadForOffline() {
+            const downloadBtn = document.getElementById('download-track-btn');
+            const statusText = document.getElementById('download-status-text');
+            const subText = document.getElementById('download-sub-text');
+
+            const songData = {
+                id: "{{ song.id }}",
+                title: "{{ song.title }}",
+                artist: "{{ song.artist }}",
+                image: "{% if is_jiosaavn %}{{ song.image_url }}{% elif song.image %}{{ song.image.url }}{% endif %}",
+                url: "{% if is_jiosaavn %}{{ song.stream_url }}{% elif song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}"
+            };
+
+            if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+                alert("PWA not fully active. Please refresh the page twice and try again.");
+                return;
+            }
+
+            // Save metadata
+            let library = JSON.parse(localStorage.getItem('offline_library') || '[]');
+            if (!library.find(s => s.id === songData.id)) {
+                library.push(songData);
+                localStorage.setItem('offline_library', JSON.stringify(library));
+            }
+
+            // Update UI
+            statusText.innerText = "Downloading...";
+            subText.innerText = "Saving to your SoulPlayer cache...";
+            downloadBtn.style.opacity = "0.7";
+
+            navigator.serviceWorker.controller.postMessage({
+                type: 'DOWNLOAD_SONG',
+                url: songData.url,
+                songId: songData.id
+            });
+
+        }
+
+        // Robust Message Listener
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data.type === 'DOWNLOAD_COMPLETE') {
+                    const downloadBtn = document.getElementById('download-track-btn');
+                    const statusText = document.getElementById('download-status-text');
+                    const subText = document.getElementById('download-sub-text');
+
+                    if (statusText && subText) {
+                        statusText.innerText = "Saved Offline";
+                        subText.innerText = "Available without internet";
+                        downloadBtn.style.opacity = "1";
+                        downloadBtn.style.borderColor = "var(--dynamic-accent)";
+                        alert("Track successfully saved for offline play!");
+                    }
+                }
+            });
         }
     </script>
 </body>

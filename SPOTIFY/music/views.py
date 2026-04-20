@@ -939,6 +939,12 @@ def toggle_like_jiosaavn(request, song_id):
 
 
 @login_required(login_url='user_login')
+def offline_songs(request):
+    """Renders the offline library shell. 
+    The actual list is populated by JavaScript from the browser's local storage."""
+    return render(request, 'Offline_songs.html') # Make sure this matches your filename!
+
+@login_required(login_url='user_login')
 def check_liked(request):
     """Check if a song is liked by the current user. Used by AJAX on page load."""
     song_id = request.GET.get('song_id', '')

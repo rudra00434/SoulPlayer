@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Library - SoulPlayer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+        :root {
+            --accent: #3be2c8;
+            --accent-dark: #2cdbbd;
+            --accent-glow: rgba(59, 226, 200, 0.35);
+            --accent-dim: rgba(59, 226, 200, 0.08);
+            --bg: #080c14;
+            --card-bg: rgba(255, 255, 255, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ── Background orbs ── */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Glass ── */
+        .glass {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        /* ── Song card ── */
+        .song-card {
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(8, 12, 20, 0.7) 100%);
+            transition: transform 0.35s cubic-bezier(.25, .8, .25, 1),
+                box-shadow 0.35s ease,
+                border-color 0.35s ease;
+            overflow: hidden;
+        }
+
+        .song-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(130deg, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .song-card:hover {
+            transform: translateY(-7px) scale(1.02);
+            border-color: rgba(59, 226, 200, 0.25);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 30px rgba(59, 226, 200, 0.08);
+        }
+
+        .song-card:hover::before {
+            opacity: 1;
+        }
+
+        /* ── Art image zoom ── */
+        .art-img {
+            transition: transform 0.55s cubic-bezier(.25, .8, .25, 1);
+        }
+
+        .song-card:hover .art-img {
+            transform: scale(1.1);
+        }
+
+        /* ── Play overlay button pop ── */
+        .play-overlay-btn {
+            transform: scale(0.5);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(.34, 1.56, .64, 1), opacity 0.2s ease;
+        }
+
+        .song-card:hover .play-overlay-btn {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* ── Delete button ── */
+        .delete-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.3);
+            transition: background 0.2s, color 0.2s, transform 0.15s, border-color 0.2s;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: rgba(248, 113, 113, 0.12);
+            border-color: rgba(248, 113, 113, 0.3);
+            color: #f87171;
+            transform: scale(1.1);
+        }
+
+        /* ── Card stagger animation ── */
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .card-anim {
+            animation: cardIn 0.4s ease both;
+        }
+
+        /* ── Spin loading ── */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        /* ── Header float ── */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .float-icon {
+            animation: float 3.5s ease-in-out infinite;
+        }
+
+        /* ── Offline badge pulse ── */
+        @keyframes badgePulse {
+
+            0%,
+            100% {
+                opacity: 0.7;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .offline-badge {
+            animation: badgePulse 2.5s ease-in-out infinite;
+        }
+
+        /* ── Count badge ── */
+        .count-pill {
+            background: rgba(59, 226, 200, 0.1);
+            border: 1px solid rgba(59, 226, 200, 0.2);
+            color: var(--accent);
+        }
+
+        /* ── Search ── */
+        .search-input {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.25);
+        }
+
+        .search-input:focus {
+            border-color: rgba(59, 226, 200, 0.4);
+            box-shadow: 0 0 0 3px rgba(59, 226, 200, 0.1);
+        }
+
+        /* ── Sort chip ── */
+        .sort-chip {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.4);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .sort-chip:hover,
+        .sort-chip.active {
+            border-color: rgba(59, 226, 200, 0.35);
+            color: var(--accent);
+            background: rgba(59, 226, 200, 0.07);
+        }
+
+        /* ── Fade-up ── */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp 0.5s ease both;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- ═══ Background Orbs ═══ -->
+    <div class="bg-orb w-[500px] h-[500px] top-[-10%] left-[-10%]"
+        style="background: radial-gradient(circle, rgba(59,226,200,0.07) 0%, transparent 70%);"></div>
+    <div class="bg-orb w-[400px] h-[400px] bottom-[-5%] right-[-5%]"
+        style="background: radial-gradient(circle, rgba(37,99,235,0.07) 0%, transparent 70%);"></div>
+
+    <!-- ═══ Page Wrapper ═══ -->
+    <div class="relative z-10 max-w-7xl mx-auto px-5 md:px-8 py-8 pb-16">
+
+        <!-- ═══ Header ═══ -->
+        <div class="fade-up mb-10">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+
+                <!-- left: icon + title -->
+                <div class="flex items-center gap-5">
+                    <div class="float-icon flex-shrink-0 w-20 h-20 rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(59,226,200,0.3)]"
+                        style="background: linear-gradient(135deg, #3be2c8 0%, #2563eb 100%);">
+                        <i class="fas fa-cloud-download-alt text-3xl text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.28em] font-bold mb-1.5"
+                            style="color: var(--accent);">
+                            <i class="fas fa-wifi-slash mr-1.5 text-[9px]"></i>Available Offline
+                        </p>
+                        <h1 class="text-4xl md:text-5xl font-black tracking-tight leading-none text-white">
+                            Offline <span
+                                style="color: var(--accent); text-shadow: 0 0 30px rgba(59,226,200,0.4);">Library</span>
+                        </h1>
+                        <p class="text-gray-400 text-sm font-medium mt-2">Your saved tracks, playable anytime — no
+                            internet needed.</p>
+                    </div>
+                </div>
+
+                <!-- right: back + count -->
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <span id="track-count-pill" class="count-pill hidden px-4 py-2 rounded-xl text-sm font-bold"></span>
+                    <a href="/"
+                        class="glass flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-white/5 transition-all hover:scale-105 active:scale-95">
+                        <i class="fas fa-arrow-left text-xs"></i>
+                        <span class="uppercase tracking-widest text-xs">Back Home</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ── Divider ── -->
+            <div class="mt-7 h-px" style="background: linear-gradient(to right, rgba(59,226,200,0.2), transparent);">
+            </div>
+
+            <!-- ── Controls row ── -->
+            <div class="flex flex-col sm:flex-row gap-3 mt-5">
+                <!-- search -->
+                <div class="relative flex-1 max-w-xs">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+                        style="color: rgba(255,255,255,0.25);"></i>
+                    <input id="search-input" type="text" placeholder="Search your library…"
+                        class="search-input w-full pl-9 pr-4 py-2.5 rounded-xl text-sm font-medium"
+                        style="font-family: inherit;" oninput="filterCards()">
+                </div>
+                <!-- sort chips -->
+                <div class="flex items-center gap-2">
+                    <button
+                        class="sort-chip active px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-transparent">Recent</button>
+                    <button
+                        class="sort-chip px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-transparent">A–Z</button>
+                </div>
+                <!-- clear all -->
+                <button id="clear-all-btn" onclick="clearAllOffline()"
+                    class="hidden ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition hover:scale-105 active:scale-95"
+                    style="background: rgba(248,113,113,0.08); color: #f87171; border: 1px solid rgba(248,113,113,0.2);">
+                    <i class="fas fa-trash text-[10px]"></i> Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- ═══ Grid ═══ -->
+        <div id="offline-grid"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+
+            <!-- initial loading -->
+            <div id="loading-state" class="col-span-full py-24 flex flex-col items-center gap-4 opacity-60">
+                <i class="fas fa-circle-notch spin text-3xl" style="color: var(--accent);"></i>
+                <p class="text-sm text-gray-400 font-medium tracking-wide">Scanning local storage…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Empty State Template ═══ -->
+    <template id="empty-state">
+        <div class="col-span-full py-28 flex flex-col items-center text-center fade-up">
+            <div class="relative mb-6">
+                <div class="w-28 h-28 rounded-3xl flex items-center justify-center"
+                    style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);">
+                    <i class="fas fa-cloud-download-alt text-5xl text-gray-700"></i>
+                </div>
+                <!-- decorative ring -->
+                <div class="absolute inset-[-8px] rounded-[2rem]" style="border: 1px dashed rgba(59,226,200,0.15);">
+                </div>
+            </div>
+            <h2 class="text-2xl font-black text-white mb-2">No Offline Tracks Yet</h2>
+            <p class="text-gray-500 text-sm max-w-xs leading-relaxed">
+                Tap the <span style="color: var(--accent);">download icon</span> on any track to save it for offline
+                playback.
+            </p>
+            <a href="/"
+                class="mt-8 inline-flex items-center gap-2.5 px-7 py-3 rounded-full font-bold text-sm transition hover:scale-105 active:scale-95 shadow-[0_0_25px_rgba(59,226,200,0.3)]"
+                style="background: linear-gradient(135deg, var(--accent), #2563eb); color: #080c14;">
+                <i class="fas fa-compass text-sm"></i> Explore Music
+            </a>
+        </div>
+    </template>
+
+    <script>
+        let allSongs = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderOfflineLibrary();
+        });
+
+        function renderOfflineLibrary() {
+            const grid = document.getElementById('offline-grid');
+            allSongs = JSON.parse(localStorage.getItem('offline_library') || '[]');
+
+            // Update count pill
+            const pill = document.getElementById('track-count-pill');
+            const clearBtn = document.getElementById('clear-all-btn');
+            if (allSongs.length > 0) {
+                pill.textContent = `${allSongs.length} track${allSongs.length !== 1 ? 's' : ''}`;
+                pill.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
+                clearBtn.classList.add('flex');
+            }
+
+            if (allSongs.length === 0) {
+                grid.innerHTML = document.getElementById('empty-state').innerHTML;
+                return;
+            }
+
+            renderCards(allSongs);
+        }
+
+        function renderCards(songs) {
+            const grid = document.getElementById('offline-grid');
+            grid.innerHTML = '';
+
+            if (songs.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 text-center text-gray-500 text-sm font-medium">No tracks match your search.</div>`;
+                return;
+            }
+
+            songs.forEach((song, index) => {
+                const card = document.createElement('div');
+                card.className = 'song-card card-anim rounded-3xl flex flex-col overflow-hidden';
+                card.style.animationDelay = `${index * 40}ms`;
+                card.dataset.title = song.title.toLowerCase();
+                card.dataset.artist = song.artist.toLowerCase();
+
+                card.innerHTML = `
+                    <!-- Art -->
+                    <div class="relative w-full aspect-square overflow-hidden cursor-pointer"
+                         onclick="playOfflineSong('${song.id}')">
+
+                        <!-- blurred backdrop -->
+                        <img src="${song.image}" alt="" aria-hidden="true"
+                             class="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-40 pointer-events-none">
+
+                        <!-- crisp art -->
+                        <img src="${song.image}" alt="${song.title}"
+                             class="art-img relative z-10 w-full h-full object-cover">
+
+                        <!-- offline saved badge -->
+                        <div class="offline-badge absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 px-2 py-1 rounded-lg"
+                             style="background: rgba(8,12,20,0.8); backdrop-filter: blur(8px);
+                                    border: 1px solid rgba(59,226,200,0.25);">
+                            <i class="fas fa-check-circle text-[9px]" style="color: var(--accent);"></i>
+                            <span class="text-[8px] font-black uppercase tracking-widest" style="color: var(--accent);">Saved</span>
+                        </div>
+
+                        <!-- play overlay -->
+                        <div class="absolute inset-0 z-20 flex items-center justify-center opacity-0 hover-target transition-opacity duration-300"
+                             style="background: linear-gradient(to top, rgba(8,12,20,0.88) 0%, rgba(8,12,20,0.3) 60%, transparent 100%);">
+                        </div>
+                        <div class="play-overlay-btn absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                            <div class="w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_25px_rgba(59,226,200,0.5)]"
+                                 style="background: linear-gradient(135deg, var(--accent), #2563eb);">
+                                <i class="fas fa-play text-white text-base ml-0.5"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex flex-col gap-3 p-3.5" style="background: linear-gradient(180deg, rgba(30,41,59,0.4) 0%, rgba(8,12,20,0.6) 100%);">
+                        <div class="min-w-0 cursor-pointer" onclick="playOfflineSong('${song.id}')">
+                            <h3 class="font-bold text-[13px] leading-snug truncate text-white/90 hover:text-white transition">${song.title}</h3>
+                            <p class="text-[11px] text-gray-500 truncate mt-0.5 font-medium">${song.artist}</p>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2.5"
+                             style="border-top: 1px solid rgba(255,255,255,0.05);">
+                            <span class="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider"
+                                  style="color: rgba(59,226,200,0.5);">
+                                <i class="fas fa-wifi-slash text-[8px]"></i>Offline
+                            </span>
+                            <button class="delete-btn" onclick="removeOffline('${song.id}')" title="Remove from offline">
+                                <i class="fas fa-trash-alt text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCards() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            if (!query) { renderCards(allSongs); return; }
+            const filtered = allSongs.filter(s =>
+                s.title.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query)
+            );
+            renderCards(filtered);
+        }
+
+        function playOfflineSong(songId) {
+            window.location.href = `/play_song/${songId}/`;
+        }
+
+        function removeOffline(songId) {
+            if (confirm("Remove this song from offline storage?")) {
+                let library = JSON.parse(localStorage.getItem('offline_library') || '[]');
+                library = library.filter(s => s.id !== songId);
+                localStorage.setItem('offline_library', JSON.stringify(library));
+                allSongs = library;
+                renderOfflineLibrary();
+            }
+        }
+
+        function clearAllOffline() {
+            if (confirm("Remove ALL songs from offline storage?")) {
+                localStorage.setItem('offline_library', '[]');
+                allSongs = [];
+                renderOfflineLibrary();
+            }
+        }
+
+        // Sort chips (UI toggle only — real sort would need backend or localStorage reorder)
+        document.querySelectorAll('.sort-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                const label = chip.textContent.trim();
+                if (label === 'A–Z') {
+                    const sorted = [...allSongs].sort((a, b) => a.title.localeCompare(b.title));
+                    renderCards(sorted);
+                } else {
+                    renderCards(allSongs); // "Recent" = original order
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
