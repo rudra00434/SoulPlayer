@@ -375,30 +375,118 @@
     </template>
 
     <script>
+        /**
+         * IndexedDB Helper - SoulPlayerDB
+         */
+        const dbName = "SoulPlayerDB";
+        const dbVersion = 1;
         let allSongs = [];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            renderOfflineLibrary();
+        function getDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, dbVersion);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("offline_tracks")) {
+                        db.createObjectStore("offline_tracks", { keyPath: "id" });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject("IndexedDB error: " + e.target.errorCode);
+            });
+        }
+
+        async function getAllTracks() {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["offline_tracks"], "readonly");
+                const store = transaction.objectStore("offline_tracks");
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject();
+            });
+        }
+
+        async function deleteTrack(id) {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["offline_tracks"], "readwrite");
+                const store = transaction.objectStore("offline_tracks");
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject();
+            });
+        }
+
+        async function clearAllTracks() {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["offline_tracks"], "readwrite");
+                const store = transaction.objectStore("offline_tracks");
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject();
+            });
+        }
+
+        /**
+         * Migration: Move localStorage data to IndexedDB once
+         */
+        async function migrateFromLocalStorage() {
+            const oldData = localStorage.getItem('offline_library');
+            if (oldData) {
+                try {
+                    const tracks = JSON.parse(oldData);
+                    if (Array.isArray(tracks) && tracks.length > 0) {
+                        console.log("[PWA] Migrating tracks to IndexedDB...");
+                        for (const track of tracks) {
+                            await saveTrackToDB_silent(track);
+                        }
+                    }
+                    localStorage.removeItem('offline_library');
+                    console.log("[PWA] Migration complete.");
+                } catch (e) {
+                    console.error("[PWA] Migration failed:", e);
+                }
+            }
+        }
+
+        async function saveTrackToDB_silent(track) {
+            const db = await getDB();
+            const transaction = db.transaction(["offline_tracks"], "readwrite");
+            transaction.objectStore("offline_tracks").put(track);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await migrateFromLocalStorage();
+            await renderOfflineLibrary();
         });
 
-        function renderOfflineLibrary() {
+        async function renderOfflineLibrary() {
             const grid = document.getElementById('offline-grid');
-            allSongs = JSON.parse(localStorage.getItem('offline_library') || '[]');
+            allSongs = await getAllTracks();
 
             // Update count pill
             const pill = document.getElementById('track-count-pill');
             const clearBtn = document.getElementById('clear-all-btn');
+            
             if (allSongs.length > 0) {
                 pill.textContent = `${allSongs.length} track${allSongs.length !== 1 ? 's' : ''}`;
                 pill.classList.remove('hidden');
                 clearBtn.classList.remove('hidden');
                 clearBtn.classList.add('flex');
+            } else {
+                pill.classList.add('hidden');
+                clearBtn.classList.add('hidden');
             }
 
             if (allSongs.length === 0) {
                 grid.innerHTML = document.getElementById('empty-state').innerHTML;
                 return;
             }
+
+            // Sort by added_at descending by default
+            allSongs.sort((a, b) => (b.added_at || 0) - (a.added_at || 0));
 
             renderCards(allSongs);
         }
@@ -489,25 +577,21 @@
             window.location.href = `/play_song/${songId}/`;
         }
 
-        function removeOffline(songId) {
+        async function removeOffline(songId) {
             if (confirm("Remove this song from offline storage?")) {
-                let library = JSON.parse(localStorage.getItem('offline_library') || '[]');
-                library = library.filter(s => s.id !== songId);
-                localStorage.setItem('offline_library', JSON.stringify(library));
-                allSongs = library;
-                renderOfflineLibrary();
+                await deleteTrack(songId);
+                await renderOfflineLibrary();
             }
         }
 
-        function clearAllOffline() {
+        async function clearAllOffline() {
             if (confirm("Remove ALL songs from offline storage?")) {
-                localStorage.setItem('offline_library', '[]');
-                allSongs = [];
-                renderOfflineLibrary();
+                await clearAllTracks();
+                await renderOfflineLibrary();
             }
         }
 
-        // Sort chips (UI toggle only — real sort would need backend or localStorage reorder)
+        // Sort chips UI
         document.querySelectorAll('.sort-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
@@ -517,7 +601,9 @@
                     const sorted = [...allSongs].sort((a, b) => a.title.localeCompare(b.title));
                     renderCards(sorted);
                 } else {
-                    renderCards(allSongs); // "Recent" = original order
+                    // Recent (added_at desc)
+                    allSongs.sort((a, b) => (b.added_at || 0) - (a.added_at || 0));
+                    renderCards(allSongs);
                 }
             });
         });

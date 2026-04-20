@@ -1,9 +1,9 @@
 /**
- * SoulPlayer Advanced Service Worker
- * Features: Static Assets Caching + Background Media Caching
+ * SoulPlayer Advanced Service Worker (Stability Edition)
+ * Features: Static Assets Caching + Background Media Caching + Range Request Support
  */
 
-const CACHE_NAME = 'soulplayer-v2';
+const CACHE_NAME = 'soulplayer-v3'; // Incremented version
 const MEDIA_CACHE = 'soulplayer-media-v1';
 
 const STATIC_ASSETS = [
@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap'
 ];
 
-// 1. Install: Cache the Shell
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -22,7 +21,6 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// 2. Activate: Take control immediately
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         Promise.all([
@@ -40,41 +38,84 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 3. Fetch Handler
+/**
+ * Helper to handle Range Requests for Media
+ * Highly critical for deployed sites & mobile browsers
+ */
+async function handleRangeRequest(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+
+    if (!cachedResponse) {
+        return fetch(request);
+    }
+
+    const rangeHeader = request.headers.get('Range');
+    if (!rangeHeader) {
+        return cachedResponse;
+    }
+
+    const bytes = await cachedResponse.arrayBuffer();
+    const match = /bytes=(\d+)-(\d+)?/.exec(rangeHeader);
+    if (!match) {
+        return cachedResponse;
+    }
+
+    const start = parseInt(match[1], 10);
+    const end = match[2] ? parseInt(match[2], 10) : bytes.byteLength - 1;
+
+    if (start >= bytes.byteLength || end >= bytes.byteLength) {
+        return new Response('', {
+            status: 416,
+            statusText: 'Range Not Satisfiable',
+            headers: { 'Content-Range': `bytes */${bytes.byteLength}` }
+        });
+    }
+
+    const slicedBuffer = bytes.slice(start, end + 1);
+    const newHeaders = new Headers(cachedResponse.headers);
+    newHeaders.set('Content-Range', `bytes ${start}-${end}/${bytes.byteLength}`);
+    newHeaders.set('Content-Length', slicedBuffer.byteLength);
+
+    return new Response(slicedBuffer, {
+        status: 206,
+        statusText: 'Partial Content',
+        headers: newHeaders
+    });
+}
+
 self.addEventListener('fetch', (event) => {
     const url = event.request.url;
-
-    // Logic for Media (MP3s / JioSaavn Streams)
     const isMedia = url.includes('.mp3') || url.includes('.m4a') ||
         url.includes('jiosaavn') || url.includes('googleusercontent');
 
-    event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) return cachedResponse;
+    if (isMedia) {
+        event.respondWith(handleRangeRequest(event.request, MEDIA_CACHE));
+    } else {
+        event.respondWith(
+            caches.match(event.request).then((cachedResponse) => {
+                if (cachedResponse) return cachedResponse;
 
-            return fetch(event.request).then((networkResponse) => {
-                if (url.includes('/static/') && !isMedia) {
-                    const responseClone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
-                }
-                return networkResponse;
-            });
-        }).catch(() => {
-            if (event.request.mode === 'navigate') {
-                return caches.match('/');
-            }
-        })
-    );
+                return fetch(event.request).then((networkResponse) => {
+                    if (url.includes('/static/') && !isMedia) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+                    }
+                    return networkResponse;
+                });
+            })
+        );
+    }
 });
 
-// 4. Message Handler: Robust downloading
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'DOWNLOAD_SONG') {
         const { url, songId } = event.data;
 
         event.waitUntil(
             caches.open(MEDIA_CACHE).then((cache) => {
-                return fetch(url, { mode: 'cors', credentials: 'omit' })
+                // Try CORS first, then fallback to no-cors
+                return fetch(url, { mode: 'cors' })
                     .catch(() => fetch(url, { mode: 'no-cors' }))
                     .then((response) => {
                         return cache.put(url, response).then(() => {

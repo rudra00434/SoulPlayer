@@ -757,6 +757,38 @@
             }
             return [Math.floor(h * 360), Math.floor(s * 100), Math.floor(l * 100)];
         }
+        /**
+         * IndexedDB Helper - SoulPlayerDB
+         * Using native API for zero dependencies and maximum reliability
+         */
+        const dbName = "SoulPlayerDB";
+        const dbVersion = 1;
+
+        function getDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, dbVersion);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("offline_tracks")) {
+                        db.createObjectStore("offline_tracks", { keyPath: "id" });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject("IndexedDB error: " + e.target.errorCode);
+            });
+        }
+
+        async function saveTrackToDB(track) {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["offline_tracks"], "readwrite");
+                const store = transaction.objectStore("offline_tracks");
+                const request = store.put(track);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject();
+            });
+        }
+
         // Download Songs in Offline mode 
         async function downloadForOffline() {
             const downloadBtn = document.getElementById('download-track-btn');
@@ -768,7 +800,8 @@
                 title: "{{ song.title }}",
                 artist: "{{ song.artist }}",
                 image: "{% if is_jiosaavn %}{{ song.image_url }}{% elif song.image %}{{ song.image.url }}{% endif %}",
-                url: "{% if is_jiosaavn %}{{ song.stream_url }}{% elif song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}"
+                url: "{% if is_jiosaavn %}{{ song.stream_url }}{% elif song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}",
+                added_at: Date.now()
             };
 
             if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
@@ -776,24 +809,24 @@
                 return;
             }
 
-            // Save metadata
-            let library = JSON.parse(localStorage.getItem('offline_library') || '[]');
-            if (!library.find(s => s.id === songData.id)) {
-                library.push(songData);
-                localStorage.setItem('offline_library', JSON.stringify(library));
+            try {
+                // Save metadata to IndexedDB
+                await saveTrackToDB(songData);
+
+                // Update UI
+                statusText.innerText = "Downloading...";
+                subText.innerText = "Saving to your SoulPlayer cache...";
+                downloadBtn.style.opacity = "0.7";
+
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'DOWNLOAD_SONG',
+                    url: songData.url,
+                    songId: songData.id
+                });
+            } catch (err) {
+                console.error("Download failed:", err);
+                alert("Failed to initialize offline storage.");
             }
-
-            // Update UI
-            statusText.innerText = "Downloading...";
-            subText.innerText = "Saving to your SoulPlayer cache...";
-            downloadBtn.style.opacity = "0.7";
-
-            navigator.serviceWorker.controller.postMessage({
-                type: 'DOWNLOAD_SONG',
-                url: songData.url,
-                songId: songData.id
-            });
-
         }
 
         // Robust Message Listener
@@ -808,7 +841,7 @@
                         statusText.innerText = "Saved Offline";
                         subText.innerText = "Available without internet";
                         downloadBtn.style.opacity = "1";
-                        downloadBtn.style.borderColor = "var(--dynamic-accent)";
+                        downloadBtn.style.borderColor = "#3be2c8";
                         alert("Track successfully saved for offline play!");
                     }
                 }
