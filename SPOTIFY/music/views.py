@@ -71,8 +71,9 @@ def index(request):
     arijit_songs = get_artist_songs('Arijit Singh', limit=20)
     armaan_songs = get_artist_songs('Armaan Malik', limit=20)
     kk_songs = get_artist_songs('KK', limit=20)
+    justin_bieber_songs = get_artist_songs('Justin Bieber', limit=10)
     nostalgia_songs = jiosavan.get_nostalgia_songs(limit=20)
-    top_albums = search_albums('bollywood hits', limit=10)
+    top_albums = search_albums('Bollywood hits', limit=10)
 
     # Curated: Best of Hindi Songs (Local Database)
     hindi_ids = [97, 96, 95, 92, 11, 98,94]
@@ -111,6 +112,7 @@ def index(request):
         "arijit_songs": arijit_songs,
         "armaan_songs": armaan_songs,
         "kk_songs": kk_songs,
+        "justin_bieber_songs": justin_bieber_songs,
         "nostalgia_songs": nostalgia_songs,
         "top_albums": top_albums,
         "best_of_hindi_songs": best_of_hindi_songs,
