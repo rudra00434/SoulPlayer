@@ -105,7 +105,8 @@
     </style>
 </head>
 
-<body class="text-white h-screen flex flex-col overflow-hidden selection:bg-[var(--dynamic-accent,#3be2c8)] selection:text-[#0b0f19]">
+<body
+    class="text-white h-screen flex flex-col overflow-hidden selection:bg-[var(--dynamic-accent,#3be2c8)] selection:text-[#0b0f19]">
 
     <div class="flex flex-1 overflow-hidden pb-20">
         {% block sidebar %}
@@ -144,13 +145,15 @@
                         class="fas fa-fire text-xl w-6 text-center {% if request.resolver_match.url_name == 'recommendations' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %}"></i>
                     <span class="tracking-wide">Recommended</span>
                 </a>
-
-                <a href="{% url 'radio_stations' %}"
-                    class="flex items-center gap-4 {% if request.resolver_match.url_name == 'radio_stations' %}text-[#3be2c8]{% else %}text-gray-400{% endif %} hover:text-white transition cursor-pointer group">
-                    <i
-                        class="fas fa-satellite-dish text-xl w-6 text-center {% if request.resolver_match.url_name == 'radio_stations' %}text-[#3be2c8]{% else %}group-hover:text-[#3be2c8]{% endif %} drop-shadow-[0_0_5px_rgba(59,226,200,0.5)]"></i>
-                    <span class="tracking-wide">Radio Stations</span>
+                <a href="{% url 'offline_songs' %}"
+                    class="flex items-center space-x-3 text-gray-400 hover:text-white group transition-all duration-300 transform hover:translate-x-1">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-cyan-500/20 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+                        <i class="fas fa-cloud-download-alt group-hover:text-cyan-400"></i>
+                    </div>
+                    <span class="font-medium">Offline Songs</span>
                 </a>
+
             </nav>
 
             <!-- Recent Songs (No header, matches screenshot) -->
@@ -243,13 +246,9 @@
                     <a href="{% url 'create_playlist' %}"
                         class="{% if request.resolver_match.url_name == 'create_playlist' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Create
                         Playlist</a>
-                    <a href="{% url 'offline_songs' %}"
-                        class="flex items-center space-x-3 text-gray-400 hover:text-white group transition-all duration-300 transform hover:translate-x-1">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-cyan-500/20 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-                            <i class="fas fa-cloud-download-alt group-hover:text-cyan-400"></i>
-                        </div>
-                        <span class="font-medium">Download Songs</span>
+                    <a href="{% url 'radio_stations' %}"
+                        class="{% if request.resolver_match.url_name == 'radio_stations' %}text-white border-b-2 border-[#3be2c8]{% else %}text-gray-500 hover:text-white{% endif %} pb-1 transition whitespace-nowrap">
+                        Radio Stations
                     </a>
                 </nav>
 
@@ -1131,7 +1130,7 @@
 
     <!-- Hidden audio element -->
     <audio id="audio-player"></audio>
-    
+
     <!-- Hidden canvas for Dynamic Theme Color extraction (PWA Feature) -->
     <canvas id="color-analysis-canvas" style="display: none;" width="50" height="50"></canvas>
 
@@ -1155,7 +1154,7 @@
             if (imageUrl) {
                 document.getElementById('player-img-container').classList.remove('hidden');
                 document.getElementById('player-img').src = imageUrl;
-                
+
                 // Trigger PWA Dynamic Theme Color Extraction
                 updateThemeColor(imageUrl);
             }
@@ -1251,42 +1250,42 @@
          */
         function updateThemeColor(imgUrl) {
             if (!imgUrl) return;
-            
+
             try {
                 const canvas = document.getElementById('color-analysis-canvas');
                 const ctx = canvas.getContext('2d', { willReadFrequently: true });
                 const img = new Image();
-                
+
                 // Set crossOrigin to allow analysis if CDN support is present
                 img.crossOrigin = "Anonymous";
-                
-                img.onload = function() {
+
+                img.onload = function () {
                     try {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
+
                         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
                         let r = 0, g = 0, b = 0, count = 0;
-                        
+
                         // Sample pixels (skip to increase speed)
                         for (let i = 0; i < imageData.length; i += 16) {
                             r += imageData[i];
-                            g += imageData[i+1];
-                            b += imageData[i+2];
+                            g += imageData[i + 1];
+                            b += imageData[i + 2];
                             count++;
                         }
-                        
+
                         r = Math.floor(r / count);
                         g = Math.floor(g / count);
                         b = Math.floor(b / count);
-                        
+
                         // Convert to HSL for UI-friendly adjustments
                         const hsl = rgbToHsl(r, g, b);
-                        
+
                         // Ensure the color is vibrant enough but not too light/dark for the theme
                         const s = Math.max(50, hsl[1]); // At least 50% saturation
                         const l = Math.max(40, Math.min(65, hsl[2])); // Lightness between 40-65%
-                        
+
                         const finalColor = `hsl(${hsl[0]}, ${s}%, ${l}%)`;
                         const darkColor = `hsl(${hsl[0]}, ${s}%, ${l - 15}%)`;
                         const glowValue = `rgba(${r}, ${g}, ${b}, 0.5)`;
@@ -1297,16 +1296,16 @@
                         document.documentElement.style.setProperty('--dynamic-accent-dark', darkColor);
                         document.documentElement.style.setProperty('--dynamic-accent-glow', glowValue);
                         document.documentElement.style.setProperty('--dynamic-accent-transparent', transValue);
-                        
+
                         // Update PWA Theme Color Meta Tag
                         const themeMeta = document.querySelector('meta[name="theme-color"]');
                         if (themeMeta) themeMeta.setAttribute('content', darkColor);
-                        
+
                     } catch (e) {
                         console.warn("[PWA] Color analysis failed:", e);
                     }
                 };
-                
+
                 img.onerror = () => {
                     // Fallback to default SoulPlayer Cyan if CORS blocks access
                     document.documentElement.style.setProperty('--dynamic-accent', '#3be2c8');
