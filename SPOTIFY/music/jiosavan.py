@@ -145,9 +145,25 @@ def _normalize_song(song_data):
     primary_artists = artists.get('primary', [])
     artist_name = ', '.join(a.get('name', '') for a in primary_artists) if primary_artists else ''
 
+    # FALLBACK: If nested artists are missing (common for English tracks), try flat strings
+    if not artist_name:
+        flat_primary = song_data.get('primaryArtists')
+        if flat_primary and isinstance(flat_primary, str):
+            artist_name = flat_primary
+        elif song_data.get('singers'):
+            artist_name = song_data.get('singers')
+
     if not artist_name:
         all_artists = artists.get('all', [])
-        artist_name = ', '.join(a.get('name', '') for a in all_artists[:3]) if all_artists else 'Unknown Artist'
+        if all_artists:
+            artist_name = ', '.join(a.get('name', '') for a in all_artists[:3])
+        else:
+            # Last resort: Parse from description if available
+            desc = song_data.get('description', '')
+            if ' · ' in desc:
+                 artist_name = desc.split(' · ')[1]
+            else:
+                 artist_name = 'Unknown Artist'
 
     return {
         'id': song_data.get('id', ''),
@@ -413,14 +429,20 @@ def get_artist_songs(artist_name, limit=20):
     for query in queries:
         if len(results) >= limit:
             break
-        data = _get_api_response("search/songs", params={'query': query, 'page': 0, 'limit': limit})
+        data = _get_api_response("search/songs", params={'query': query, 'page': 0, 'limit': 50})
         if data and data.get('data', {}).get('results'):
             for s in data['data']['results']:
                 song = _normalize_song(s)
                 if not song or song['id'] in seen_ids:
                     continue
-                # Only include songs where the artist is actually credited
-                if artist_name.lower() in song.get('artist', '').lower():
+                
+                clean_artist = song.get('artist', '').lower()
+                clean_title = song.get('title', '').lower()
+                clean_target = artist_name.lower()
+                
+                # Official Match: Artist name is in the artist metadata
+                # Smart-Search Match: Artist name is in the title (catches official remixes/covers)
+                if clean_target in clean_artist or clean_target in clean_title:
                     seen_ids.add(song['id'])
                     results.append(song)
                     if len(results) >= limit:
