@@ -864,10 +864,10 @@
                         <p class="text-gray-500 italic">KK songs currently unavailable.</p>
                         {% endfor %}
                     </div>
-                    <!-- Justin Bieber Songs -->
+                    <!-- Sonu Nigam Songs -->
                     <div class="mb-5 flex items-end justify-between">
-                        <h2 class="text-2xl font-bold tracking-wide"><span class="text-amber-400">Justin Bieber's</span>
-                            Songs
+                        <h2 class="text-2xl font-bold tracking-wide"><span class="text-amber-400">Sonu Nigam's</span>
+                            All Time Hits
                         </h2>
                         <span
                             class="text-xs font-bold px-2 py-1 bg-amber-500/20 text-amber-400 rounded uppercase tracking-widest border border-amber-500/30 flex items-center gap-1.5">
@@ -877,7 +877,7 @@
                     </div>
 
                     <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
-                        {% for song in justin_bieber_songs %}
+                        {% for song in sonu_nigam_songs %}
                         <div class="flex-none w-44 group cursor-pointer relative"
                             onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
                             <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
@@ -900,7 +900,7 @@
                             <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
                         </div>
                         {% empty %}
-                        <p class="text-gray-500 italic">Justin Bieber songs currently unavailable.</p>
+                        <p class="text-gray-500 italic">Sonu Nigam songs currently unavailable.</p>
                         {% endfor %}
                     </div>
 
