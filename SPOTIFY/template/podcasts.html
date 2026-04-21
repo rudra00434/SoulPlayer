@@ -87,13 +87,10 @@
         </h2>
         <div
             class="flex rtl:flex-row-reverse items-center gap-6 text-sm font-bold text-gray-500 uppercase tracking-widest overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
-            <span class="text-white border-b-2 border-[#3be2c8] pb-1.5 cursor-pointer whitespace-nowrap">All
-                Topics</span>
-            <span class="hover:text-white cursor-pointer transition-colors whitespace-nowrap">Music
-                Tech</span>
-            <span
-                class="hover:text-white cursor-pointer transition-colors whitespace-nowrap">Interviews</span>
-            <span class="hover:text-white cursor-pointer transition-colors whitespace-nowrap">Culture</span>
+            <a href="?topic=all" class="{% if current_topic == 'all' or not current_topic %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1.5 cursor-pointer transition-colors whitespace-nowrap">All Topics</a>
+            <a href="?topic=tech" class="{% if current_topic == 'tech' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1.5 cursor-pointer transition-colors whitespace-nowrap">Music Tech</a>
+            <a href="?topic=interviews" class="{% if current_topic == 'interviews' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1.5 cursor-pointer transition-colors whitespace-nowrap">Interviews</a>
+            <a href="?topic=culture" class="{% if current_topic == 'culture' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1.5 cursor-pointer transition-colors whitespace-nowrap">Culture</a>
         </div>
     </div>
 

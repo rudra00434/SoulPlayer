@@ -384,9 +384,23 @@ def voice_search(request):
     return render(request, 'voice_search.html')
 
 def podcasts(request):
-
     youtube_api_key = getattr(settings, 'YOUTUBE_API_KEY', '')
-    query = "music podcast full episode"
+    
+    # Get the selected topic from the URL, defaulting to 'all'
+    topic = request.GET.get('topic', 'all')
+    
+    # Map topics to specific YouTube search queries for better results
+    topic_queries = {
+        'all': "music podcast full episode",
+        'tech': "music technology podcast gear reviews synth production",
+        'interviews': "music artist interviews podcast full episodes",
+        'culture': "music culture history documentary podcast",
+    }
+    
+    # Find the query based on the topic, fallback to 'all' if topic not found
+    query = topic_queries.get(topic, topic_queries['all'])
+    
+    # Build the URL with the dynamic query
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q={query}&type=video&key={youtube_api_key}"
     
     videos = []
@@ -416,7 +430,8 @@ def podcasts(request):
 
     context = {
         'videos': videos,
-        'error_message': error_message
+        'error_message': error_message,
+        'current_topic': topic  
     }
     return render(request, 'podcasts.html', context)
 
