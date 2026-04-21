@@ -19,7 +19,7 @@ def _normalize_station(data):
     # Default image if empty
     image_url = data.get('favicon', '').strip()
     if not image_url or not image_url.startswith('http'):
-        image_url = f"https://ui-avatars.com/api/?name={requests.utils.quote(name)}&background=0b0f19&color=3be2c8&size=512&font-size=0.3"
+        image_url = ""
         
     # Tags parsing
     tags = data.get('tags', '')

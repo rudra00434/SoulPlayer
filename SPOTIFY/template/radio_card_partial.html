@@ -13,12 +13,15 @@
     <!-- ── Art area ── -->
     <div
         class="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0b0f19] shadow-inner flex items-center justify-center">
+        <!-- Blurred Backdrop (Only if image exists) -->
+        {% if station.image_url %}
         <img src="{{ station.image_url }}" alt=""
             class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-35 pointer-events-none"
             aria-hidden="true" onerror="this.style.display='none'">
+        {% endif %}
 
         <!-- Fallback icon -->
-        <div class="art-fallback absolute inset-0 z-10 hidden items-center justify-center flex-col gap-2">
+        <div class="art-fallback absolute inset-0 z-10 {% if station.image_url %}hidden{% else %}flex{% endif %} items-center justify-center flex-col gap-2">
             <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
                 style="background: rgba(59,226,200,0.1); border: 1px solid rgba(59,226,200,0.25); box-shadow: 0 0 30px rgba(59,226,200,0.1);">
                 <i class="fas fa-broadcast-tower text-3xl"
@@ -29,9 +32,11 @@
             </div>
         </div>
 
+        {% if station.image_url %}
         <img src="{{ station.image_url }}" alt="{{ station.name }}"
             class="art-img relative z-10 w-full h-full object-contain p-5 drop-shadow-2xl"
             onerror="this.style.display='none'; this.closest('.relative').querySelector('.art-fallback').classList.remove('hidden'); this.closest('.relative').querySelector('.art-fallback').classList.add('flex')">
+        {% endif %}
 
         <div class="absolute top-3 right-3 z-20 flex items-center gap-1.5
                         opacity-0 group-hover:opacity-100

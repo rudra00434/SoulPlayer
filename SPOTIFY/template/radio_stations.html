@@ -36,15 +36,17 @@
             <!-- Image Area - Fixed Stretching -->
             <div
                 class="relative w-full aspect-square mb-4 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0b0f19] shadow-inner group-hover:shadow-[0_10px_20px_rgba(59,226,200,0.1)] transition-all duration-500 border border-white/5 group-hover:border-white/10 flex items-center justify-center">
-                <!-- Blurred Backdrop for arbitrary logo dimensions -->
+                <!-- Blurred Backdrop (Only if image exists) -->
+                {% if station.image_url %}
                 <div class="absolute inset-0 opacity-40">
                     <img src="{{ station.image_url }}" alt=""
                         class="w-full h-full object-cover filter blur-xl scale-125" onerror="this.style.display='none'">
                 </div>
+                {% endif %}
 
-                <!-- Fallback Icon (shown when image fails) -->
+                <!-- Fallback Icon (shown when image fails or is missing) -->
                 <div id="fallback-{{ forloop.counter }}"
-                    class="art-fallback absolute inset-0 flex items-center justify-center z-10 hidden">
+                    class="art-fallback absolute inset-0 flex items-center justify-center z-10 {% if station.image_url %}hidden{% endif %}">
                     <div
                         class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#3be2c8]/20 to-blue-600/20 border border-[#3be2c8]/30 flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.15)] group-hover:shadow-[0_0_40px_rgba(59,226,200,0.3)] transition-all duration-500">
                         <i
@@ -56,9 +58,11 @@
                 </div>
 
                 <!-- Main crisp logo -->
+                {% if station.image_url %}
                 <img src="{{ station.image_url }}" alt="{{ station.name }}"
                     class="w-full h-full object-contain p-4 relative z-10 transform group-hover:scale-105 group-hover:rotate-2 transition-all duration-700 ease-out drop-shadow-2xl"
                     onerror="this.style.display='none'; this.closest('.relative').querySelector('.art-fallback').classList.remove('hidden'); this.closest('.relative').querySelector('.art-fallback').classList.add('flex')">
+                {% endif %}
                 <!-- Play Overlay Blur -->
                 <div
                     class="absolute inset-0 bg-gradient-to-t from-[#0b0f19]/90 via-[#0b0f19]/40 to-transparent opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-500 backdrop-blur-[2px] z-20">
