@@ -4,58 +4,87 @@
 {% block content %}
 <div class="px-6 md:px-10 pb-12 pt-6 min-h-[90vh]">
     <div class="flex items-center gap-6 mb-8 mt-2">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#3be2c8] to-blue-600 flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.5)]">
+        <div
+            class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#3be2c8] to-blue-600 flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.5)]">
             <i class="fas fa-satellite-dish text-2xl text-white"></i>
         </div>
         <div>
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2">Live Radio</h1>
-            <p class="text-gray-400 font-medium tracking-wide">Stream 40,000+ stations globally in crystal clear quality.</p>
+            <p class="text-gray-400 font-medium tracking-wide">Stream 40,000+ stations globally in crystal clear
+                quality.</p>
         </div>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {% for station in stations %}
         <div class="bg-[#111827]/40 backdrop-blur-3xl rounded-3xl p-4 relative overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.3)] group hover:shadow-[0_0_40px_rgba(59,226,200,0.15)] transition-all duration-500 border border-white/5 hover:border-[#3be2c8]/30 cursor-pointer flex flex-col justify-between hover:-translate-y-2 group"
-             onclick="window.location.href='{% url 'play_radio' station.id %}'">
-             
+            onclick="window.location.href='{% url 'play_radio' station.id %}'">
+
             <!-- Glass glare effect -->
-            <div class="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent rounded-t-3xl pointer-events-none"></div>
-            
+            <div
+                class="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent rounded-t-3xl pointer-events-none">
+            </div>
+
             <!-- Live badge -->
-            <div class="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-[#0b0f19]/80 backdrop-blur-xl px-2.5 py-1 rounded-md shadow-lg border border-[#f87171]/40 translate-x-4 group-hover:translate-x-0">
-                <div class="w-1.5 h-1.5 rounded-full bg-[#f87171] animate-pulse shadow-[0_0_8px_rgba(248,113,113,0.8)]"></div>
+            <div
+                class="absolute top-6 right-6 z-20 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-[#0b0f19]/80 backdrop-blur-xl px-2.5 py-1 rounded-md shadow-lg border border-[#f87171]/40 translate-x-4 group-hover:translate-x-0">
+                <div class="w-1.5 h-1.5 rounded-full bg-[#f87171] animate-pulse shadow-[0_0_8px_rgba(248,113,113,0.8)]">
+                </div>
                 <span class="text-[9px] font-black uppercase tracking-widest text-[#f87171]">LIVE</span>
             </div>
 
             <!-- Image Area - Fixed Stretching -->
-            <div class="relative w-full aspect-square mb-4 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0b0f19] shadow-inner group-hover:shadow-[0_10px_20px_rgba(59,226,200,0.1)] transition-all duration-500 border border-white/5 group-hover:border-white/10 flex items-center justify-center">
+            <div
+                class="relative w-full aspect-square mb-4 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0b0f19] shadow-inner group-hover:shadow-[0_10px_20px_rgba(59,226,200,0.1)] transition-all duration-500 border border-white/5 group-hover:border-white/10 flex items-center justify-center">
                 <!-- Blurred Backdrop for arbitrary logo dimensions -->
                 <div class="absolute inset-0 opacity-40">
-                    <img src="{{ station.image_url }}" alt="" class="w-full h-full object-cover filter blur-xl scale-125">
+                    <img src="{{ station.image_url }}" alt=""
+                        class="w-full h-full object-cover filter blur-xl scale-125" onerror="this.style.display='none'">
                 </div>
-                
+
+                <!-- Fallback Icon (shown when image fails) -->
+                <div id="fallback-{{ forloop.counter }}"
+                    class="art-fallback absolute inset-0 flex items-center justify-center z-10 hidden">
+                    <div
+                        class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#3be2c8]/20 to-blue-600/20 border border-[#3be2c8]/30 flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.15)] group-hover:shadow-[0_0_40px_rgba(59,226,200,0.3)] transition-all duration-500">
+                        <i
+                            class="fas fa-broadcast-tower text-4xl text-[#3be2c8] drop-shadow-[0_0_12px_rgba(59,226,200,0.6)] group-hover:scale-110 transition-transform duration-500"></i>
+                    </div>
+                    <!-- Ambient glow rings -->
+                    <div class="absolute w-28 h-28 rounded-full border border-[#3be2c8]/10 animate-ping"></div>
+                    <div class="absolute w-36 h-36 rounded-full border border-[#3be2c8]/5"></div>
+                </div>
+
                 <!-- Main crisp logo -->
-                <img src="{{ station.image_url }}" alt="{{ station.name }}" class="w-full h-full object-contain p-4 relative z-10 transform group-hover:scale-105 group-hover:rotate-2 transition-all duration-700 ease-out drop-shadow-2xl">
-                
+                <img src="{{ station.image_url }}" alt="{{ station.name }}"
+                    class="w-full h-full object-contain p-4 relative z-10 transform group-hover:scale-105 group-hover:rotate-2 transition-all duration-700 ease-out drop-shadow-2xl"
+                    onerror="this.style.display='none'; this.closest('.relative').querySelector('.art-fallback').classList.remove('hidden'); this.closest('.relative').querySelector('.art-fallback').classList.add('flex')">
                 <!-- Play Overlay Blur -->
-                <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19]/90 via-[#0b0f19]/40 to-transparent opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-500 backdrop-blur-[2px] z-20">
-                    <div class="w-16 h-16 bg-gradient-to-br from-[#3be2c8] to-blue-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.5)] transform translate-y-6 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out delay-75">
+                <div
+                    class="absolute inset-0 bg-gradient-to-t from-[#0b0f19]/90 via-[#0b0f19]/40 to-transparent opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-500 backdrop-blur-[2px] z-20">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-[#3be2c8] to-blue-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.5)] transform translate-y-6 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out delay-75">
                         <i class="fas fa-play text-white ml-1 text-xl"></i>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Text Content -->
             <div class="mt-auto px-1">
-                <h3 class="font-extrabold text-[15px] truncate text-gray-100 mb-2.5 drop-shadow-md group-hover:text-[#3be2c8] transition-colors duration-300">{{ station.name }}</h3>
-                
+                <h3
+                    class="font-extrabold text-[15px] truncate text-gray-100 mb-2.5 drop-shadow-md group-hover:text-[#3be2c8] transition-colors duration-300">
+                    {{ station.name }}</h3>
+
                 <!-- Badges -->
                 <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    <span
+                        class="px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
                         <i class="fas fa-map-marker-alt mr-1"></i>{{ station.country }}
                     </span>
-                    <span class="px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider bg-[#3be2c8]/20 text-[#3be2c8] border border-[#3be2c8]/30 max-w-[100px] truncate">
-                        {% if station.genres %}<i class="fas fa-tags mr-1"></i>{{ station.genres|first }}{% else %}<i class="fas fa-broadcast-tower mr-1"></i>RADIO{% endif %}
+                    <span
+                        class="px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider bg-[#3be2c8]/20 text-[#3be2c8] border border-[#3be2c8]/30 max-w-[100px] truncate">
+                        {% if station.genres %}<i class="fas fa-tags mr-1"></i>{{ station.genres|first }}{% else %}<i
+                            class="fas fa-broadcast-tower mr-1"></i>RADIO{% endif %}
                     </span>
                 </div>
             </div>

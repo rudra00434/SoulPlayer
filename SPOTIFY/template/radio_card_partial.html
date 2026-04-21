@@ -1,7 +1,6 @@
-<div class="station-card relative rounded-3xl overflow-hidden cursor-pointer group flex flex-col" 
-     data-name="{{ station.name|lower }}"
-     data-genre="{% if station.genres %}{{ station.genres|join:','|lower }}{% else %}radio{% endif %}"
-     style="background: linear-gradient(145deg, rgba(30,41,59,0.6) 0%, rgba(11,15,25,0.8) 100%);
+<div class="station-card relative rounded-3xl overflow-hidden cursor-pointer group flex flex-col"
+    data-name="{{ station.name|lower }}"
+    data-genre="{% if station.genres %}{{ station.genres|join:','|lower }}{% else %}radio{% endif %}" style="background: linear-gradient(145deg, rgba(30,41,59,0.6) 0%, rgba(11,15,25,0.8) 100%);
             border: 1px solid rgba(255,255,255,0.06);
             box-shadow: 0 8px 32px rgba(0,0,0,0.35);
             transition: transform 0.3s cubic-bezier(.25,.8,.25,1), box-shadow 0.3s ease, border-color 0.3s;"
@@ -12,26 +11,40 @@
         style="box-shadow: inset 0 0 0 1px rgba(59,226,200,0.25);"></div>
 
     <!-- ── Art area ── -->
-    <div class="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#080c14]">
+    <div
+        class="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0b0f19] shadow-inner flex items-center justify-center">
         <img src="{{ station.image_url }}" alt=""
             class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-35 pointer-events-none"
-            aria-hidden="true">
+            aria-hidden="true" onerror="this.style.display='none'">
+
+        <!-- Fallback icon -->
+        <div class="art-fallback absolute inset-0 z-10 hidden items-center justify-center flex-col gap-2">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+                style="background: rgba(59,226,200,0.1); border: 1px solid rgba(59,226,200,0.25); box-shadow: 0 0 30px rgba(59,226,200,0.1);">
+                <i class="fas fa-broadcast-tower text-3xl"
+                    style="color: #3be2c8; filter: drop-shadow(0 0 10px rgba(59,226,200,0.5));"></i>
+            </div>
+            <div class="w-24 h-24 rounded-full absolute"
+                style="border: 1px solid rgba(59,226,200,0.08); animation: ping 2s cubic-bezier(0,0,0.2,1) infinite;">
+            </div>
+        </div>
 
         <img src="{{ station.image_url }}" alt="{{ station.name }}"
-            class="art-img relative z-10 w-full h-full object-contain p-5 drop-shadow-2xl">
+            class="art-img relative z-10 w-full h-full object-contain p-5 drop-shadow-2xl"
+            onerror="this.style.display='none'; this.closest('.relative').querySelector('.art-fallback').classList.remove('hidden'); this.closest('.relative').querySelector('.art-fallback').classList.add('flex')">
 
         <div class="absolute top-3 right-3 z-20 flex items-center gap-1.5
-                     opacity-0 group-hover:opacity-100
-                     translate-x-2 group-hover:translate-x-0
-                     transition-all duration-300
-                     px-2 py-1 rounded-lg" style="background: rgba(8,12,20,0.85); backdrop-filter: blur(8px);
-                    border: 1px solid rgba(248,113,113,0.35);">
+                        opacity-0 group-hover:opacity-100
+                        translate-x-2 group-hover:translate-x-0
+                        transition-all duration-300
+                        px-2 py-1 rounded-lg" style="background: rgba(8,12,20,0.85); backdrop-filter: blur(8px);
+                        border: 1px solid rgba(248,113,113,0.35);">
             <div class="live-dot w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div>
             <span class="text-[9px] font-black uppercase tracking-widest text-red-400">LIVE</span>
         </div>
 
         <div class="absolute inset-0 z-20 flex items-center justify-center
-                     opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             style="background: linear-gradient(to top, rgba(8,12,20,0.85) 0%, rgba(8,12,20,0.3) 60%, transparent 100%);">
             <div class="play-overlay-btn w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(59,226,200,0.55)]"
                 style="background: linear-gradient(135deg, #3be2c8, #2563eb);">
@@ -43,7 +56,7 @@
     <!-- ── Info ── -->
     <div class="flex flex-col gap-2.5 p-3.5 mt-auto">
         <h3 class="font-extrabold text-[13px] leading-snug text-gray-100 truncate
-                    group-hover:text-[#3be2c8] transition-colors duration-300">
+                        group-hover:text-[#3be2c8] transition-colors duration-300">
             {{ station.name }}
         </h3>
 
