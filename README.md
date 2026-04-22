@@ -49,6 +49,8 @@ Beyond standard playback functionality, the platform differentiates itself with 
 ---
 <img width="1912" height="874" alt="image" src="https://github.com/user-attachments/assets/a9452241-50a0-447a-bfd9-ae7da7ca963f" />
 
+---
+<img width="1918" height="916" alt="image" src="https://github.com/user-attachments/assets/7a401500-9091-4016-ab31-702153abaa28" />
 
  ---
 
