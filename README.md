@@ -29,7 +29,7 @@ Beyond standard playback functionality, the platform differentiates itself with 
 ---
 ## 🔥🔥 Newly Added Feature
 ### 🎯 New Premium Feature real time AR-VR experience 
-<img width="1873" height="769" alt="image" src="https://github.com/user-attachments/assets/ceb48f99-f1bc-42cd-94ce-44d4ad44bf03" />
+<img width="1214" height="898" alt="image" src="https://github.com/user-attachments/assets/da2ca63e-5a4d-4c37-8a07-ccb566e912c1" />
 
 ---
 
