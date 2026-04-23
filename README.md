@@ -390,7 +390,7 @@ SoulPlayer/
 │   │   ├── jam_lobby.html         # Live Jam lobby (create/join rooms)
 │   │   ├── jam_room.html          # Live Listening Room with chat
 │   │   ├── profile.html           # User dashboard
-|   |   ├──  Offline_songs.html    # Downloaded Offline Songs
+|   |   ├── Offline_songs.html    # Downloaded Offline Songs
 |   |   ├── radio_stations.html    # 40K+ rendered Radio stations Hub
 │   │   └── ...                    # Additional other templates
 │   ├── static/                    # Static assets
