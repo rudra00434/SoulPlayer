@@ -1010,7 +1010,7 @@ def sunday_suspense(request):
     Radio Mirchi live stream is fetched from radio-browser.info.
     """
     mirchi_station = radio_api.get_mirchi_station()
-    episodes = radio_api.get_sunday_suspense_episodes(limit=48)
+    episodes = radio_api.get_sunday_suspense_episodes(limit=100)
     context = {
         'mirchi_station': mirchi_station,
         'episodes': episodes,
@@ -1028,7 +1028,7 @@ def play_sunday_suspense(request, episode_id):
         return render(request, 'play_sunday_suspense.html', {'error': 'Episode could not be loaded.'})
 
     # Fetch surrounding episodes for next/prev navigation
-    all_episodes = radio_api.get_sunday_suspense_episodes(limit=48)
+    all_episodes = radio_api.get_sunday_suspense_episodes(limit=100)
     current_index = next((i for i, e in enumerate(all_episodes) if e['id'] == episode_id), None)
     prev_episode = all_episodes[current_index + 1] if current_index is not None and current_index + 1 < len(all_episodes) else None
     next_episode = all_episodes[current_index - 1] if current_index is not None and current_index > 0 else None

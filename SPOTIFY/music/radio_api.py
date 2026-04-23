@@ -130,7 +130,7 @@ def _format_duration_ms(ms):
         return ''
 
 
-def get_sunday_suspense_episodes(limit=24):
+def get_sunday_suspense_episodes(limit=100):
     """Fetch latest Sunday Suspense episodes from Spreaker API with 6-hour cache."""
     cache_key = f'spreaker_sunday_suspense_{limit}'
     cached = cache.get(cache_key)
