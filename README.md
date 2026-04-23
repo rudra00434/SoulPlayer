@@ -361,6 +361,8 @@ SoulPlayer/
 │   ├── Procfile                   # Render deployment (Daphne ASGI)
 │   ├── build.sh                   # Build script for Render
 │   ├── db.sqlite3                 # SQLite database
+|   ├── menifest.json              #javascript service workers
+|   ├── sw.js                      # Caching and javascript service workers for Offline song download
 │   ├── music/                     # Main Django app
 │   │   ├── ml_Pipeline/           # Machine learning engines (Hybrid, Content-Based, Collaborative)
 │   │   ├── management/commands/   # Custom django-admin commands (train_recommendations)
@@ -369,6 +371,7 @@ SoulPlayer/
 │   │   ├── urls.py                # URL routing
 │   │   ├── forms.py               # Django ModelForms with Tailwind styling
 │   │   ├── jiosavan.py            # JioSaavn API service module
+|   |   ├── radio_api.py           # setting up radio browser api for fetching radio stations
 │   │   ├── consumers.py           # WebSocket consumer for Listening Rooms
 │   │   ├── routing.py             # WebSocket URL routing
 │   │   ├── context_processors.py  # Sidebar data for all templates
@@ -387,7 +390,9 @@ SoulPlayer/
 │   │   ├── jam_lobby.html         # Live Jam lobby (create/join rooms)
 │   │   ├── jam_room.html          # Live Listening Room with chat
 │   │   ├── profile.html           # User dashboard
-│   │   └── ...                    # Additional templates
+|   |   ├──  Offline_songs.html    # Downloaded Offline Songs
+|   |   ├── radio_stations.html    # 40K+ rendered Radio stations Hub
+│   │   └── ...                    # Additional other templates
 │   ├── static/                    # Static assets
 │   │   └── xr_backgrounds/        # Cinematic 3D environments for immersive player
 │   └── media/                     # User-uploaded media files
