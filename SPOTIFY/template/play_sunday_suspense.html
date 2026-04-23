@@ -1,0 +1,250 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="absolute inset-0 z-50 flex pt-20 pb-[90px] overflow-hidden"
+    style="background:linear-gradient(160deg,#0a0005 0%,#120010 40%,#0b0f19 100%);">
+
+    {% if error %}
+    <div class="w-full flex flex-col items-center justify-center text-center px-6">
+        <i class="fas fa-ghost text-7xl mb-6" style="color:rgba(220,38,38,0.4);"></i>
+        <h2 class="text-2xl font-bold text-gray-300 mb-2">Episode unavailable</h2>
+        <p class="text-gray-500 mb-6">{{ error }}</p>
+        <a href="{% url 'sunday_suspense' %}" class="px-6 py-3 rounded-full text-white font-bold text-sm" style="background:linear-gradient(135deg,#dc2626,#7c3aed);">
+            ← Back to Sunday Suspense
+        </a>
+    </div>
+    {% else %}
+
+    <!-- ── Immersive blurred background ── -->
+    <div class="absolute inset-0 opacity-25 pointer-events-none">
+        {% if episode.image_url %}
+        <img src="{{ episode.image_url }}" alt="" class="w-full h-full object-cover" style="filter:blur(60px);transform:scale(1.2);" onerror="this.style.display='none'">
+        {% endif %}
+        <div class="absolute inset-0" style="background:linear-gradient(to top,#0a0005 0%,rgba(10,0,5,0.7) 50%,transparent 100%);"></div>
+    </div>
+
+    <!-- Ambient glow blobs -->
+    <div class="absolute top-10 left-1/4 w-[400px] h-[400px] rounded-full pointer-events-none opacity-20" style="background:radial-gradient(circle,#dc2626,transparent 70%);filter:blur(100px);animation:pulse 5s ease-in-out infinite;"></div>
+    <div class="absolute bottom-20 right-1/4 w-[300px] h-[300px] rounded-full pointer-events-none opacity-15" style="background:radial-gradient(circle,#7c3aed,transparent 70%);filter:blur(80px);animation:pulse 7s ease-in-out infinite 2s;"></div>
+
+    <!-- ── Back button ── -->
+    <a href="{% url 'sunday_suspense' %}"
+        class="absolute top-6 left-6 z-50 w-11 h-11 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all hover:scale-110"
+        style="background:rgba(255,255,255,0.07);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);">
+        <i class="fas fa-arrow-left text-sm"></i>
+    </a>
+
+    <!-- ── Main layout ── -->
+    <div class="relative z-10 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-center gap-10 md:gap-16 px-8">
+
+        <!-- ── LEFT: Album Art ── -->
+        <div class="relative flex-shrink-0 w-64 h-64 md:w-80 md:h-80 group">
+            <!-- Rotating gradient halos -->
+            <div class="absolute inset-0 rounded-2xl transform rotate-3 scale-[1.03] opacity-60 group-hover:rotate-6 transition-all duration-700" style="background:linear-gradient(135deg,#dc2626,#7c3aed);"></div>
+            <div class="absolute inset-0 rounded-2xl transform -rotate-3 scale-[1.03] opacity-40 group-hover:-rotate-6 transition-all duration-700" style="background:linear-gradient(135deg,#7c3aed,#dc2626);"></div>
+
+            <!-- Art image -->
+            {% if episode.image_url %}
+            <img src="{{ episode.image_url }}" alt="{{ episode.title }}"
+                class="relative z-10 w-full h-full object-cover rounded-2xl shadow-2xl border border-white/10"
+                onerror="this.style.display='none';document.getElementById('art-fallback').classList.remove('hidden');document.getElementById('art-fallback').classList.add('flex');">
+            {% endif %}
+
+            <!-- Fallback -->
+            <div id="art-fallback" class="absolute inset-0 z-10 {% if episode.image_url %}hidden{% else %}flex{% endif %} items-center justify-center rounded-2xl border border-white/10"
+                style="background:linear-gradient(135deg,#1a0000,#0a0010);">
+                <div class="relative flex flex-col items-center gap-3">
+                    <div class="w-20 h-20 rounded-2xl flex items-center justify-center" style="background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);">
+                        <i class="fas fa-ghost text-5xl" style="color:#dc2626;filter:drop-shadow(0 0 20px rgba(220,38,38,0.7));"></i>
+                    </div>
+                    <div class="absolute w-32 h-32 rounded-full border border-red-700/20 animate-ping"></div>
+                    <div class="absolute w-48 h-48 rounded-full border border-red-900/10 animate-pulse"></div>
+                </div>
+            </div>
+
+            <!-- Sunday Suspense badge -->
+            <div class="absolute -top-4 -right-4 z-20 px-3 py-1.5 rounded-full font-black uppercase tracking-widest text-[10px] text-white flex items-center gap-1.5 border"
+                style="background:rgba(220,38,38,0.9);border-color:rgba(220,38,38,0.4);box-shadow:0 0 20px rgba(220,38,38,0.6);">
+                <i class="fas fa-broadcast-tower text-[10px]"></i> MIRCHI 98.3
+            </div>
+
+            <!-- Duration badge -->
+            {% if episode.duration_str %}
+            <div class="absolute -bottom-4 left-6 z-20 px-3 py-1 rounded-full text-[10px] font-bold text-red-300 border" style="background:rgba(15,0,20,0.85);border-color:rgba(220,38,38,0.25);backdrop-filter:blur(8px);">
+                <i class="fas fa-clock mr-1"></i>{{ episode.duration_str }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ── RIGHT: Details & Player ── -->
+        <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left w-full max-w-md">
+
+            <!-- Meta badges -->
+            <div class="flex items-center gap-2 flex-wrap justify-center md:justify-start mb-3">
+                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-purple-300" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.25);">Bengali Thriller</span>
+                {% if episode.published_at %}
+                <span class="px-3 py-1 rounded-full text-[10px] font-bold text-gray-400" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">{{ episode.published_at }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-2 drop-shadow-lg" style="text-shadow:0 0 40px rgba(220,38,38,0.4);">
+                {{ episode.title }}
+            </h1>
+            <p class="text-gray-400 font-medium mb-8">Sunday Suspense &nbsp;·&nbsp; Radio Mirchi 98.3 FM</p>
+
+            <!-- Hidden audio -->
+            <audio id="ep-audio" src="{{ episode.playback_url }}" preload="none"></audio>
+
+            <!-- Visualizer -->
+            <div id="ep-visualizer" class="h-14 w-full max-w-sm bg-black/20 rounded-xl mb-8 flex items-end justify-between px-3 pb-2 pt-3 border border-white/5 opacity-40 transition-opacity duration-500">
+                {% for i in "123456789012345678901234" %}
+                <div class="flex-1 mx-px rounded-t-sm ep-bar transition-all duration-100" style="height:3px;background:linear-gradient(to top,#dc2626,#7c3aed);"></div>
+                {% endfor %}
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-6 mb-8">
+                <!-- Seek back 15s -->
+                <button onclick="seekEp(-15)" class="text-gray-400 hover:text-white transition-colors flex flex-col items-center gap-1">
+                    <i class="fas fa-undo text-lg"></i>
+                    <span class="text-[9px] uppercase tracking-wider">15s</span>
+                </button>
+
+                <!-- Big Play/Pause -->
+                <button onclick="togglePlay()" id="play-btn"
+                    class="w-20 h-20 rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-105 transition-all duration-300"
+                    style="background:linear-gradient(135deg,#dc2626,#7c3aed);box-shadow:0 0 35px rgba(220,38,38,0.5);">
+                    <i id="play-icon" class="fas fa-play text-2xl ml-1.5"></i>
+                </button>
+
+                <!-- Seek forward 30s -->
+                <button onclick="seekEp(30)" class="text-gray-400 hover:text-white transition-colors flex flex-col items-center gap-1">
+                    <i class="fas fa-redo text-lg"></i>
+                    <span class="text-[9px] uppercase tracking-wider">30s</span>
+                </button>
+            </div>
+
+            <!-- Status + time -->
+            <div class="flex flex-col items-center md:items-start gap-1 mb-8">
+                <span id="status-text" class="text-sm font-bold uppercase tracking-widest text-gray-400">Ready to Play</span>
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <span id="time-current">0:00</span>
+                    <div class="w-32 h-1 rounded-full bg-white/10 relative">
+                        <div id="progress-bar" class="h-full rounded-full transition-all" style="width:0%;background:linear-gradient(to right,#dc2626,#7c3aed);"></div>
+                    </div>
+                    <span id="time-total">{{ episode.duration_str }}</span>
+                </div>
+            </div>
+
+            <!-- Prev / Next navigation -->
+            <div class="flex items-center gap-4">
+                {% if prev_episode %}
+                <a href="{% url 'play_sunday_suspense' prev_episode.id %}"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition-all hover:scale-105"
+                    style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);">
+                    <i class="fas fa-chevron-left"></i>
+                    <span class="max-w-[80px] truncate">{{ prev_episode.title }}</span>
+                </a>
+                {% endif %}
+                {% if next_episode %}
+                <a href="{% url 'play_sunday_suspense' next_episode.id %}"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition-all hover:scale-105"
+                    style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);">
+                    <span class="max-w-[80px] truncate">{{ next_episode.title }}</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const audio = document.getElementById('ep-audio');
+const playIcon = document.getElementById('play-icon');
+const statusText = document.getElementById('status-text');
+const visualizer = document.getElementById('ep-visualizer');
+const bars = document.querySelectorAll('.ep-bar');
+const progressBar = document.getElementById('progress-bar');
+const timeCurrent = document.getElementById('time-current');
+
+let vizInterval;
+
+function fmtTime(s) {
+    s = Math.floor(s || 0);
+    const m = Math.floor(s / 60), sec = s % 60;
+    return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function setStatus(text, colorClass) {
+    statusText.textContent = text;
+    statusText.className = 'text-sm font-bold uppercase tracking-widest ' + colorClass;
+}
+
+function startViz() {
+    visualizer.classList.replace('opacity-40','opacity-100');
+    vizInterval = setInterval(() => {
+        bars.forEach(b => { b.style.height = (Math.random() * 100 + 4) + '%'; });
+    }, 110);
+}
+
+function stopViz() {
+    visualizer.classList.replace('opacity-100','opacity-40');
+    clearInterval(vizInterval);
+    bars.forEach(b => { b.style.height = '3px'; });
+}
+
+function togglePlay() {
+    if (audio.paused) {
+        setStatus('Connecting…', 'text-yellow-400');
+        audio.play()
+            .then(() => {
+                playIcon.className = 'fas fa-pause text-2xl';
+                setStatus('Now Playing', 'text-red-400');
+                startViz();
+            })
+            .catch(e => {
+                console.warn(e);
+                setStatus('Playback Failed', 'text-gray-500');
+            });
+    } else {
+        audio.pause();
+        playIcon.className = 'fas fa-play text-2xl ml-1.5';
+        setStatus('Paused', 'text-gray-400');
+        stopViz();
+    }
+}
+
+function seekEp(s) { audio.currentTime = Math.max(0, audio.currentTime + s); }
+
+audio.addEventListener('timeupdate', () => {
+    if (audio.duration) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = pct + '%';
+        timeCurrent.textContent = fmtTime(audio.currentTime);
+    }
+});
+
+audio.addEventListener('ended', () => {
+    playIcon.className = 'fas fa-play text-2xl ml-1.5';
+    setStatus('Finished', 'text-gray-500');
+    stopViz();
+    progressBar.style.width = '0%';
+});
+
+// Stop global bottom player so they don't overlap
+document.addEventListener('DOMContentLoaded', () => {
+    const globalAudio = document.getElementById('audio-player');
+    if (globalAudio && !globalAudio.paused) {
+        globalAudio.pause();
+        const btn = document.getElementById('player-play-btn');
+        if (btn) btn.querySelector('i').className = 'fas fa-play ml-1 text-lg';
+    }
+    // Auto-play after a short delay
+    setTimeout(() => { if (audio) togglePlay(); }, 600);
+});
+</script>
+{% endblock %}

@@ -49,4 +49,6 @@ urlpatterns =[
     path('sw.js', views.pwa_sw, name='pwa_sw'),
     path('manifest.json', views.pwa_manifest, name='pwa_manifest'),
     path('offline-library/', views.offline_songs, name='offline_songs'),
+    path('sunday-suspense/', views.sunday_suspense, name='sunday_suspense'),
+    path('sunday-suspense/<int:episode_id>/', views.play_sunday_suspense, name='play_sunday_suspense'),
 ]

@@ -16,7 +16,54 @@
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+
+        <!-- ── Sunday Suspense Featured Card (full-width) ── -->
+        <a href="{% url 'sunday_suspense' %}"
+            class="col-span-2 md:col-span-4 lg:col-span-5 relative rounded-3xl overflow-hidden group cursor-pointer flex items-center gap-6 p-6 md:p-8 transition-all duration-500 hover:-translate-y-1"
+            style="background:linear-gradient(135deg,rgba(127,0,0,0.55) 0%,rgba(60,0,80,0.55) 50%,rgba(11,15,25,0.85) 100%);border:1px solid rgba(220,38,38,0.2);box-shadow:0 8px 40px rgba(220,38,38,0.12);text-decoration:none;">
+
+            <!-- BG Glow on hover -->
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl" style="box-shadow:inset 0 0 0 1.5px rgba(220,38,38,0.45),0 0 60px rgba(220,38,38,0.15);"></div>
+
+            <!-- Animated bg blobs -->
+            <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full opacity-20 pointer-events-none" style="background:radial-gradient(circle,#dc2626,transparent 70%);filter:blur(50px);"></div>
+            <div class="absolute -left-10 -bottom-10 w-48 h-48 rounded-full opacity-15 pointer-events-none" style="background:radial-gradient(circle,#7c3aed,transparent 70%);filter:blur(60px);"></div>
+
+            <!-- Album Art -->
+            <div class="relative flex-shrink-0 w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden shadow-2xl" style="box-shadow:0 0 30px rgba(220,38,38,0.5);">
+                <img src="https://d3wo5wojvuv7l.cloudfront.net/t_square_limited_160/images.spreaker.com/original/3ba3b84590f744fd7857027f4de760f4.jpg"
+                    alt="Sunday Suspense" class="w-full h-full object-cover"
+                    onerror="this.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center text-4xl\' style=\'background:#1a0000;\'>👻</div>'">
+            </div>
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white" style="background:rgba(220,38,38,0.85);box-shadow:0 0 10px rgba(220,38,38,0.5);">
+                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>LIVE
+                    </span>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold text-orange-300 uppercase tracking-wider" style="background:rgba(234,88,12,0.15);border:1px solid rgba(234,88,12,0.25);">
+                        📻 Radio Mirchi 98.3 FM
+                    </span>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold text-purple-300 uppercase tracking-wider" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.25);">
+                        Bengali Horror
+                    </span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight mb-1 group-hover:text-red-300 transition-colors duration-300" style="text-shadow:0 0 30px rgba(220,38,38,0.4);">
+                    Sunday Suspense
+                </h2>
+                <p class="text-gray-400 text-sm font-medium truncate">সানডে সাসপেন্স &nbsp;·&nbsp; 300+ episodes &nbsp;·&nbsp; Every Sunday 9 PM</p>
+            </div>
+
+            <!-- CTA Arrow -->
+            <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white transition-all duration-300 group-hover:scale-110" style="background:linear-gradient(135deg,#dc2626,#7c3aed);box-shadow:0 0 20px rgba(220,38,38,0.4);">
+                <i class="fas fa-headphones text-base"></i>
+            </div>
+        </a>
+        <!-- ── End Sunday Suspense card ── -->
+
         {% for station in stations %}
+
         <div class="bg-[#111827]/40 backdrop-blur-3xl rounded-3xl p-4 relative overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.3)] group hover:shadow-[0_0_40px_rgba(59,226,200,0.15)] transition-all duration-500 border border-white/5 hover:border-[#3be2c8]/30 cursor-pointer flex flex-col justify-between hover:-translate-y-2 group"
             onclick="window.location.href='{% url 'play_radio' station.id %}'">
 

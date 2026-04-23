@@ -1004,6 +1004,42 @@ def play_radio(request, station_uuid):
     }
     return render(request, 'play_radio.html', context)
 
+def sunday_suspense(request):
+    """Dedicated Sunday Suspense × Radio Mirchi 98.3 FM page.
+    Episodes are served from the official Spreaker API (no auth required).
+    Radio Mirchi live stream is fetched from radio-browser.info.
+    """
+    mirchi_station = radio_api.get_mirchi_station()
+    episodes = radio_api.get_sunday_suspense_episodes(limit=48)
+    context = {
+        'mirchi_station': mirchi_station,
+        'episodes': episodes,
+        'total_episodes': len(episodes),
+    }
+    return render(request, 'sunday_suspense.html', context)
+
+
+def play_sunday_suspense(request, episode_id):
+    """Full-screen immersive player for a single Sunday Suspense episode.
+    Fetches episode data from Spreaker API by episode_id.
+    """
+    episode = radio_api.get_episode_by_id(episode_id)
+    if not episode:
+        return render(request, 'play_sunday_suspense.html', {'error': 'Episode could not be loaded.'})
+
+    # Fetch surrounding episodes for next/prev navigation
+    all_episodes = radio_api.get_sunday_suspense_episodes(limit=48)
+    current_index = next((i for i, e in enumerate(all_episodes) if e['id'] == episode_id), None)
+    prev_episode = all_episodes[current_index + 1] if current_index is not None and current_index + 1 < len(all_episodes) else None
+    next_episode = all_episodes[current_index - 1] if current_index is not None and current_index > 0 else None
+
+    context = {
+        'episode': episode,
+        'prev_episode': prev_episode,
+        'next_episode': next_episode,
+    }
+    return render(request, 'play_sunday_suspense.html', context)
+
 
 def album_detail(request, album_id):
     """View to show the details of an album and its tracklist."""

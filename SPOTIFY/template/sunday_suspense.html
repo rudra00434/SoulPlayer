@@ -1,0 +1,225 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen pb-32" style="background: linear-gradient(160deg, #0a0005 0%, #0f0010 40%, #0b0f19 100%);">
+
+    <!-- ── Ambient BG particles ── -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full opacity-10" style="background:radial-gradient(circle,#dc2626,transparent 70%);filter:blur(80px);animation:pulse 4s ease-in-out infinite;"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full opacity-8" style="background:radial-gradient(circle,#7c3aed,transparent 70%);filter:blur(100px);animation:pulse 6s ease-in-out infinite 2s;"></div>
+    </div>
+
+    <div class="relative z-10 px-6 md:px-10 pt-6">
+
+        <!-- ── HERO ── -->
+        <div class="relative rounded-3xl overflow-hidden mb-10 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8"
+            style="background:linear-gradient(135deg,rgba(127,0,0,0.5) 0%,rgba(30,0,50,0.7) 50%,rgba(11,15,25,0.9) 100%);border:1px solid rgba(220,38,38,0.2);box-shadow:0 0 80px rgba(220,38,38,0.15);">
+
+            <!-- Album Art -->
+            <div class="relative flex-shrink-0 w-44 h-44 md:w-56 md:h-56 rounded-2xl overflow-hidden shadow-2xl" style="box-shadow:0 0 50px rgba(220,38,38,0.4);">
+                <img src="https://d3wo5wojvuv7l.cloudfront.net/t_square_limited_160/images.spreaker.com/original/3ba3b84590f744fd7857027f4de760f4.jpg"
+                    alt="Sunday Suspense" class="w-full h-full object-cover"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><rect fill=\'%23300\' width=\'100\' height=\'100\'/><text y=\'55\' x=\'50\' text-anchor=\'middle\' font-size=\'40\'>👻</text></svg>'">
+                <div class="absolute inset-0" style="background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.6));"></div>
+            </div>
+
+            <!-- Info -->
+            <div class="flex-1 text-center md:text-left">
+                <div class="flex items-center gap-2 justify-center md:justify-start mb-3">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-1.5" style="background:rgba(220,38,38,0.9);box-shadow:0 0 15px rgba(220,38,38,0.6);">
+                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block"></span>LIVE NOW
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-orange-300" style="background:rgba(234,88,12,0.2);border:1px solid rgba(234,88,12,0.3);">
+                        📻 Radio Mirchi 98.3 FM
+                    </span>
+                </div>
+                <h1 class="text-4xl md:text-6xl font-black text-white mb-1 tracking-tight drop-shadow-lg" style="font-family:'Georgia',serif;text-shadow:0 0 40px rgba(220,38,38,0.5);">
+                    Sunday Suspense
+                </h1>
+                <p class="text-gray-400 font-medium mb-1">সানডে সাসপেন্স — Mirchi Bangla</p>
+                <p class="text-sm text-gray-500 mb-6">{{ total_episodes }} episodes &nbsp;·&nbsp; Every Sunday 9 PM &nbsp;·&nbsp; Bengali Horror &amp; Thriller</p>
+
+                <!-- Mirchi Live Button -->
+                {% if mirchi_station %}
+                <div class="flex items-center gap-4 justify-center md:justify-start">
+                    <button onclick="toggleMirchi()" id="mirchi-btn"
+                        class="flex items-center gap-3 px-6 py-3 rounded-full font-black text-sm uppercase tracking-wider text-white transition-all duration-300 hover:scale-105"
+                        style="background:linear-gradient(135deg,#dc2626,#7c3aed);box-shadow:0 0 25px rgba(220,38,38,0.5);">
+                        <i class="fas fa-broadcast-tower" id="mirchi-btn-icon"></i>
+                        <span id="mirchi-btn-text">Stream Live Radio</span>
+                    </button>
+                    <span class="text-xs text-gray-500">{{ mirchi_station.name }}</span>
+                    <audio id="mirchi-player" src="{{ mirchi_station.stream_url }}" preload="none"></audio>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Back button -->
+            <a href="{% url 'radio_stations' %}" class="absolute top-5 left-5 w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-all hover:scale-110" style="background:rgba(255,255,255,0.06);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);">
+                <i class="fas fa-arrow-left text-sm"></i>
+            </a>
+
+            <!-- Mirchi Live visualizer bar -->
+            <div id="mirchi-visualizer" class="absolute bottom-0 left-0 right-0 h-8 flex items-end gap-px px-4 opacity-0 transition-opacity duration-500 pointer-events-none">
+                {% for i in "123456789012345678901234567890" %}
+                <div class="flex-1 bg-red-500/60 rounded-t-sm mirchi-bar" style="height:3px;"></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ── SEARCH + FILTER BAR ── -->
+        <div class="flex items-center gap-3 mb-6">
+            <div class="relative flex-1 max-w-md">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none"></i>
+                <input type="text" id="ep-search" placeholder="Search episodes…"
+                    oninput="filterEpisodes(this.value)"
+                    class="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-white placeholder-gray-500 outline-none focus:ring-2 transition-all"
+                    style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);focus:border-red-500/50;">
+            </div>
+            <span id="ep-count" class="text-xs text-gray-500 whitespace-nowrap">{{ total_episodes }} episodes</span>
+        </div>
+
+        <!-- ── EPISODE GRID ── -->
+        {% if episodes %}
+        <div id="episodes-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for ep in episodes %}
+        <div class="episode-card group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 flex flex-col"
+                data-title="{{ ep.title|lower }}"
+                onclick="window.location.href='{% url 'play_sunday_suspense' ep.id %}'"
+                style="background:linear-gradient(160deg,rgba(30,5,5,0.8),rgba(11,15,25,0.9));border:1px solid rgba(255,255,255,0.06);box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+
+                <!-- Hover glow -->
+                <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style="box-shadow:inset 0 0 0 1px rgba(220,38,38,0.35);"></div>
+
+                <!-- Art -->
+                <div class="relative aspect-square overflow-hidden bg-gradient-to-br from-red-950 to-black flex items-center justify-center">
+                    {% if ep.image_url %}
+                    <!-- Blurred backdrop -->
+                    <img src="{{ ep.image_url }}" alt="" class="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-30 pointer-events-none" onerror="this.style.display='none'">
+                    <!-- Main image -->
+                    <img src="{{ ep.image_url }}" alt="{{ ep.title }}"
+                        class="relative z-10 w-full h-full object-contain p-2 drop-shadow-2xl group-hover:scale-105 transition-transform duration-500"
+                        onerror="this.style.display='none';this.closest('.relative').querySelector('.ep-fallback').classList.remove('hidden')">
+                    {% endif %}
+
+                    <!-- Fallback -->
+                    <div class="ep-fallback {% if ep.image_url %}hidden{% endif %} absolute inset-0 z-10 flex items-center justify-center">
+                        <i class="fas fa-ghost text-4xl" style="color:rgba(220,38,38,0.7);filter:drop-shadow(0 0 15px rgba(220,38,38,0.5));"></i>
+                    </div>
+
+                    <!-- Play overlay -->
+                    <div class="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        style="background:linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.3) 60%,transparent 100%);">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center shadow-xl translate-y-3 group-hover:translate-y-0 transition-transform duration-300"
+                            style="background:linear-gradient(135deg,#dc2626,#7c3aed);">
+                            <i class="fas fa-play text-white text-sm ml-0.5"></i>
+                        </div>
+                    </div>
+
+                    <!-- Date badge -->
+                    <div class="absolute top-2 left-2 z-30 px-2 py-0.5 rounded-md text-[9px] font-bold text-gray-300" style="background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);">
+                        {{ ep.published_at }}
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="p-2.5 flex flex-col gap-1 mt-auto">
+                    <h3 class="text-[12px] font-bold text-gray-100 line-clamp-2 leading-snug group-hover:text-red-400 transition-colors duration-300">{{ ep.title }}</h3>
+                    <span class="text-[10px] text-gray-500 flex items-center gap-1"><i class="fas fa-clock text-[8px]"></i>{{ ep.duration_str }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- No results -->
+        <div id="no-results" class="hidden py-20 text-center">
+            <i class="fas fa-ghost text-5xl mb-4" style="color:rgba(220,38,38,0.4);"></i>
+            <p class="text-gray-400 font-bold">No episodes found</p>
+            <p class="text-gray-600 text-sm mt-1">Try a different search term</p>
+        </div>
+
+        {% else %}
+        <div class="py-24 text-center">
+            <i class="fas fa-ghost text-6xl mb-6" style="color:rgba(220,38,38,0.3);"></i>
+            <h2 class="text-2xl font-bold text-gray-400 mb-2">Could not load episodes</h2>
+            <p class="text-gray-600">The Spreaker API may be temporarily unavailable. Try again later.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.episode-card.playing { border-color: rgba(220,38,38,0.6) !important; box-shadow: 0 0 25px rgba(220,38,38,0.3) !important; }
+#ep-search:focus { border-color: rgba(220,38,38,0.5); box-shadow: 0 0 0 2px rgba(220,38,38,0.15); }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+
+<script>
+// ── Mirchi Radio Player ──
+const mirchiPlayer = document.getElementById('mirchi-player');
+const mirchiBtnIcon = document.getElementById('mirchi-btn-icon');
+const mirchiBtnText = document.getElementById('mirchi-btn-text');
+const mirchiViz = document.getElementById('mirchi-visualizer');
+const mirchiBars = document.querySelectorAll('.mirchi-bar');
+let mirchiVizInterval;
+
+function updateMirchiUI(playing) {
+    if (!mirchiBtnIcon || !mirchiBtnText) return;
+    if (playing) {
+        mirchiBtnIcon.className = 'fas fa-stop';
+        mirchiBtnText.textContent = 'Stop Radio';
+        if (mirchiViz) mirchiViz.classList.replace('opacity-0', 'opacity-100');
+        mirchiVizInterval = setInterval(() => {
+            mirchiBars.forEach(b => { b.style.height = Math.floor(Math.random() * 100) + '%'; });
+        }, 120);
+    } else {
+        mirchiBtnIcon.className = 'fas fa-broadcast-tower';
+        mirchiBtnText.textContent = 'Stream Live Radio';
+        if (mirchiViz && mirchiViz.classList.contains('opacity-100')) mirchiViz.classList.replace('opacity-100', 'opacity-0');
+        clearInterval(mirchiVizInterval);
+        mirchiBars.forEach(b => { b.style.height = '3px'; });
+    }
+}
+
+function toggleMirchi() {
+    if (!mirchiPlayer) return; // No Mirchi station available — safe exit
+    if (mirchiPlayer.paused) {
+        if (mirchiBtnText) mirchiBtnText.textContent = 'Connecting…';
+        mirchiPlayer.play().then(() => updateMirchiUI(true)).catch(e => {
+            console.warn('[Mirchi]', e);
+            if (mirchiBtnText) mirchiBtnText.textContent = 'Stream Offline';
+        });
+    } else {
+        mirchiPlayer.pause();
+        updateMirchiUI(false);
+    }
+}
+
+// ── Client-side Episode Search/Filter ──
+function filterEpisodes(query) {
+    const q = query.toLowerCase().trim();
+    const cards = document.querySelectorAll('.episode-card');
+    const counter = document.getElementById('ep-count');
+    const noRes = document.getElementById('no-results');
+    let visible = 0;
+    cards.forEach(card => {
+        const match = !q || card.dataset.title.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    if (counter) counter.textContent = visible + ' episode' + (visible !== 1 ? 's' : '');
+    if (noRes) noRes.classList.toggle('hidden', visible > 0);
+}
+
+// Stop global bottom player on page load so audio doesn’t overlap
+document.addEventListener('DOMContentLoaded', () => {
+    const globalAudio = document.getElementById('audio-player');
+    if (globalAudio && !globalAudio.paused) {
+        globalAudio.pause();
+        const btn = document.getElementById('player-play-btn');
+        if (btn) btn.querySelector('i').className = 'fas fa-play ml-1 text-lg';
+    }
+});
+</script>
+{% endblock %}
