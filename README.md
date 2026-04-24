@@ -1,7 +1,7 @@
 <div align="center">
   <img width="1918" height="871" alt="SoulPlayer" src="https://github.com/user-attachments/assets/f013e054-ed20-460b-b105-98cb669c6d26" />
 </div>
-"
+
 
 <h1 align="center">SoulPlayer</h1>
 
@@ -44,9 +44,26 @@ Beyond standard playback functionality, the platform differentiates itself with 
 ---
 <img width="1919" height="870" alt="image" src="https://github.com/user-attachments/assets/9500a341-fd55-4299-85ba-4fdf9fc1c580" />
 
+
 <img width="1919" height="873" alt="image" src="https://github.com/user-attachments/assets/df77e833-6aec-4c04-ac38-24c175b91bdf" />
 
+
+
+<img width="1600" height="726" alt="WhatsApp Image 2026-04-25 at 1 44 52 AM" src="https://github.com/user-attachments/assets/6b611861-a3c2-4f9e-9040-30d0b23ecf45" />
+
 ---
+<img width="1535" height="759" alt="WhatsApp Image 2026-04-24 at 12 45 50 AM" src="https://github.com/user-attachments/assets/ee87c542-c123-44bd-909d-3e8565a65423" />
+
+
+---
+<img width="1919" height="867" alt="image" src="https://github.com/user-attachments/assets/5393ded7-61ac-457b-a7b7-8353a79eef79" />
+
+---
+
+<img width="1911" height="868" alt="image" src="https://github.com/user-attachments/assets/8f8b119e-a8a4-470c-9269-3b3db6402717" />
+
+---
+
 <img width="1912" height="874" alt="image" src="https://github.com/user-attachments/assets/a9452241-50a0-447a-bfd9-ae7da7ca963f" />
 
 ---
