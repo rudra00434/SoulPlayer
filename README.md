@@ -257,6 +257,10 @@ SoulPlayer escapes the flat 2D player limitation with a full 3D interactive WebG
 * **Cinematic Genre Themes:** 9 custom environmental themes (Cosmic, Romance, Pop, Rock, Hip-Hop, Indie, EDM, Classical, Lo-Fi) that alter sky gradients, lighting colors, fog densities, and waveform aesthetics.
 * **Auto Genre Detection:** The engine parses metadata keywords ("metal", "dj", "acoustic", etc.) upon playing a track and automatically switches the 3D environment's theme to match the vibe.
 * **Live In-World JioSaavn Search:** Fully functional in-world floating UI that lets users search the entire music catalog and enqueue tracks without terminating the 3D WebGL context.
+
+### 10. Offline-First Music Experience with JavaScript Service Worker–Powered Browser Side Caching
+Browser-side caching and offline functionality using JavaScript Service Workers significantly enhance the performance and resilience of a web application. A Service Worker acts as a background proxy between the browser and the network, intercepting requests and caching essential assets such as HTML, CSS, JavaScript files, and media content like songs. This enables faster load times by serving cached resources instantly, reducing dependency on network latency. Additionally, it allows users to download songs and store them locally within the browser cache, making them accessible even when the user is offline or experiencing poor connectivity. By implementing strategies like Cache First or Network Falling Back to Cache, developers can ensure a seamless user experience where music playback continues uninterrupted regardless of network conditions, effectively bringing native app-like reliability to web applications.
+
 ---
 
 ## 🛠️ Tech Stack
