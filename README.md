@@ -270,7 +270,7 @@ Browser-side caching and offline functionality using JavaScript Service Workers 
 *   **ASGI Server:** Daphne (for WebSocket + HTTP support)
 *   **WebSockets:** Django Channels with Redis channel layer
 *   **Database:** SQLite (Development & Free Tier Production ready)
-*   **Caching:** Redis (Production) / In-memory LocMemCache (Development)
+*   **Caching:** Redis (Production) & In-memory LocMemCache (Development)
 *   **NLP Engine:** spaCy (`en_core_web_sm`)
 *   **Machine Learning:** Pandas, Scikit-Learn (TF-IDF Vectorization, Cosine Similarity)
 *   **External APIs:** JioSaavn API (unofficial, no key needed), YouTube Data API v3
@@ -279,8 +279,8 @@ Browser-side caching and offline functionality using JavaScript Service Workers 
 ### Frontend
 *   **Templating:** Django Template Engine
 *   **Styling:** Tailwind CSS (via CDN)
-*   **Interactivity:** Vanilla JS (ES6) with WebSocket API for real-time features
-*   **3D / AR / VR:** Three.js (WebGL rendering engine and audio analysis)
+*   **Interactivity:** Vanilla JS (ES6) with WebSocket API & Service workers for real-time features
+*   **3D / AR / VR:** Three.js (WebGL rendering engine) , WebXR , A-frame
 *   **Icons:** FontAwesome 6
 *   **Typography:** Google Fonts (Outfit)
 
