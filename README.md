@@ -27,7 +27,18 @@ SoulPlayer is a modern, high-performance web-based music streaming platform desi
 Beyond standard playback functionality, the platform differentiates itself with advanced features like **Natural Language Voice Search (NLP)**, **Real-Time Listening Rooms (Live Jams)**, **JioSaavn API Integration** for unlimited music streaming, and **Dynamic Background Play Tracking**.
 
 ---
-## 🔥🔥 Newly Added Feature
+## 🔥🔥 Newly Added Features
+### 🤝 Collaborative Playlists with Real-Time WebSocket Updates
+Invite friends to collaborate on your playlists! Owners can generate secure invite links via the **Web Share API** (WhatsApp, Telegram, Instagram, etc.) or a premium glassmorphism fallback modal. Collaborators can add songs in real-time — powered by a dedicated `PlaylistConsumer` WebSocket that broadcasts live song additions, collaborator join/leave events, and presence indicators with animated toast notifications. No page refresh needed.
+
+**Key Highlights:**
+- 🔗 **Native Sharing** — Web Share API for mobile, glassmorphism modal with WhatsApp/Telegram/X/Email for desktop
+- 👥 **Overlapping Avatars** — Color-coded collaborator initials with owner crown badge
+- ⚡ **Real-Time Updates** — Live song row injection + toast notifications via Django Channels
+- 🛡️ **Permission Scoping** — Collaborators can add songs; only owners can delete/remove
+- 🏷️ **Visual Indicators** — Shimmer-animated "Collaborative" badges on playlist cards with "Shared by @user" labels
+
+---
 ### 🎯 New Premium Feature real time AR-VR experience 
 <img width="1214" height="898" alt="image" src="https://github.com/user-attachments/assets/da2ca63e-5a4d-4c37-8a07-ccb566e912c1" />
 
@@ -121,6 +132,7 @@ graph TB
         subgraph WS["WebSocket Layer"]
             WSRouter["WebSocket Router (routing.py)"]
             Consumer["ListeningRoomConsumer"]
+            PlaylistWS["PlaylistConsumer"]
         end
 
         subgraph Services["Service Layer"]
@@ -165,8 +177,11 @@ graph TB
 
     %% WebSocket Flow
     WSRouter --> Consumer
+    WSRouter --> PlaylistWS
     Consumer -->|"Group broadcast"| Redis
+    PlaylistWS -->|"Collab events"| Redis
     Redis -->|"Real-time events"| Consumer
+    Redis -->|"Playlist updates"| PlaylistWS
 
     %% Service Layer
     JioSaavn -->|"Search, Trending, Details"| JioAPI
@@ -189,7 +204,7 @@ graph TB
     classDef dataNode fill:#0c0a09,stroke:#facc15,color:#fff
 
     class UI,XR,JS,Audio,WSClient,SpeechAPI clientNode
-    class URLRouter,Views,NLP,CtxProc,WSRouter,Consumer,JioSaavn,ML,CacheLayer serverNode
+    class URLRouter,Views,NLP,CtxProc,WSRouter,Consumer,PlaylistWS,JioSaavn,ML,CacheLayer serverNode
     class JioAPI,YTApi externalNode
     class SQLite,Redis,Song,Artist,Playlist,UserProfile,RecommendationModel,ListeningRoom dataNode
 ```
@@ -260,6 +275,14 @@ SoulPlayer escapes the flat 2D player limitation with a full 3D interactive WebG
 
 ### 10. Offline-First Music Experience with JavaScript Service Worker–Powered Browser Side Caching
 Browser-side caching and offline functionality using JavaScript Service Workers significantly enhance the performance and resilience of a web application. A Service Worker acts as a background proxy between the browser and the network, intercepting requests and caching essential assets such as HTML, CSS, JavaScript files, and media content like songs. This enables faster load times by serving cached resources instantly, reducing dependency on network latency. Additionally, it allows users to download songs and store them locally within the browser cache, making them accessible even when the user is offline or experiencing poor connectivity. By implementing strategies like Cache First or Network Falling Back to Cache, developers can ensure a seamless user experience where music playback continues uninterrupted regardless of network conditions, effectively bringing native app-like reliability to web applications.
+
+### 11. 🤝 Collaborative Playlists (Real-Time)
+SoulPlayer enables users to collaborate on playlists in real-time, powered by a dedicated `PlaylistConsumer` WebSocket consumer.
+* **Invite System:** Playlist owners generate unique, secure invite tokens (`secrets.token_urlsafe`). Invite links are shared via the native **Web Share API** on mobile (triggering WhatsApp, Instagram, Messages, etc.) or a premium glassmorphism modal on desktop with direct share buttons for WhatsApp, Telegram, X/Twitter, and Email.
+* **WebSocket Architecture:** A dedicated `PlaylistConsumer` handles four event types: `song_added`, `collaborator_joined`, `collaborator_removed`, and `presence_update`. Views broadcast mutations via `channel_layer.group_send()` → Redis → WebSocket → Browser, keeping permissions centralized in HTTP views.
+* **Real-Time UI Updates:** When a collaborator adds a song, a new row animates into the song table instantly (no page refresh). Animated toast notifications slide in from the bottom-right for all events: song additions, collaborator joins, and presence indicators.
+* **Visual Indicators:** Collaborative playlists display a shimmer-animated "Collaborative" badge, overlapping color-coded avatar circles (owner with crown badge), and collaborator count. On the library page, shared playlists show a "Shared by @username" label.
+* **Permission Model:** Collaborators can add songs (both local and JioSaavn). Only the playlist owner can remove songs, remove collaborators (via ✕ button on avatars), and generate invite links.
 
 ---
 
@@ -387,14 +410,14 @@ SoulPlayer/
 │   ├── music/                     # Main Django app
 │   │   ├── ml_Pipeline/           # Machine learning engines (Hybrid, Content-Based, Collaborative)
 │   │   ├── management/commands/   # Custom django-admin commands (train_recommendations)
-│   │   ├── models.py              # Song, Artist, Playlist, UserProfile, Recommendation, ListeningRoom
+│   │   ├── models.py              # Song, Artist, Playlist (+ collaborators), UserProfile, Recommendation, ListeningRoom
 │   │   ├── views.py               # All view controllers
 │   │   ├── urls.py                # URL routing
 │   │   ├── forms.py               # Django ModelForms with Tailwind styling
 │   │   ├── jiosavan.py            # JioSaavn API service module
 |   |   ├── radio_api.py           # setting up radio browser api for fetching radio stations
-│   │   ├── consumers.py           # WebSocket consumer for Listening Rooms
-│   │   ├── routing.py             # WebSocket URL routing
+│   │   ├── consumers.py           # WebSocket consumers (ListeningRoom + Playlist collaboration)
+│   │   ├── routing.py             # WebSocket URL routing (rooms + playlists)
 │   │   ├── context_processors.py  # Sidebar data for all templates
 │   │   └── admin.py               # Django admin registration
 │   ├── mysite/                    # Django project config
@@ -413,6 +436,8 @@ SoulPlayer/
 │   │   ├── profile.html           # User dashboard
 |   |   ├── Offline_songs.html    # Downloaded Offline Songs
 |   |   ├── radio_stations.html    # 40K+ rendered Radio stations Hub
+│   │   ├── playlist_detail.html   # Collaborative playlist with WebSocket + share modal
+│   │   ├── playlists.html         # Library page with collaborative badges
 │   │   └── ...                    # Additional other templates
 │   ├── static/                    # Static assets
 │   │   └── xr_backgrounds/        # Cinematic 3D environments for immersive player
