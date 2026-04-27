@@ -82,6 +82,20 @@ Invite friends to collaborate on your playlists! Owners can generate secure invi
 
  ---
 
+ 
+
+ ## Real Time Collaborative Playlist (Newly Added feature)
+
+<img width="1919" height="870" alt="image" src="https://github.com/user-attachments/assets/5dc6a6b5-873d-4361-aff5-065904dddcfc" />
+ 
+ ---
+<img width="1903" height="870" alt="image" src="https://github.com/user-attachments/assets/728370b4-dbde-4e36-864e-6c2acbb50ced" />
+  
+  ---
+<img width="1640" height="776" alt="image" src="https://github.com/user-attachments/assets/d600cbe2-3f47-4595-9bf5-466251b5a209" />
+  
+---
+
 ## 🏗️ Architecture & System Design
 
 SoulPlayer follows a classic **Model-View-Template (MVT)** architecture utilized by Django, augmented with **ASGI (Daphne)** for asynchronous operations, **Django Channels** for real-time WebSocket communication, and vanilla JavaScript for asynchronous frontend operations (AJAX) to maintain a seamless, single-page-application feel during media playback.
