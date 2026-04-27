@@ -90,3 +90,47 @@ class ListeningRoomConsumer(AsyncWebsocketConsumer):
             'username': event['username'],
             'message': event['message'],
         }))
+        
+class PlaylistConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.playlist_id = self.scope['url_route']['kwargs']['playlist_id']
+        self.group_name = f'playlist_{self.playlist_id}'
+        self.user = self.scope['user']
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        if self.user.is_authenticated:
+            await self.channel_layer.group_send(
+                self.group_name,
+                {'type': 'presence_update', 'username': self.user.username, 'action': 'viewing'}
+            )
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'user') and self.user.is_authenticated:
+            await self.channel_layer.group_send(
+                self.group_name,
+                {'type': 'presence_update', 'username': self.user.username, 'action': 'left'}
+            )
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def song_added(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'song_added', 'song_id': event['song_id'],
+            'song_title': event['song_title'], 'song_artist': event['song_artist'],
+            'song_image': event['song_image'], 'song_duration': event['song_duration'],
+            'added_by': event['added_by'],
+        }))
+
+    async def collaborator_joined(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'collaborator_joined', 'username': event['username'], 'user_id': event['user_id'],
+        }))
+
+    async def collaborator_removed(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'collaborator_removed', 'user_id': event['user_id'],
+        }))
+
+    async def presence_update(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'presence', 'username': event['username'], 'action': event['action'],
+        }))

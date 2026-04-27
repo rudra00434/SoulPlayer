@@ -51,4 +51,8 @@ urlpatterns =[
     path('offline-library/', views.offline_songs, name='offline_songs'),
     path('sunday-suspense/', views.sunday_suspense, name='sunday_suspense'),
     path('sunday-suspense/<int:episode_id>/', views.play_sunday_suspense, name='play_sunday_suspense'),
+    path('playlist/<int:pk>/invite/', views.generate_playlist_invite, name='generate_playlist_invite'),
+    path('playlist/invite/<str:token>/', views.accept_playlist_invite, name='accept_playlist_invite'),
+    path('playlist/<int:pk>/remove_collaborator/<int:user_id>/', views.remove_collaborator, name='remove_collaborator'),
+
 ]

@@ -37,6 +37,8 @@ class Playlist(models.Model):
     name=models.CharField(max_length=200)
     artists=models.ManyToManyField(Artist,related_name='playlists',blank=True)
     songs=models.ManyToManyField(Song,related_name='playlists',blank=True)
+    collaborators= models.ManyToManyField(User,related_name='collaborative_playlists',blank=True)
+    invite_token=models.CharField(max_length=65,unique=True,null=True,blank=True)
 
     def __str__(self):
         return self.name

@@ -19,6 +19,9 @@ from django.conf import settings
 from .models import UserProfile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+import secrets
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from . import jiosavan
 from .jiosavan import get_trending_today, get_artist_songs, search_albums, get_album_details
 # Load the spaCy model
@@ -334,21 +337,31 @@ def create_playlist(request):
 
 @login_required(login_url='user_login')
 def playlists(request):
-    playlists=Playlist.objects.filter(user=request.user)
+    playlists=Playlist.objects.filter(Q(user=request.user) | Q(collaborators=request.user)).distinct()
     context={"playlists":playlists}
     return render(request,'playlists.html',context)
 
 def playlist_detail(request,pk):
     playlist=get_object_or_404(Playlist,id=pk)
     songs=playlist.songs.all()
+    is_owner = request.user.is_authenticated and playlist.user == request.user
+    is_collaborator = request.user.is_authenticated and playlist.collaborators.filter(id=request.user.id).exists()
     context={
              "playlist":playlist,
-             "songs":songs
+             "songs":songs,
+             "is_owner":is_owner,
+             "is_collaborator":is_collaborator,
+             "collaborator_list":playlist.collaborators.all(),
              }
     return render(request,'playlist_detail.html',context)
 
 def add_to_playlist(request,pk):
     playlist=get_object_or_404(Playlist,id=pk)
+    if request.user.is_authenticated:
+        is_owner = playlist.user == request.user
+        is_collab=playlist.collaborators.filter(id=request.user.id).exists()
+        if not (is_owner or is_collab):
+            return redirect('playlists')
     
     if request.method == 'POST':
         selected_song_ids = request.POST.getlist('selected_songs')
@@ -357,6 +370,21 @@ def add_to_playlist(request,pk):
             songs_to_add = Song.objects.filter(id__in=selected_song_ids)
             # Add them to the ManyToMany field (avoids duplicates automatically)
             playlist.songs.add(*songs_to_add)
+            
+            channel_layer=get_channel_layer()
+            for song in songs_to_add:
+                async_to_sync(channel_layer.group_send)(
+                    f'playlist_{pk}',
+                 {
+                    'type' : 'song_added',
+                    'song_id':song.id,
+                    'song_title':song.title,
+                    'song_artist':song.artist,
+                    'song_image':song.remote_image_url or '',
+                    'song_duration':song.duration,
+                    'added_by':request.user.username,
+                 }
+                )
         return redirect('playlist_detail', pk=playlist.id)
 
     songs=Song.objects.all()
@@ -773,8 +801,12 @@ def add_jiosaavn_to_playlist(request):
         
         if not song_id or not playlist_id:
             return JsonResponse({'status': 'error', 'message': 'Missing data'}, status=400)
-            
-        playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
+        
+        playlist = get_object_or_404(Playlist, id=playlist_id)
+        
+        # Verify ownership or collaboration
+        if playlist.user != request.user and not playlist.collaborators.filter(id=request.user.id).exists():
+            return JsonResponse({'status': 'error', 'message': 'Not authorized'}, status=403)
         
         # Check if song already exists in local DB
         song = Song.objects.filter(jiosaavn_id=song_id).first()
@@ -797,9 +829,26 @@ def add_jiosaavn_to_playlist(request):
         
         if song:
             playlist.songs.add(song)
+            
+            # Broadcast via WebSocket
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f'playlist_{playlist_id}',
+                {
+                    'type': 'song_added',
+                    'song_id': song.id,
+                    'song_title': song.title,
+                    'song_artist': song.artist,
+                    'song_image': song.remote_image_url or '',
+                    'song_duration': song.duration,
+                    'added_by': request.user.username,
+                }
+            )
+            
             return JsonResponse({'status': 'success', 'message': f'"{song.title}" added to {playlist.name}'})
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
 
 def about(request):
     return render(request, 'about.html')
@@ -1063,3 +1112,39 @@ def pwa_sw(request):
     """Serve the sw.js from root."""
     path = os.path.join(settings.BASE_DIR, 'sw.js')
     return FileResponse(open(path, 'rb'), content_type='application/javascript')
+
+@login_required(login_url='user_login')
+@csrf_exempt
+def generate_playlist_invite(request, pk):
+    playlist = get_object_or_404(Playlist, id=pk, user=request.user)
+    if not playlist.invite_token:
+        playlist.invite_token = secrets.token_urlsafe(32)
+        playlist.save()
+    invite_url = request.build_absolute_uri(reverse('accept_playlist_invite', args=[playlist.invite_token]))
+    return JsonResponse({'status': 'success', 'invite_url': invite_url, 'token': playlist.invite_token})
+
+
+@login_required(login_url='user_login')
+def accept_playlist_invite(request, token):
+    playlist = get_object_or_404(Playlist, invite_token=token)
+    if playlist.user != request.user:
+        playlist.collaborators.add(request.user)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'playlist_{playlist.id}',
+            {'type': 'collaborator_joined', 'username': request.user.username, 'user_id': request.user.id}
+        )
+    return redirect('playlist_detail', pk=playlist.id)
+
+
+@login_required(login_url='user_login')
+@csrf_exempt
+def remove_collaborator(request, pk, user_id):
+    playlist = get_object_or_404(Playlist, id=pk, user=request.user)
+    playlist.collaborators.remove(user_id)
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f'playlist_{pk}',
+        {'type': 'collaborator_removed', 'user_id': user_id}
+    )
+    return JsonResponse({'status': 'success'})

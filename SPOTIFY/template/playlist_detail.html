@@ -1,35 +1,60 @@
 {% extends 'index.html' %}
 
-
-
 {% block content %}
-<div class="px-10 pb-32">
+<div class="px-4 sm:px-6 md:px-10 pb-32">
 
     <!-- Playlist Header -->
-    <div class="flex items-end gap-8 mb-10 mt-4 group">
+    <div class="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-8 mb-10 mt-4 group">
         <!-- Playlist Cover Art -->
-        <div
-            class="w-56 h-56 rounded-2xl shadow-2xl relative overflow-hidden bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center group-hover:shadow-[0_20px_50px_rgba(59,226,200,0.2)] transition-all duration-500">
+        <div class="w-40 h-40 sm:w-56 sm:h-56 rounded-2xl shadow-2xl relative overflow-hidden bg-gradient-to-br from-indigo-900 to-slate-800 flex items-center justify-center group-hover:shadow-[0_20px_50px_rgba(59,226,200,0.2)] transition-all duration-500 flex-shrink-0 mx-auto sm:mx-0">
             {% if songs and songs.first.image %}
-            <img src="{{ songs.first.image.url }}"
-                class="w-full h-full object-cover opacity-80 mix-blend-overlay">
+            <img src="{{ songs.first.image.url }}" class="w-full h-full object-cover opacity-80 mix-blend-overlay">
             <i class="fas fa-music text-5xl text-white/50 absolute"></i>
             {% elif songs and songs.first.remote_image_url %}
-            <img src="{{ songs.first.remote_image_url }}"
-                class="w-full h-full object-cover opacity-80 mix-blend-overlay">
+            <img src="{{ songs.first.remote_image_url }}" class="w-full h-full object-cover opacity-80 mix-blend-overlay">
             <i class="fas fa-music text-5xl text-white/50 absolute"></i>
             {% else %}
             <i class="fas fa-music text-6xl text-gray-600"></i>
             {% endif %}
         </div>
 
-        <div class="flex flex-col mb-2">
-            <span class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-2">Playlist</span>
-            <h1 class="text-6xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg text-white mb-6">
+        <div class="flex flex-col mb-2 text-center sm:text-left">
+            <div class="flex items-center gap-3 mb-2 justify-center sm:justify-start">
+                <span class="text-sm font-bold uppercase tracking-widest text-gray-400">Playlist</span>
+                {% if collaborator_list.count > 0 %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide" style="background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(59,226,200,0.15));border:1px solid rgba(0,240,255,0.3);color:#00f0ff;animation:badgeShimmer 3s ease-in-out infinite;">
+                    <i class="fas fa-users text-[10px]"></i> Collaborative
+                </span>
+                {% endif %}
+            </div>
+            <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg text-white mb-4">
                 {{ playlist.name }}
             </h1>
-            <div class="flex items-center gap-2 text-sm text-gray-300 font-medium">
-                <span class="font-bold text-white">SoulPlayer</span>
+
+            <!-- Collaborator Avatars -->
+            {% if collaborator_list.count > 0 or is_owner %}
+            <div class="flex items-center gap-3 mb-3 justify-center sm:justify-start">
+                <div class="flex -space-x-2" id="collab-avatars">
+                    <!-- Owner -->
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-[#0b0f19] relative z-10 shadow-lg" style="background:linear-gradient(135deg,#3be2c8,#00f0ff);" title="{{ playlist.user.username }} (Owner)">
+                        <span class="text-[#0b0f19]">{{ playlist.user.username|make_list|first|upper }}</span>
+                        <span class="absolute -top-1 -right-1 text-[8px]">👑</span>
+                    </div>
+                    {% for collab in collaborator_list %}
+                    <div class="collab-avatar w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-[#0b0f19] relative shadow-lg group/av" data-user-id="{{ collab.id }}" style="background:hsl({{ collab.id|add:137 }},70%,50%);" title="{{ collab.username }}">
+                        <span class="text-white">{{ collab.username|make_list|first|upper }}</span>
+                        {% if is_owner %}
+                        <button onclick="event.stopPropagation();removeCollaborator({{ playlist.id }},{{ collab.id }})" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[8px] text-white items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity shadow-md hidden sm:flex" title="Remove">✕</button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <span class="text-xs text-gray-400 font-medium">{{ collaborator_list.count }} collaborator{{ collaborator_list.count|pluralize }}</span>
+            </div>
+            {% endif %}
+
+            <div class="flex items-center gap-2 text-sm text-gray-300 font-medium justify-center sm:justify-start">
+                <span class="font-bold text-white">{{ playlist.user.username }}</span>
                 <span class="text-gray-500">•</span>
                 <span>{{ songs.count }} songs</span>
                 <span class="text-gray-500">•</span>
@@ -39,89 +64,221 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex items-center gap-6 mb-10">
-        <button
-            class="w-14 h-14 bg-[#3be2c8] text-[#0b0f19] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.4)] hover:scale-105 hover:shadow-[0_0_25px_rgba(59,226,200,0.6)] transition-all">
+    <div class="flex flex-wrap items-center gap-4 sm:gap-6 mb-10">
+        <button class="w-14 h-14 bg-[#3be2c8] text-[#0b0f19] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.4)] hover:scale-105 hover:shadow-[0_0_25px_rgba(59,226,200,0.6)] transition-all">
             <i class="fas fa-play ml-1 text-xl"></i>
         </button>
-        <button class="text-gray-400 hover:text-white transition"><i
-                class="far fa-heart text-3xl"></i></button>
-        <button class="text-gray-400 hover:text-white transition"><i
-                class="fas fa-ellipsis-h text-2xl"></i></button>
+        <button id="playlist-heart" onclick="toggleHeart()" class="text-gray-400 hover:text-white transition-all duration-300"><i class="far fa-heart text-3xl"></i></button>
+        <button class="text-gray-400 hover:text-white transition"><i class="fas fa-ellipsis-h text-2xl"></i></button>
 
-        <a href="{% url 'add_to_playlist' playlist.id %}"
-            class="ml-auto flex items-center gap-2 text-sm font-bold tracking-widest text-[#3be2c8] border border-[#3be2c8]/30 px-5 py-2.5 rounded-full hover:bg-[#3be2c8]/10 transition-colors">
-            <i class="fas fa-plus"></i> ADD MORE SONGS
+        {% if is_owner %}
+        <button onclick="inviteCollaborator()" class="flex items-center gap-2 text-sm font-bold tracking-widest text-[#00f0ff] border border-[#00f0ff]/30 px-4 sm:px-5 py-2.5 rounded-full hover:bg-[#00f0ff]/10 hover:shadow-[0_0_15px_rgba(0,240,255,0.2)] transition-all duration-300">
+            <i class="fas fa-user-plus"></i> <span class="hidden sm:inline">INVITE</span>
+        </button>
+        {% endif %}
+
+        {% if is_owner or is_collaborator %}
+        <a href="{% url 'add_to_playlist' playlist.id %}" class="ml-auto flex items-center gap-2 text-sm font-bold tracking-widest text-[#3be2c8] border border-[#3be2c8]/30 px-4 sm:px-5 py-2.5 rounded-full hover:bg-[#3be2c8]/10 transition-colors">
+            <i class="fas fa-plus"></i> <span class="hidden sm:inline">ADD MORE SONGS</span><span class="sm:hidden">ADD</span>
         </a>
+        {% endif %}
     </div>
 
     <!-- Song List Table -->
     <div class="w-full">
         <!-- Table Header -->
-        <div
-            class="grid grid-cols-[1fr_2fr_1fr_100px] gap-4 px-4 py-2 border-b border-white/10 text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
-            <div class="flex items-center gap-4">
-                <span>#</span>
-                <span>Title</span>
-            </div>
+        <div class="hidden sm:grid grid-cols-[1fr_2fr_1fr_100px] gap-4 px-4 py-2 border-b border-white/10 text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
+            <div class="flex items-center gap-4"><span>#</span><span>Title</span></div>
             <div>Artist</div>
             <div>Album/Genre</div>
             <div class="text-right"><i class="far fa-clock text-base"></i></div>
         </div>
 
         <!-- Song Rows -->
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1" id="song-list">
             {% for song in songs %}
-            <div
-                class="grid grid-cols-[1fr_2fr_1fr_100px] gap-4 px-4 py-3 rounded-xl hover:bg-white/5 group transition-colors cursor-pointer items-center border border-transparent hover:border-white/5">
+            <div class="song-row grid grid-cols-[auto_1fr_auto] sm:grid-cols-[1fr_2fr_1fr_100px] gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-xl hover:bg-white/5 group transition-colors cursor-pointer items-center border border-transparent hover:border-white/5">
 
                 <!-- Index & Title -->
-                <div class="flex items-center gap-4 overflow-hidden">
-                    <!-- Number changes to play icon on hover -->
-                    <span class="w-4 text-center text-gray-500 font-medium group-hover:hidden">
-                        {{ forloop.counter }}</span>
+                <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                    <span class="w-4 text-center text-gray-500 font-medium group-hover:hidden hidden sm:block">{{ forloop.counter }}</span>
                     <button class="w-4 text-center text-white hidden group-hover:block"
                         onclick="playSong('{{ song.id }}', '{% if song.audio_link %}{{ song.audio_link }}{% elif song.audio_file %}{{ song.audio_file.url }}{% endif %}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% endif %}')">
                         <i class="fas fa-play text-xs text-[#3be2c8]"></i>
                     </button>
-
-                    <img src="{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% else %}https://placehold.co/40x40/1e293b/ffffff?text=M{% endif %}"
-                        class="w-10 h-10 rounded shadow-sm object-cover">
-
-                    <div
-                        class="truncate text-base font-bold text-white group-hover:text-[#3be2c8] transition-colors">
-                        {{ song.title }}</div>
+                    <img src="{% if song.image %}{{ song.image.url }}{% elif song.remote_image_url %}{{ song.remote_image_url }}{% else %}https://placehold.co/40x40/1e293b/ffffff?text=M{% endif %}" class="w-10 h-10 rounded shadow-sm object-cover">
+                    <div class="min-w-0">
+                        <div class="truncate text-base font-bold text-white group-hover:text-[#3be2c8] transition-colors">{{ song.title }}</div>
+                        <div class="truncate text-xs text-gray-400 sm:hidden">{{ song.artist }}</div>
+                    </div>
                 </div>
 
-                <!-- Artist -->
-                <div
-                    class="text-sm font-medium text-gray-400 truncate group-hover:text-white transition-colors">
-                    {{ song.artist }}</div>
+                <!-- Artist (desktop) -->
+                <div class="text-sm font-medium text-gray-400 truncate group-hover:text-white transition-colors hidden sm:block">{{ song.artist }}</div>
 
-                <!-- Genre -->
-                <div class="text-sm font-medium text-gray-400 truncate">{{ song.song_type }}</div>
+                <!-- Genre (desktop) -->
+                <div class="text-sm font-medium text-gray-400 truncate hidden sm:block">{{ song.song_type }}</div>
 
                 <!-- Duration & Actions -->
                 <div class="flex items-center justify-end gap-4 text-sm font-medium text-gray-500">
-                    <a href="{% url 'delete_song' song.id %}"
-                        class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Remove from App"><i class="fas fa-trash"></i></a>
+                    {% if is_owner %}
+                    <a href="{% url 'delete_song' song.id %}" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove from App"><i class="fas fa-trash"></i></a>
+                    {% endif %}
                     <span>{{ song.duration }}</span>
                 </div>
-
             </div>
             {% empty %}
-            <div class="py-16 text-center flex flex-col items-center">
+            <div class="py-16 text-center flex flex-col items-center" id="empty-state">
                 <i class="fas fa-drum text-4xl text-gray-600 mb-4"></i>
                 <h3 class="text-xl font-bold text-gray-300">This playlist is currently empty.</h3>
                 <p class="text-sm text-gray-500 mt-2">Find some songs you like and add them here.</p>
-                <a href="{% url 'add_to_playlist' playlist.id %}"
-                    class="mt-6 px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-full font-bold text-sm tracking-wide transition-colors">Find
-                    Songs</a>
+                {% if is_owner or is_collaborator %}
+                <a href="{% url 'add_to_playlist' playlist.id %}" class="mt-6 px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-full font-bold text-sm tracking-wide transition-colors">Find Songs</a>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
     </div>
-
 </div>
-{% endblock %}
+
+<!-- ========== SHARE MODAL ========== -->
+<div id="share-modal" class="fixed inset-0 z-[9999] hidden items-center justify-center">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeShareModal()"></div>
+    <div class="relative w-full max-w-md mx-4 bg-[#0d1422]/95 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.6)] transform transition-all duration-300 scale-95 opacity-0" id="share-card">
+        <button onclick="closeShareModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#00f0ff]/20 to-[#3be2c8]/20 flex items-center justify-center border border-[#00f0ff]/20">
+                <i class="fas fa-share-alt text-2xl text-[#00f0ff]"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white">Share Playlist</h3>
+            <p class="text-gray-400 text-sm mt-1">Invite friends to <span class="text-[#3be2c8] font-semibold">{{ playlist.name }}</span></p>
+        </div>
+        <div class="flex items-center gap-2 mb-6">
+            <div class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-300 truncate font-mono" id="invite-link-text">Generating...</div>
+            <button onclick="copyLink()" id="copy-btn" class="px-4 py-3 bg-[#3be2c8] text-[#0b0f19] rounded-xl font-bold text-sm hover:shadow-[0_0_15px_rgba(59,226,200,0.4)] transition-all whitespace-nowrap"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Share via</p>
+        <div class="grid grid-cols-4 gap-3">
+            <button onclick="shareVia('whatsapp')" class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-green-500/40 hover:bg-green-500/10 transition-all group/s"><i class="fab fa-whatsapp text-2xl text-green-400 group-hover/s:scale-110 transition-transform"></i><span class="text-[10px] text-gray-400 font-semibold">WhatsApp</span></button>
+            <button onclick="shareVia('telegram')" class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-blue-400/40 hover:bg-blue-400/10 transition-all group/s"><i class="fab fa-telegram text-2xl text-blue-400 group-hover/s:scale-110 transition-transform"></i><span class="text-[10px] text-gray-400 font-semibold">Telegram</span></button>
+            <button onclick="shareVia('twitter')" class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-sky-400/40 hover:bg-sky-400/10 transition-all group/s"><i class="fab fa-x-twitter text-2xl text-sky-400 group-hover/s:scale-110 transition-transform"></i><span class="text-[10px] text-gray-400 font-semibold">X</span></button>
+            <button onclick="shareVia('email')" class="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-purple-400/40 hover:bg-purple-400/10 transition-all group/s"><i class="fas fa-envelope text-2xl text-purple-400 group-hover/s:scale-110 transition-transform"></i><span class="text-[10px] text-gray-400 font-semibold">Email</span></button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-box" class="fixed bottom-6 right-6 z-[9998] flex flex-col gap-3 pointer-events-none"></div>
+
+<style>
+@keyframes badgeShimmer{0%,100%{box-shadow:0 0 8px rgba(0,240,255,0.2)}50%{box-shadow:0 0 16px rgba(0,240,255,0.4)}}
+@keyframes toastIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100px);opacity:0}}
+.toast-in{animation:toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards}
+.toast-out{animation:toastOut .3s ease-in forwards}
+</style>
+
+<script>
+let inviteUrl='';
+const PID={{playlist.id}}, CSRF='{{csrf_token}}';
+
+/* ── WebSocket ── */
+const ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/playlist/${PID}/`);
+ws.onmessage=function(e){
+    const d=JSON.parse(e.data);
+    if(d.type==='song_added'){addRow(d);toast(`🎵 ${d.added_by} added "${d.song_title}"`,'teal')}
+    else if(d.type==='collaborator_joined'){addAvatar(d.username,d.user_id);toast(`👋 ${d.username} joined!`,'cyan')}
+    else if(d.type==='collaborator_removed'){rmAvatar(d.user_id)}
+    else if(d.type==='presence'&&d.action==='viewing'){toast(`👀 ${d.username} is viewing`,'gray')}
+};
+
+/* ── Live Song Row ── */
+function addRow(d){
+    const es=document.getElementById('empty-state');if(es)es.remove();
+    const list=document.getElementById('song-list'),n=list.querySelectorAll('.song-row').length+1;
+    const img=d.song_image||'https://placehold.co/40x40/1e293b/ffffff?text=M';
+    const r=document.createElement('div');
+    r.className='song-row grid grid-cols-[auto_1fr_auto] sm:grid-cols-[1fr_2fr_1fr_100px] gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-xl hover:bg-white/5 group transition-colors items-center border border-transparent hover:border-white/5';
+    r.style.animation='toastIn .4s ease forwards';
+    r.innerHTML=`<div class="flex items-center gap-3 sm:gap-4 overflow-hidden"><span class="w-4 text-center text-gray-500 font-medium hidden sm:block">${n}</span><img src="${img}" class="w-10 h-10 rounded shadow-sm object-cover"><div class="min-w-0"><div class="truncate text-base font-bold text-[#3be2c8]">${d.song_title}</div><div class="truncate text-xs text-gray-400 sm:hidden">${d.song_artist}</div></div></div><div class="text-sm font-medium text-gray-400 truncate hidden sm:block">${d.song_artist}</div><div class="text-sm font-medium text-gray-400 truncate hidden sm:block">—</div><div class="flex items-center justify-end text-sm text-gray-500"><span>${d.song_duration||'—'}</span></div>`;
+    list.appendChild(r);
+}
+
+/* ── Avatars ── */
+function addAvatar(name,id){
+    const c=document.getElementById('collab-avatars');if(!c)return;
+    const a=document.createElement('div');
+    a.className='collab-avatar w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-[#0b0f19] shadow-lg';
+    a.dataset.userId=id;a.style.background=`hsl(${(id*137)%360},70%,50%)`;a.title=name;
+    a.innerHTML=`<span class="text-white">${name.charAt(0).toUpperCase()}</span>`;
+    a.style.animation='toastIn .3s ease forwards';c.appendChild(a);
+}
+function rmAvatar(id){
+    const el=document.querySelector(`.collab-avatar[data-user-id="${id}"]`);
+    if(el){el.style.animation='toastOut .3s ease forwards';setTimeout(()=>el.remove(),300)}
+}
+
+/* ── Invite ── */
+function inviteCollaborator(){
+    fetch(`/playlist/${PID}/invite/`,{method:'POST',headers:{'X-CSRFToken':CSRF}})
+    .then(r=>r.json()).then(d=>{
+        if(d.status==='success'){
+            inviteUrl=d.invite_url;
+            if(navigator.share){navigator.share({title:'Join my SoulPlayer playlist!',text:'Collaborate on "{{playlist.name|escapejs}}" 🎵',url:d.invite_url}).catch(()=>openModal(d.invite_url))}
+            else{openModal(d.invite_url)}
+        }
+    });
+}
+function openModal(url){
+    inviteUrl=url;document.getElementById('invite-link-text').textContent=url;
+    const m=document.getElementById('share-modal'),c=document.getElementById('share-card');
+    m.classList.remove('hidden');m.classList.add('flex');
+    setTimeout(()=>{c.style.transform='scale(1)';c.style.opacity='1'},10);
+}
+function closeShareModal(){
+    const c=document.getElementById('share-card');c.style.transform='scale(0.95)';c.style.opacity='0';
+    setTimeout(()=>{const m=document.getElementById('share-modal');m.classList.add('hidden');m.classList.remove('flex')},300);
+}
+function copyLink(){
+    navigator.clipboard.writeText(inviteUrl).then(()=>{
+        const b=document.getElementById('copy-btn');b.innerHTML='<i class="fas fa-check"></i> Copied!';
+        setTimeout(()=>{b.innerHTML='<i class="fas fa-copy"></i> Copy'},2000);
+    });
+}
+function shareVia(p){
+    const t=encodeURIComponent('Join "{{playlist.name|escapejs}}" on SoulPlayer! 🎵'),u=encodeURIComponent(inviteUrl);
+    const l={whatsapp:`https://wa.me/?text=${t}%20${u}`,telegram:`https://t.me/share/url?url=${u}&text=${t}`,twitter:`https://twitter.com/intent/tweet?url=${u}&text=${t}`,email:`mailto:?subject=Join%20my%20playlist&body=${t}%20${u}`};
+    window.open(l[p],'_blank');
+}
+function removeCollaborator(pid,uid){
+    fetch(`/playlist/${pid}/remove_collaborator/${uid}/`,{method:'POST',headers:{'X-CSRFToken':CSRF}})
+    .then(r=>r.json()).then(d=>{if(d.status==='success')rmAvatar(uid)});
+}
+
+/* ── Toasts ── */
+function toast(msg,color){
+    const colors={teal:'border-[#3be2c8]/40 bg-[#3be2c8]/10 text-[#3be2c8]',cyan:'border-[#00f0ff]/40 bg-[#00f0ff]/10 text-[#00f0ff]',red:'border-red-500/40 bg-red-500/10 text-red-400',gray:'border-white/10 bg-white/5 text-gray-400'};
+    const box=document.getElementById('toast-box'),t=document.createElement('div');
+    t.className=`pointer-events-auto px-5 py-3 rounded-xl border backdrop-blur-xl text-sm font-semibold shadow-2xl toast-in ${colors[color]||colors.teal}`;
+    t.textContent=msg;box.appendChild(t);
+    setTimeout(()=>{t.classList.remove('toast-in');t.classList.add('toast-out');setTimeout(()=>t.remove(),300)},4000);
+}
+
+/* ── Heart Toggle ── */
+function toggleHeart(){
+    const btn=document.getElementById('playlist-heart'), icon=btn.querySelector('i');
+    const liked=icon.classList.contains('fas');
+    if(liked){
+        icon.classList.replace('fas','far');
+        btn.style.color='';
+        btn.classList.add('text-gray-400');
+    }else{
+        icon.classList.replace('far','fas');
+        btn.classList.remove('text-gray-400');
+        btn.style.color='#3be2c8';
+    }
+    btn.style.transform='scale(1.3)';
+    setTimeout(()=>{btn.style.transform='scale(1)'},200);
+}
+</script>
+{% endblock %}
