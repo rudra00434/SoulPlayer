@@ -1,6 +1,30 @@
 from django.forms import ModelForm, TextInput, FileInput, CheckboxSelectMultiple
 from .models import Song, Artist, Playlist, UserProfile
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+from django import forms
+
+
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        label="Email",
+        widget=forms.EmailInput(attrs={
+            "placeholder": "your@gmail.com",
+            "autocomplete": "email",
+        }),
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password1", "password2"]
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"]
+        if commit:
+            user.save()
+        return user
 
 class SongForm(ModelForm):
     class Meta:

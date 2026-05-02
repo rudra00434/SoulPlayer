@@ -7,7 +7,7 @@ import os
 import requests
 from .models import Song,Artist,Playlist,LikedSong
 from django.core.paginator import Paginator 
-from .forms import SongForm, ArtistForm, PlaylistForm, UserUpdateForm, ProfileUpdateForm
+from .forms import SongForm, ArtistForm, PlaylistForm, UserUpdateForm, ProfileUpdateForm, CustomUserCreationForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
@@ -30,15 +30,191 @@ try:
 except (OSError, ImportError):
     nlp = None
 
+def _send_welcome_email(user):
+    """Send a beautiful branded welcome email to newly registered users via Resend API."""
+    api_key = settings.RESEND_API_KEY
+    from_email = settings.DEFAULT_FROM_EMAIL
+
+    if not api_key or not user.email:
+        # Local dev or no email provided — skip silently
+        print(f"\n--- WELCOME EMAIL (skipped: {'no API key' if not api_key else 'no email'}) ---")
+        print(f"    User: {user.username}, Email: {user.email}\n")
+        return
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head><meta charset="UTF-8"></head>
+    <body style="margin:0; padding:0; background-color:#0b0f19; font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0f19; padding:40px 0;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px; width:100%;">
+
+              <!-- Logo / Brand Header -->
+              <tr>
+                <td align="center" style="padding:0 0 32px 0;">
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:linear-gradient(135deg,#00f0ff,#3be2c8); width:52px; height:52px; border-radius:16px; text-align:center; vertical-align:middle;">
+                        <span style="font-size:26px; color:#0b0f19;">&#9835;</span>
+                      </td>
+                      <td style="padding-left:14px;">
+                        <span style="font-size:26px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;">Soul</span><span style="font-size:26px; font-weight:800; color:#00f0ff; letter-spacing:-0.5px;">Player</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Main Card -->
+              <tr>
+                <td style="background:linear-gradient(145deg,#141928 0%,#1a1025 50%,#0d1b2a 100%); border-radius:24px; border:1px solid rgba(255,255,255,0.08); padding:48px 40px; box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+
+                  <!-- Welcome Heading -->
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding-bottom:8px;">
+                        <span style="font-size:42px;">&#127911;</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:8px;">
+                        <h1 style="margin:0; font-size:28px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;">Welcome to the Vibe,</h1>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-bottom:24px;">
+                        <h2 style="margin:0; font-size:32px; font-weight:800; background:linear-gradient(90deg,#00f0ff,#3be2c8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">{user.username}!</h2>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Divider -->
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:0 0 28px 0;">
+                        <div style="height:1px; background:linear-gradient(90deg,transparent,rgba(0,240,255,0.3),transparent);"></div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Body Text -->
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="color:#c0c7d6; font-size:16px; line-height:1.7; padding-bottom:32px;">
+                        Your SoulPlayer account is ready. You've just unlocked a world of unlimited music, curated playlists, and personalized recommendations &mdash; all crafted for <em>your</em> taste.
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Feature Highlights -->
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                    <tr>
+                      <td style="padding:16px 20px; background:rgba(0,240,255,0.05); border-radius:16px; border:1px solid rgba(0,240,255,0.1);">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td style="padding:8px 0; color:#ffffff; font-size:15px;">&#127925;&nbsp;&nbsp;<strong style="color:#00f0ff;">Discover</strong> &mdash; Trending hits &amp; hidden gems</td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 0; color:#ffffff; font-size:15px;">&#9829;&nbsp;&nbsp;<strong style="color:#ff007f;">Like &amp; Save</strong> &mdash; Build your personal library</td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 0; color:#ffffff; font-size:15px;">&#127911;&nbsp;&nbsp;<strong style="color:#a78bfa;">Playlists</strong> &mdash; Create, share &amp; collaborate</td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 0; color:#ffffff; font-size:15px;">&#128302;&nbsp;&nbsp;<strong style="color:#3be2c8;">AI Recommendations</strong> &mdash; Made just for you</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- CTA Button -->
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding-bottom:32px;">
+                        <a href="https://soulplayer.onrender.com/" target="_blank" style="display:inline-block; background:linear-gradient(135deg,#00f0ff,#3be2c8); color:#0b0f19; font-size:15px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; text-decoration:none; padding:16px 48px; border-radius:14px; box-shadow:0 10px 30px rgba(0,240,255,0.3);">
+                          &#9654;&nbsp; START LISTENING
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Closing Text -->
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="color:#7a8194; font-size:14px; line-height:1.6; text-align:center;">
+                        Your music journey starts now. Put on your headphones, hit play, and let your soul vibe. &#10024;
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td align="center" style="padding:32px 0 0 0;">
+                  <p style="margin:0; font-size:12px; color:#4a5568; line-height:1.6;">
+                    &copy; 2025 SoulPlayer &middot; Made with &#10084;&#65039; for music lovers
+                  </p>
+                  <p style="margin:8px 0 0 0; font-size:11px; color:#374151;">
+                    You&rsquo;re receiving this because you signed up on SoulPlayer.
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
+
+    plain_body = (
+        f"Welcome to SoulPlayer, {user.username}!\n\n"
+        f"Your account is ready. You've unlocked unlimited music, curated playlists,Collaborative playlist, Listening to music with your friends, Live chat on premium and personalized recommendations — all crafted for your taste.\n\n"
+        f"Start listening: https://soulplayer.onrender.com/\n\n"
+        f"— The SoulPlayer Team"
+    )
+
+    try:
+        response = requests.post(
+            'https://api.resend.com/emails',
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json',
+            },
+            json={
+                'from': from_email,
+                'to': [user.email],
+                'subject': f'Welcome to SoulPlayer, {user.username}! 🎧',
+                'html': html_body,
+                'text': plain_body,
+            },
+            timeout=10,
+        )
+        if response.status_code == 200:
+            print(f"Welcome email sent to {user.email}")
+        else:
+            print(f"Welcome email API error: {response.status_code} — {response.text}")
+    except Exception as e:
+        # Never let email failure block registration
+        print(f"Welcome email send error: {e}")
+
+
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            _send_welcome_email(user)
             login(request, user)
             return redirect('index')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
 def user_login(request):
