@@ -31,13 +31,14 @@ except (OSError, ImportError):
     nlp = None
 
 def _send_welcome_email(user):
-    """Send a beautiful branded welcome email to newly registered users via Resend API."""
-    api_key = settings.RESEND_API_KEY
-    from_email = settings.DEFAULT_FROM_EMAIL
+    """Send a beautiful branded welcome email to newly registered users via Brevo API."""
+    api_key = getattr(settings, 'BREVO_API_KEY', '')
+    sender_email = getattr(settings, 'BREVO_SENDER_EMAIL', '')
+    sender_name = getattr(settings, 'BREVO_SENDER_NAME', 'SoulPlayer')
 
-    if not api_key or not user.email:
+    if not api_key or not sender_email or not user.email:
         # Local dev or no email provided — skip silently
-        print(f"\n--- WELCOME EMAIL (skipped: {'no API key' if not api_key else 'no email'}) ---")
+        print(f"\n--- WELCOME EMAIL (skipped: {'no API key/sender' if not api_key else 'no email'}) ---")
         print(f"    User: {user.username}, Email: {user.email}\n")
         return
 
@@ -182,22 +183,23 @@ def _send_welcome_email(user):
 
     try:
         response = requests.post(
-            'https://api.resend.com/emails',
+            'https://api.brevo.com/v3/smtp/email',
             headers={
-                'Authorization': f'Bearer {api_key}',
+                'api-key': api_key,
                 'Content-Type': 'application/json',
+                'accept': 'application/json'
             },
             json={
-                'from': from_email,
-                'to': [user.email],
+                'sender': {'name': sender_name, 'email': sender_email},
+                'to': [{'email': user.email, 'name': user.username}],
                 'subject': f'Welcome to SoulPlayer, {user.username}! 🎧',
-                'html': html_body,
-                'text': plain_body,
+                'htmlContent': html_body,
+                'textContent': plain_body,
             },
             timeout=10,
         )
-        if response.status_code == 200:
-            print(f"Welcome email sent to {user.email}")
+        if response.status_code in [200, 201, 202]:
+            print(f"Welcome email sent to {user.email} via Brevo")
         else:
             print(f"Welcome email API error: {response.status_code} — {response.text}")
     except Exception as e:

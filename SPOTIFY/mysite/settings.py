@@ -151,4 +151,9 @@ RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', '')  # Where contact form emails are sent
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'SoulPlayer <onboarding@resend.dev>')
 
+# Brevo (Sendinblue) — for welcome emails to new users (no custom domain needed)
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', '')  # Your verified Gmail in Brevo
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'SoulPlayer')
+
 
