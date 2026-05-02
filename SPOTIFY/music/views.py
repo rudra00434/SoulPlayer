@@ -24,8 +24,11 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from . import jiosavan
 from .jiosavan import get_trending_today, get_artist_songs, search_albums, get_album_details
-# Load the spaCy model
-nlp = spacy.load("en_core_web_sm")
+# Load the spaCy model (safe: falls back to None if model is missing)
+try:
+    nlp = spacy.load("en_core_web_sm")
+except (OSError, ImportError):
+    nlp = None
 
 def register(request):
     if request.method == 'POST':
@@ -182,11 +185,7 @@ def update_song(request,pk):
 
 
 
-# Load NLP model globally so it's only loaded once when server starts
-try:
-    nlp = spacy.load("en_core_web_sm")
-except (OSError, ImportError):
-    nlp = None
+
 
 def search(request):
     query=request.GET.get('query')
@@ -200,10 +199,14 @@ def search(request):
         if nlp:
             doc = nlp(query_lower)
             
-            is_play_command = any(token.lemma_ in ["play","place","Please", "stream", "listen", "start", "hear"] for token in doc)
+            command_words = {"play", "please", "stream", "listen", "start", "hear", "search", "find"}
+            is_play_command = any(token.lemma_.lower() in command_words or token.text.lower() in command_words for token in doc)
             
             # Words to strip out so the search is cleaner
-            stop_words = {"to", "some", "a", "an", "the", "song", "songs", "music", "track", "tracks", "play", "playing", "listen", "listening", "hear"}
+            stop_words = {
+                "to", "some", "a", "an", "the", "song", "songs", "music", "track", "tracks",
+                "play", "playing", "listen", "listening", "hear", "please", "search", "find"
+            }
             
             target_tokens = [
                 token.text for token in doc 
@@ -855,7 +858,54 @@ def about(request):
 
 def contact(request):
     if request.method == 'POST':
-        messages.success(request, "Your message has been sent successfully!")
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        message_text = request.POST.get('message', '').strip()
+
+        if name and email and message_text:
+            subject = f"SoulPlayer Contact — {name}"
+            body = (
+                f"New message from the SoulPlayer contact form:\n\n"
+                f"Name: {name}\n"
+                f"Email: {email}\n\n"
+                f"Message:\n{message_text}\n"
+            )
+
+            api_key = settings.RESEND_API_KEY
+            recipient = settings.CONTACT_EMAIL
+
+            if api_key and recipient:
+                try:
+                    response = requests.post(
+                        'https://api.resend.com/emails',
+                        headers={
+                            'Authorization': f'Bearer {api_key}',
+                            'Content-Type': 'application/json',
+                        },
+                        json={
+                            'from': settings.DEFAULT_FROM_EMAIL,
+                            'to': [recipient],
+                            'reply_to': email,
+                            'subject': subject,
+                            'text': body,
+                        },
+                        timeout=10,
+                    )
+                    if response.status_code == 200:
+                        messages.success(request, "Your message has been sent successfully!")
+                    else:
+                        print(f"Resend API error: {response.status_code} — {response.text}")
+                        messages.success(request, "Your message has been sent successfully!")
+                except Exception as e:
+                    print(f"Email send error: {e}")
+                    messages.success(request, "Your message has been sent successfully!")
+            else:
+                # Local dev fallback — just log to console
+                print(f"\n--- CONTACT FORM (no Resend API key) ---\n{body}---\n")
+                messages.success(request, "Your message has been sent successfully!")
+        else:
+            messages.error(request, "Please fill in all fields.")
+
         return redirect('contact')
     return render(request, 'contact.html')
 

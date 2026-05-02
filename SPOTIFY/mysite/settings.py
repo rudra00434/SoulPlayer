@@ -145,3 +145,10 @@ STATICFILES_DIRS=[os.path.join(BASE_DIR,'static')]
 STATIC_ROOT=os.path.join(BASE_DIR,'staticfiles')
 MEDIA_URL ='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+
+# Email Configuration (Resend API — works on Render free tier, no SMTP needed)
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', '')  # Where contact form emails are sent
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'SoulPlayer <onboarding@resend.dev>')
+
+

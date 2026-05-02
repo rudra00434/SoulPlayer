@@ -236,17 +236,38 @@
             }
 
             const recognition = new SpeechRecognition();
-            recognition.continuous = false; // Stop listening after one phrase
-            recognition.lang = 'en-US';     // Can be customized
-            recognition.interimResults = true; // Show words as they are spoken
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-IN';
+            recognition.maxAlternatives = 3;
 
             let isListening = false;
+            let finalTranscriptBuffer = '';
+            let submitTimer = null;
+
+            function submitVoiceSearch() {
+                const query = finalTranscriptBuffer.trim();
+
+                if (!query) {
+                    statusHeading.textContent = "Didn't catch that";
+                    statusSubtext.textContent = "Tap the microphone and try again.";
+                    return;
+                }
+
+                statusHeading.textContent = "Got it!";
+                statusSubtext.textContent = "Searching library...";
+                hiddenSearchInput.value = query;
+                voiceSearchForm.submit();
+            }
 
             micButton.addEventListener('click', () => {
                 if (isListening) {
                     recognition.stop();
                     return;
                 }
+
+                finalTranscriptBuffer = '';
+                clearTimeout(submitTimer);
 
                 try {
                     recognition.start();
@@ -267,44 +288,38 @@
                 micButton.classList.remove('from-gray-800', 'to-gray-900', 'border-gray-700');
                 micButton.classList.add('from-[#3be2c8]/20', 'to-blue-600/20', 'border-[#3be2c8]', 'shadow-[0_0_50px_rgba(59,226,200,0.3)]', 'text-[#3be2c8]');
 
-                statusHeading.innerHTML = "Listening...";
-                statusSubtext.innerHTML = "Speak clearly into your microphone.";
-                transcriptOutput.innerHTML = "Listening...";
+                statusHeading.textContent = "Listening...";
+                statusSubtext.textContent = "Speak naturally. I'll search after you pause.";
+                transcriptOutput.textContent = "Listening...";
                 transcriptOutput.classList.remove('opacity-100');
                 transcriptOutput.classList.add('opacity-50');
             };
 
             recognition.onresult = (event) => {
                 let interimTranscript = '';
-                let finalTranscript = '';
 
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript.trim();
+
                     if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
+                        finalTranscriptBuffer = `${finalTranscriptBuffer} ${transcript}`.trim();
                     } else {
-                        interimTranscript += event.results[i][0].transcript;
+                        interimTranscript += ` ${transcript}`;
                     }
                 }
 
-                // Show what they are saying in real time
-                if (interimTranscript) {
-                    transcriptOutput.innerHTML = interimTranscript;
-                }
-                if (finalTranscript) {
-                    transcriptOutput.innerHTML = finalTranscript;
+                const visibleText = interimTranscript.trim() || finalTranscriptBuffer;
+                if (visibleText) {
+                    transcriptOutput.textContent = visibleText;
                     transcriptOutput.classList.add('text-white', 'opacity-100');
                     transcriptOutput.classList.remove('opacity-50');
-
-                    // Stop UI immediately
-                    statusHeading.innerHTML = "Got it!";
-                    statusSubtext.innerHTML = "Searching library...";
-
-                    // SET VALUE AND SUBMIT FORM
-                    setTimeout(() => {
-                        hiddenSearchInput.value = finalTranscript;
-                        voiceSearchForm.submit();
-                    }, 800);
                 }
+
+                // Auto-submit after 1.2s of silence
+                clearTimeout(submitTimer);
+                submitTimer = setTimeout(() => {
+                    recognition.stop();
+                }, 1200);
             };
 
             recognition.onerror = (event) => {
@@ -333,6 +348,10 @@
 
             recognition.onend = () => {
                 resetUI();
+
+                if (finalTranscriptBuffer.trim()) {
+                    submitVoiceSearch();
+                }
             };
 
             function resetUI() {
