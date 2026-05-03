@@ -239,10 +239,6 @@
                     <a href="{% url 'immersive_player' %}"
                         class="{% if request.resolver_match.url_name == 'immersive_player' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white text-[#818cf8]{% endif %} pb-1 transition flex items-center gap-1.5"><i
                             class="fas fa-vr-cardboard text-[10px]"></i> XR Studio</a>
-                    <a href="{% url 'about' %}"
-                        class="{% if request.resolver_match.url_name == 'about' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">About</a>
-                    <a href="{% url 'contact' %}"
-                        class="{% if request.resolver_match.url_name == 'contact' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Contact</a>
                     <a href="{% url 'create_playlist' %}"
                         class="{% if request.resolver_match.url_name == 'create_playlist' %}text-white border-b-2 border-[#3be2c8]{% else %}hover:text-white{% endif %} pb-1 transition">Create
                         Playlist</a>
@@ -904,6 +900,46 @@
                         {% endfor %}
                     </div>
 
+                    <!-- Jubin Nautiyal Songs -->
+                    <div class="mb-5 flex items-end justify-between">
+                        <h2 class="text-2xl font-bold tracking-wide"><span class="text-indigo-400">Jubin Nautiyal's</span>
+                            Chartbusters
+                        </h2>
+                        <span
+                            class="text-xs font-bold px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded uppercase tracking-widest border border-indigo-500/30 flex items-center gap-1.5">
+                            <i class="fas fa-music text-[9px]"></i>
+                            Trending
+                        </span>
+                    </div>
+
+                    <div class="flex gap-6 overflow-x-auto no-scrollbar mb-14 pb-6">
+                        {% for song in jubin_songs %}
+                        <div class="flex-none w-44 group cursor-pointer relative"
+                            onclick="playSong('{{ song.id }}', '{{ song.stream_url }}', '{{ song.title|escapejs }}', '{{ song.artist|escapejs }}', '{{ song.image_url }}', 'jiosaavn')">
+                            <div class="relative mb-4 overflow-hidden rounded-2xl shadow-lg">
+                                <img src="{{ song.image_url }}"
+                                    class="w-full aspect-square object-cover transform group-hover:scale-110 transition duration-500">
+                                <div
+                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                                    <a href="{% url 'play_jiosaavn_song' song.id %}" onclick="event.stopPropagation();"
+                                        class="w-12 h-12 bg-[#3be2c8]/90 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,226,200,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-300 delay-75">
+                                        <i class="fas fa-play text-[#0b0f19] ml-1"></i>
+                                    </a>
+                                    <button
+                                        onclick="event.stopPropagation(); showPlaylistMenu(event, '{{ song.id }}', '{{ song.title|escapejs }}')"
+                                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/10 hover:bg-[#3be2c8] hover:text-[#0b0f19] rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 delay-100">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-[15px] truncate px-1">{{ song.title }}</h3>
+                            <p class="text-xs text-gray-500 truncate px-1 mt-1 font-medium">{{ song.artist }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">Jubin Nautiyal songs currently unavailable.</p>
+                        {% endfor %}
+                    </div>
+
 
                     <!-- 90s Nostalgia -->
                     <div class="mb-5 flex items-end justify-between">
@@ -1106,7 +1142,133 @@
                     </div>
                 </div>
                 {% endblock %}
+                <!-- ===== SOULPLAYER FOOTER ===== -->
+                <footer class="mt-20 border-t border-white/5 pt-14 pb-8 px-2">
+                    <!-- Top Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
 
+                        <!-- Brand Column -->
+                        <div class="col-span-2 md:col-span-1 flex flex-col gap-4">
+                            <div
+                                class="text-xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-[#3be2c8]">
+                                SoulPlayer
+                            </div>
+                            <p class="text-gray-500 text-xs leading-relaxed font-light">
+                                Stream millions of songs. Discover new artists. Build the perfect playlist.
+                            </p>
+                            <!-- Social Icons -->
+                            <div class="flex gap-3 mt-1">
+                                <a href="#"
+                                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-[#3be2c8] hover:text-[#0b0f19] text-gray-400 flex items-center justify-center transition-all duration-300 text-xs">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                                <a href="#"
+                                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-[#3be2c8] hover:text-[#0b0f19] text-gray-400 flex items-center justify-center transition-all duration-300 text-xs">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="#"
+                                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-[#3be2c8] hover:text-[#0b0f19] text-gray-400 flex items-center justify-center transition-all duration-300 text-xs">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                                <a href="#"
+                                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-[#3be2c8] hover:text-[#0b0f19] text-gray-400 flex items-center justify-center transition-all duration-300 text-xs">
+                                    <i class="fab fa-youtube"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Company -->
+                        <div class="flex flex-col gap-3">
+                            <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-1">Company</h4>
+                            <a href="{% url 'about' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">About</a>
+                            <a href="{% url 'contact' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Contact</a>
+                            <a href="#"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Jobs</a>
+                            <a href="#"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Press</a>
+                        </div>
+
+                        <!-- Communities -->
+                        <div class="flex flex-col gap-3">
+                            <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-1">Communities</h4>
+                            <a href="{% url 'artists' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">For
+                                Artists</a>
+                            <a href="#"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Developers</a>
+                            <a href="#"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Advertising</a>
+                            <a href="{% url 'podcasts' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Podcasters</a>
+                        </div>
+
+                        <!-- Useful Links -->
+                        <div class="flex flex-col gap-3">
+                            <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-1">Explore</h4>
+                            <a href="{% url 'search' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Library</a>
+                            <a href="{% url 'recommendations' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Recommended</a>
+                            <a href="{% url 'radio_stations' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Radio
+                                Stations</a>
+                            <a href="{% url 'offline_songs' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Offline
+                                Songs</a>
+                        </div>
+
+                        <!-- Plans / CTA -->
+                        <div class="flex flex-col gap-3">
+                            <h4 class="text-white text-xs font-bold uppercase tracking-widest mb-1">Account</h4>
+                            {% if user.is_authenticated %}
+                            <a href="{% url 'profile' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">My
+                                Profile</a>
+                            <a href="{% url 'playlists' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">My
+                                Playlists</a>
+                            <a href="{% url 'last_listening' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Listening
+                                History</a>
+                            <a href="{% url 'create_playlist' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Create
+                                Playlist</a>
+                            {% else %}
+                            <a href="{% url 'register' %}"
+                                class="text-[#3be2c8] hover:text-white text-xs font-semibold transition-colors duration-200">Sign
+                                Up Free</a>
+                            <a href="{% url 'user_login' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Log
+                                In</a>
+                            <a href="{% url 'playlists' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Playlists</a>
+                            <a href="{% url 'create_playlist' %}"
+                                class="text-gray-500 hover:text-white text-xs font-medium transition-colors duration-200">Create
+                                Playlist</a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div
+                        class="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <!-- Legal Links -->
+                        <div class="flex flex-wrap gap-4 text-[10px] text-gray-600 font-medium tracking-wide">
+                            <a href="#" class="hover:text-gray-400 transition-colors">Legal</a>
+                            <a href="#" class="hover:text-gray-400 transition-colors">Safety &amp; Privacy Center</a>
+                            <a href="#" class="hover:text-gray-400 transition-colors">Privacy Policy</a>
+                            <a href="#" class="hover:text-gray-400 transition-colors">Cookies</a>
+                            <a href="#" class="hover:text-gray-400 transition-colors">Accessibility</a>
+                        </div>
+                        <!-- Copyright -->
+                        <p class="text-[10px] text-gray-600 font-medium tracking-wider whitespace-nowrap">
+                            © {{ now.year|default:"2026" }} SoulPlayer. All rights reserved.
+                        </p>
+                    </div>
+                </footer>
+                <!-- ===== END FOOTER ===== -->
             </div>
         </div>
     </div>
@@ -1156,12 +1318,14 @@
 
         <!-- Volume (Right) -->
         <div class="w-[25%] flex items-center justify-end gap-3 text-gray-400 hidden lg:flex">
-            <i class="fas fa-volume-up text-sm hover:text-white transition cursor-pointer"></i>
-            <div class="w-24 h-1.5 bg-gray-800 rounded-full relative cursor-pointer group">
-                <div class="absolute top-0 left-0 h-full w-[80%] bg-[#3be2c8] rounded-full group-hover:bg-[#2cdbbd]">
+            <i id="volume-icon" class="fas fa-volume-up text-sm hover:text-white transition cursor-pointer"
+                onclick="toggleMute()"></i>
+            <div id="volume-bar" class="w-24 h-1.5 bg-gray-800 rounded-full relative cursor-pointer group">
+                <div id="volume-fill"
+                    class="absolute top-0 left-0 h-full w-[80%] bg-[#3be2c8] rounded-full group-hover:bg-[#2cdbbd]">
                 </div>
                 <!-- knob for volume on hover -->
-                <div
+                <div id="volume-knob"
                     class="absolute left-[80%] top-1/2 -translate-y-1/2 -translate-x-1.5 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
                 </div>
             </div>
@@ -1173,7 +1337,59 @@
 
     <!-- Hidden canvas for Dynamic Theme Color extraction (PWA Feature) -->
     <canvas id="color-analysis-canvas" style="display: none;" width="50" height="50"></canvas>
+    <script>
+        // ── Volume Control ──────────────────────────────────────────
+        const volumeBar = document.getElementById('volume-bar');
+        const volumeFill = document.getElementById('volume-fill');
+        const volumeKnob = document.getElementById('volume-knob');
+        const volumeIcon = document.getElementById('volume-icon');
+        let isDraggingVolume = false;
+        let lastVolume = 0.8; // remember volume before mute
 
+        function setVolume(percent) {
+            percent = Math.max(0, Math.min(1, percent));
+            audioPlayer.volume = percent;
+            volumeFill.style.width = (percent * 100) + '%';
+            volumeKnob.style.left = (percent * 100) + '%';
+            // Update icon
+            volumeIcon.className = 'fas text-sm hover:text-white transition cursor-pointer ' +
+                (percent === 0 ? 'fa-volume-mute' : percent < 0.5 ? 'fa-volume-down' : 'fa-volume-up');
+        }
+
+        function toggleMute() {
+            if (audioPlayer.volume > 0) {
+                lastVolume = audioPlayer.volume;
+                setVolume(0);
+            } else {
+                setVolume(lastVolume || 0.8);
+            }
+        }
+
+        function getVolumeFromEvent(e) {
+            const rect = volumeBar.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            return (clientX - rect.left) / rect.width;
+        }
+
+        volumeBar.addEventListener('click', (e) => setVolume(getVolumeFromEvent(e)));
+
+        volumeBar.addEventListener('mousedown', (e) => {
+            isDraggingVolume = true;
+            setVolume(getVolumeFromEvent(e));
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (isDraggingVolume) setVolume(getVolumeFromEvent(e));
+        });
+        document.addEventListener('mouseup', () => { isDraggingVolume = false; });
+
+        // Touch support
+        volumeBar.addEventListener('touchstart', (e) => { isDraggingVolume = true; setVolume(getVolumeFromEvent(e)); }, { passive: true });
+        document.addEventListener('touchmove', (e) => { if (isDraggingVolume) setVolume(getVolumeFromEvent(e)); }, { passive: true });
+        document.addEventListener('touchend', () => { isDraggingVolume = false; });
+
+        // Init at 80%
+        setVolume(0.8);
+    </script>
     <script>
         const audioPlayer = document.getElementById('audio-player');
         const playBtn = document.getElementById('player-play-btn');
@@ -1551,7 +1767,8 @@
             <div class="px-6 pb-6 w-full">
                 <h2 class="text-[22px] font-extrabold text-white mb-1 tracking-tight leading-tight">Unlock the
                     Full<br>Experience</h2>
-                <p class="text-gray-500 text-[12px] mb-4 leading-relaxed font-medium">Join thousands of music lovers —
+                <p class="text-gray-500 text-[12px] mb-4 leading-relaxed font-medium">Join thousands of music lovers
+                    —
                     it's completely free.</p>
 
                 <!-- Divider -->
@@ -1566,21 +1783,24 @@
                             class="w-7 h-7 rounded-md bg-[#3be2c8]/[0.08] flex items-center justify-center flex-shrink-0">
                             <i class="fas fa-heart text-[#3be2c8] text-[10px]"></i>
                         </div>
-                        <span class="text-[12px] text-gray-300 font-medium">Save unlimited playlists & favorites</span>
+                        <span class="text-[12px] text-gray-300 font-medium">Save unlimited playlists &
+                            favorites</span>
                     </div>
                     <div class="flex items-center gap-2.5">
                         <div
                             class="w-7 h-7 rounded-md bg-[#3be2c8]/[0.08] flex items-center justify-center flex-shrink-0">
                             <i class="fas fa-brain text-[#3be2c8] text-[10px]"></i>
                         </div>
-                        <span class="text-[12px] text-gray-300 font-medium">AI-powered personal recommendations</span>
+                        <span class="text-[12px] text-gray-300 font-medium">AI-powered personal
+                            recommendations</span>
                     </div>
                     <div class="flex items-center gap-2.5">
                         <div
                             class="w-7 h-7 rounded-md bg-[#3be2c8]/[0.08] flex items-center justify-center flex-shrink-0">
                             <i class="fas fa-history text-[#3be2c8] text-[10px]"></i>
                         </div>
-                        <span class="text-[12px] text-gray-300 font-medium">Full listening history & analytics</span>
+                        <span class="text-[12px] text-gray-300 font-medium">Full listening history &
+                            analytics</span>
                     </div>
                 </div>
 

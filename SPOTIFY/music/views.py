@@ -256,6 +256,12 @@ def index(request):
     armaan_songs = get_artist_songs('Armaan Malik', limit=20)
     kk_songs = get_artist_songs('KK', limit=20)
     sonu_nigam_songs = get_artist_songs('Sonu Nigam', limit=20)
+    
+    # Specific Jubin Nautiyal songs chosen by user
+    raw_jubin = jiosavan.search_songs('Jubin Nautiyal', limit=20)
+    desired_jubin_ids = ['mPTrDSun', 'Ujnmaest', 'G9e-2ovU', 'qPB2SEmk', 'AQElj-gb', 'rEoWbHsm', 'mQEkLivY', 'CDa795cA', 'HKRyCYDv']
+    jubin_songs = [s for s in raw_jubin if s['id'] in desired_jubin_ids]
+
     nostalgia_songs = jiosavan.get_nostalgia_songs(limit=20)
     top_albums = search_albums('Bollywood hits', limit=10)
 
@@ -297,6 +303,7 @@ def index(request):
         "armaan_songs": armaan_songs,
         "kk_songs": kk_songs,
         "sonu_nigam_songs": sonu_nigam_songs,
+        "jubin_songs": jubin_songs,
         "nostalgia_songs": nostalgia_songs,
         "top_albums": top_albums,
         "best_of_hindi_songs": best_of_hindi_songs,
