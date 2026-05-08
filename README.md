@@ -102,6 +102,9 @@ Seamlessly bridging the gap between digital music and live experiences, SoulPlay
 <img width="1640" height="776" alt="image" src="https://github.com/user-attachments/assets/d600cbe2-3f47-4595-9bf5-466251b5a209" />
   
 ---
+## Global Live Events and Concerts through Ticketmaster 
+<img width="1919" height="756" alt="image" src="https://github.com/user-attachments/assets/cc72ec1c-2715-4452-9f81-39fc2f093bc6" />
+
 
 ## 🏗️ Architecture & System Design
 
