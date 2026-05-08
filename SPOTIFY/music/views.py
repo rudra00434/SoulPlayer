@@ -502,9 +502,14 @@ def artist_detail(request,pk):
     # Also fetch JioSaavn songs by this artist
     jiosaavn_songs = jiosavan.search_songs(artist.name, limit=10)
     
+    # Fetch upcoming live events for this artist
+    from . import ticketmaster_api
+    artist_events = ticketmaster_api.get_artist_events(artist.name, size=5)
+    
     context={"artist":artist,
              "songs":songs,
-             "jiosaavn_songs": jiosaavn_songs}
+             "jiosaavn_songs": jiosaavn_songs,
+             "artist_events": artist_events}
     return render(request,'artist_detail.html',context)
 
 @login_required(login_url='user_login')
@@ -1383,3 +1388,61 @@ def remove_collaborator(request, pk, user_id):
         {'type': 'collaborator_removed', 'user_id': user_id}
     )
     return JsonResponse({'status': 'success'})
+
+
+# ==========================================
+# LIVE EVENTS / CONCERTS VIEWS
+# ==========================================
+from . import ticketmaster_api
+
+def live_events(request):
+    """Live Events & Concerts discovery page powered by Ticketmaster API."""
+    city = request.GET.get('city', '').strip()
+    query = request.GET.get('q', '').strip()
+    country = request.GET.get('country', '').strip()
+
+    events = []
+    search_performed = bool(city or query)
+
+    if city or query:
+        events = ticketmaster_api.get_events(
+            city=city,
+            keyword=query,
+            country_code=country if country else '',
+            size=30,
+        )
+    else:
+        # Default: show globally trending music events
+        events = ticketmaster_api.get_global_events(size=30)
+
+    context = {
+        'events': events,
+        'current_city': city,
+        'current_query': query,
+        'current_country': country,
+        'search_performed': search_performed,
+        'total_events': len(events),
+    }
+    return render(request, 'live_events.html', context)
+
+
+def event_detail(request, event_id):
+    """Detail page for a single live event."""
+    event = ticketmaster_api.get_event_details(event_id)
+    if not event:
+        return render(request, 'live_events.html', {
+            'events': [],
+            'error': 'Event not found or API unavailable.',
+        })
+
+    # Fetch more events from the same city for "More events near you"
+    related_events = []
+    if event.get('city'):
+        all_city_events = ticketmaster_api.get_events(city=event['city'], size=10)
+        related_events = [e for e in all_city_events if e['id'] != event_id][:6]
+
+    context = {
+        'event': event,
+        'related_events': related_events,
+    }
+    return render(request, 'event_detail.html', context)

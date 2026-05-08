@@ -55,4 +55,8 @@ urlpatterns =[
     path('playlist/invite/<str:token>/', views.accept_playlist_invite, name='accept_playlist_invite'),
     path('playlist/<int:pk>/remove_collaborator/<int:user_id>/', views.remove_collaborator, name='remove_collaborator'),
 
+    # Live Events / Concerts
+    path('live-events/', views.live_events, name='live_events'),
+    path('live-events/<str:event_id>/', views.event_detail, name='event_detail'),
+
 ]

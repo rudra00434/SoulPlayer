@@ -1,0 +1,84 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<div class="px-10 pb-32">
+    <!-- Hero Section -->
+    <div class="relative w-full h-[280px] rounded-3xl overflow-hidden mb-10 shadow-2xl group flex items-center justify-center bg-gradient-to-r from-[#0b0f19] to-[#1e293b]">
+        <div class="absolute -top-20 -right-20 w-80 h-80 bg-[#3be2c8] rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
+        <div class="absolute bottom-0 left-1/4 w-60 h-60 bg-blue-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20"></div>
+        <div class="relative z-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
+                Live <span class="text-[#3be2c8]">Events</span> Near You
+            </h1>
+            <p class="text-gray-400 max-w-lg mx-auto">Discover upcoming concerts and live performances powered by Ticketmaster.</p>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+        <div class="flex flex-wrap gap-2">
+            {% for c in "Mumbai,Delhi,Bangalore,Kolkata,Chennai,Hyderabad,Pune"|slice:"," %}
+            <a href="?city={{ c }}" class="px-4 py-2 rounded-full text-xs font-semibold {% if current_city == c %}bg-[#3be2c8] text-[#0b0f19]{% else %}bg-[#1e293b] text-gray-400 hover:text-white{% endif %} transition">
+                {{ c }}
+            </a>
+            {% endfor %}
+            <a href="?city=" class="px-4 py-2 rounded-full text-xs font-semibold bg-[#1e293b] text-gray-400 hover:text-white transition">Global</a>
+        </div>
+        <form action="" method="GET" class="relative">
+            <input type="hidden" name="city" value="{{ current_city }}">
+            <input type="text" name="q" value="{{ current_query }}" placeholder="Search artist or event..." class="bg-[#1e293b]/50 border border-transparent focus:border-[#3be2c8]/50 text-sm rounded-full pl-10 pr-4 py-2 w-64 focus:outline-none text-white transition-all shadow-inner placeholder-gray-500">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        </form>
+    </div>
+
+    <!-- Results -->
+    {% if error %}
+        <div class="text-red-400 p-4 bg-red-400/10 rounded-xl text-center">{{ error }}</div>
+    {% elif events %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for event in events %}
+            <div class="bg-[#1e293b]/30 backdrop-blur-sm border border-white/5 rounded-2xl overflow-hidden hover:bg-[#1e293b]/60 transition-all duration-300 group shadow-lg flex flex-col h-full cursor-pointer hover:scale-[1.02]" onclick="window.location.href='{% url 'event_detail' event.id %}'">
+                <div class="h-40 w-full relative overflow-hidden bg-gray-800">
+                    {% if event.image_url %}
+                    <img src="{{ event.image_url }}" alt="{{ event.name }}" class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500">
+                    {% endif %}
+                    <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold tracking-wider uppercase {% if event.status == 'onsale' %}text-green-400{% elif event.status == 'cancelled' %}text-red-400{% else %}text-yellow-400{% endif %}">
+                        {{ event.status }}
+                    </div>
+                </div>
+                <div class="p-4 flex flex-col flex-1">
+                    <h3 class="font-bold text-base text-white truncate mb-1" title="{{ event.name }}">{{ event.name }}</h3>
+                    <p class="text-xs text-[#3be2c8] font-semibold mb-3">
+                        <i class="far fa-calendar-alt mr-1"></i> {{ event.display_date }} {% if event.display_time %}• {{ event.display_time }}{% endif %}
+                    </p>
+                    <div class="text-xs text-gray-400 mb-2 truncate flex items-center">
+                        <i class="fas fa-map-marker-alt w-4 text-center mr-1"></i> 
+                        {{ event.venue }}{% if event.city and event.venue %}, {% endif %}{{ event.city }}
+                    </div>
+                    {% if event.price_min %}
+                    <div class="text-xs text-gray-300 font-medium mb-4 flex items-center">
+                        <i class="fas fa-ticket-alt w-4 text-center mr-1 text-gray-500"></i>
+                        {{ event.currency }} {{ event.price_min }} - {{ event.price_max }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-auto pt-4 flex gap-2">
+                        <a href="{{ event.url }}" target="_blank" onclick="event.stopPropagation();" class="flex-1 text-center py-2 bg-gradient-to-r from-[#3be2c8] to-[#2cdbbd] text-[#0b0f19] font-bold text-xs rounded-lg hover:shadow-lg hover:shadow-[#3be2c8]/20 transition-all">
+                            GET TICKETS
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="py-20 text-center">
+            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5">
+                <i class="fas fa-ticket-alt text-2xl text-gray-500"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">No events found</h3>
+            <p class="text-gray-400 text-sm">Try searching for a different city or artist.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

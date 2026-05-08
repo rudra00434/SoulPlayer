@@ -22,6 +22,9 @@ YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
 # JioSaavn API Base URL (unofficial API, no key needed)
 JIOSAAVN_API_BASE = os.environ.get('JIOSAAVN_API_BASE', 'https://saavn.sumit.co')
 
+# Ticketmaster Discovery API (free tier — 5,000 calls/day)
+TICKETMASTER_API_KEY = os.environ.get('TICKETMASTER_API_KEY', '')
+
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
