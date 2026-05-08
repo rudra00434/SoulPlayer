@@ -106,6 +106,10 @@ Seamlessly bridging the gap between digital music and live experiences, SoulPlay
 <img width="1919" height="756" alt="image" src="https://github.com/user-attachments/assets/cc72ec1c-2715-4452-9f81-39fc2f093bc6" />
 
 
+<img width="1919" height="869" alt="image" src="https://github.com/user-attachments/assets/724baf74-bd54-4192-9959-d1c6c9dfa738" />
+
+---
+
 ## 🏗️ Architecture & System Design
 
 SoulPlayer follows a classic **Model-View-Template (MVT)** architecture utilized by Django, augmented with **ASGI (Daphne)** for asynchronous operations, **Django Channels** for real-time WebSocket communication, and vanilla JavaScript for asynchronous frontend operations (AJAX) to maintain a seamless, single-page-application feel during media playback.
