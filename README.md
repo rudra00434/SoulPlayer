@@ -39,6 +39,13 @@ Invite friends to collaborate on your playlists! Owners can generate secure invi
 - 🏷️ **Visual Indicators** — Shimmer-animated "Collaborative" badges on playlist cards with "Shared by @user" labels
 
 ---
+### 🎟️ Live Concerts & Events Discovery
+Seamlessly bridging the gap between digital music and live experiences, SoulPlayer now features a dedicated live events discovery hub powered by the **Ticketmaster Discovery API**.
+* **Global & Local Discovery:** Users can browse globally trending music events or filter by major Indian cities (Mumbai, Delhi, Bangalore, etc.) via a dynamic glassmorphism UI.
+* **Artist Integration:** The Artist Detail pages now intelligently cross-reference the Ticketmaster API to display upcoming tour dates directly alongside the artist's discography.
+* **Intelligent Caching:** Implements a robust 5-minute TTL caching layer via Django's cache framework to optimize Ticketmaster API rate limits and ensure lightning-fast page loads.
+
+---
 ### 🎯 New Premium Feature real time AR-VR experience 
 <img width="1214" height="898" alt="image" src="https://github.com/user-attachments/assets/da2ca63e-5a4d-4c37-8a07-ccb566e912c1" />
 
@@ -300,6 +307,15 @@ SoulPlayer enables users to collaborate on playlists in real-time, powered by a 
 
 ---
 
+### 12. 🎟️ Live Concerts & Events Discovery (Ticketmaster API)
+SoulPlayer integrates with the **Ticketmaster Discovery API v2** to offer users real-time information on live concerts and tours.
+* **Discovery Hub:** A dedicated `/live-events/` page features a premium glassmorphism design where users can search for events by keyword, artist, or city.
+* **API Architecture:** The `ticketmaster_api.py` module acts as a wrapper for the external API. It parses raw JSON into normalized, template-friendly dictionaries containing event dates, venues, high-res images, and ticket prices.
+* **Smart Caching:** To respect rate limits and improve performance, all Ticketmaster API calls are routed through Django's caching layer with a 5-minute TTL.
+* **Artist Synergy:** When users view an Artist's portfolio page, a background API call fetches and displays that specific artist's upcoming global tour dates, creating a unified music ecosystem.
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Backend
@@ -310,7 +326,7 @@ SoulPlayer enables users to collaborate on playlists in real-time, powered by a 
 *   **Caching:** Redis (Production) & In-memory LocMemCache (Development)
 *   **NLP Engine:** spaCy (`en_core_web_sm`)
 *   **Machine Learning:** Pandas, Scikit-Learn (TF-IDF Vectorization, Cosine Similarity)
-*   **External APIs:** JioSaavn API (unofficial, no key needed), YouTube Data API v3
+*   **External APIs:** JioSaavn API (unofficial, no key needed), YouTube Data API v3, Ticketmaster Discovery API v2
 *   **API Interactions:** Python `requests` module
 
 ### Frontend
