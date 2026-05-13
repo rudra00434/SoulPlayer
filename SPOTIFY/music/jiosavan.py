@@ -229,13 +229,24 @@ def get_song_details(song_id):
     Get full details of a song by its JioSaavn ID.
     Returns a normalized song dict or None.
     """
+    cache_key = f'jiosaavn_song_details_{CACHE_VERSION}_{song_id}'
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
     data = _get_api_response(f"songs/{song_id}")
     if data and data.get('data'):
         songs = data['data']
+        result = None
         if isinstance(songs, list) and len(songs) > 0:
-            return _normalize_song(songs[0])
+            result = _normalize_song(songs[0])
         elif isinstance(songs, dict):
-            return _normalize_song(songs)
+            result = _normalize_song(songs)
+            
+        if result:
+            cache.set(cache_key, result, timeout=60 * 60 * 24) # Cache for 24 hours
+            return result
+            
     return None
 
 
